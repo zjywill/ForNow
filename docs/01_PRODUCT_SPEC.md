@@ -333,7 +333,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-EDIT-007 - Layout direction override
 
-- Source: `AN-REV-002`.
+- Source: `FORNOW-DECISION-006`; informed by `AN-REV-002`.
 - Settings can force left-to-right or right-to-left text layout; the default
   follows the natural direction of the content.
 - The override changes presentation only and never rewrites source text.
@@ -390,7 +390,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-CMD-002 - Mode header
 
-- Source: `AN-CMD-001`, `AN-REV-001`.
+- Source: `AN-CMD-001`, `FORNOW-DECISION-004`; informed by `AN-REV-001`.
 - Only the configured leading region can select a mode.
 - Alias matching is case-insensitive by default.
 - Invalid keywords remain ordinary content.
@@ -674,7 +674,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-UI-003 - Text size and settings validation
 
-- Source: `AN-CMD-003`, `AN-UI-001`.
+- Source: `AN-CMD-003`, `AN-UI-001`, `FORNOW-DECISION-005`.
 - Text sizes are XS, S, M, L, and XL, with a separate double-size setting.
 - Command-plus and Command-minus increase and decrease text size.
 - Quick-action shortcuts (navigation, new note, promote, delete, search, pin,
@@ -750,12 +750,16 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-EXT-003 - Extension network and secrets
 
-- Source: `AN-EXT-002`.
+- Source: `AN-EXT-002`, `FORNOW-DECISION-010`.
 - Target: `1.x`.
 - API keys are stored in Keychain and never exposed to JavaScript; the host
   substitutes `{{API_KEY}}` placeholders when executing declared calls.
-- Request URLs must prefix-match declared endpoints; extension identity is
-  host-verified and cannot be spoofed.
+- Request URLs are parsed and matched against declared scheme, normalized host,
+  effective port, and path boundaries; raw string prefix checks are forbidden.
+- Redirect targets are revalidated before following. Loopback, private-network,
+  file, data, and custom-scheme destinations are denied unless an explicit
+  capability permits the exact destination class.
+- Extension identity is host-verified and cannot be spoofed.
 - Network capability is denied by default without declared endpoints.
 
 #### FR-EXT-004 - Extension bridges and services

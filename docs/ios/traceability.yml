@@ -1,0 +1,110 @@
+version: 1
+scope: fornow-ios
+reviewed: "2026-08-02"
+
+requirements:
+  FR-IOS-CAP-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#2-the-core-problem-invocation-without-a-global-hotkey"
+    decisions: [FORNOW-DECISION-009]
+    release: ios-1.0
+    tests: [UIT-IOS-CAP-001A, UIT-IOS-CAP-001B, UIT-IOS-CAP-001C, UIT-IOS-CAP-001D]
+  FR-IOS-CAP-002:
+    source: "01_IOS_PRODUCT_DESIGN.md#2-the-core-problem-invocation-without-a-global-hotkey"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [UIT-IOS-CAP-002, MT-IOS-CAP-002A, MT-IOS-CAP-002B, MT-IOS-CAP-002C]
+  FR-IOS-CAP-003:
+    source: "01_IOS_PRODUCT_DESIGN.md#2-the-core-problem-invocation-without-a-global-hotkey"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [UT-IOS-CAP-003A, UT-IOS-CAP-003B, UT-IOS-CAP-003C, MT-IOS-CAP-003]
+  FR-IOS-IMP-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#5-autopaste-replacement-deliberate-import"
+    decisions: [FORNOW-DECISION-009]
+    release: ios-1.0
+    tests: [IT-IOS-IMP-001A, IT-IOS-IMP-001B, IT-IOS-IMP-001C, IT-IOS-IMP-001D, IT-IOS-IMP-001E]
+  FR-IOS-IMP-002:
+    source: "01_IOS_PRODUCT_DESIGN.md#5-autopaste-replacement-deliberate-import"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [UT-IOS-IMP-002A, UT-IOS-IMP-002B, ET-IOS-IMP-002A, ET-IOS-IMP-002B]
+  FR-IOS-IMP-003:
+    source: "01_IOS_PRODUCT_DESIGN.md#5-autopaste-replacement-deliberate-import"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [UT-IOS-IMP-003A, UT-IOS-IMP-003B, UT-IOS-IMP-003C, UT-IOS-IMP-003D]
+  FR-IOS-NAV-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#4-in-app-interaction-model"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [ET-IOS-NAV-001A, ET-IOS-NAV-001B, ET-IOS-NAV-001C, ET-IOS-NAV-001D, ET-IOS-NAV-001E, ET-IOS-NAV-001F, ET-IOS-NAV-001G, ET-IOS-NAV-001H]
+  FR-IOS-EDIT-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#4-in-app-interaction-model"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [ET-IOS-EDIT-001A, ET-IOS-EDIT-001B, ET-IOS-EDIT-001C, ET-IOS-EDIT-001D, ET-IOS-EDIT-001E, ET-IOS-EDIT-001F, ET-IOS-EDIT-001G, ET-IOS-EDIT-001H]
+  FR-IOS-SRCH-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#4-in-app-interaction-model"
+    decisions: [FORNOW-DECISION-008]
+    release: ios-1.0
+    tests: [UT-IOS-SRCH-001A, UT-IOS-SRCH-001B, UT-IOS-SRCH-001C, IT-IOS-SRCH-001A, IT-IOS-SRCH-001B, MT-IOS-SRCH-001]
+  FR-IOS-TIME-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#6-timer-live-activity-replaces-the-menu-bar"
+    decisions: [FORNOW-DECISION-009]
+    release: ios-1.0
+    tests: [UT-IOS-TIME-001A, UT-IOS-TIME-001B, UT-IOS-TIME-001C, UT-IOS-TIME-001D, MT-IOS-TIME-001A, MT-IOS-TIME-001B, MT-IOS-TIME-001C, MT-IOS-TIME-001D]
+  FR-IOS-OCR-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#7-ocr-plus-camera"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [UT-IOS-OCR-001A, UT-IOS-OCR-001B, UT-IOS-OCR-001C, MT-IOS-OCR-001A, MT-IOS-OCR-001B, MT-IOS-OCR-001C, ST-IOS-OCR-001]
+  FR-IOS-DATA-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#8-architecture"
+    decisions: [FORNOW-DECISION-009]
+    release: ios-1.0
+    tests: [IT-IOS-DATA-001A, IT-IOS-DATA-001B, IT-IOS-DATA-001C, IT-IOS-DATA-001D, IT-IOS-DATA-001E, IT-IOS-DATA-001F, ST-IOS-DATA-001]
+  FR-IOS-A11Y-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#4-in-app-interaction-model"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [MT-IOS-A11Y-001A, MT-IOS-A11Y-001B, MT-IOS-A11Y-001C, MT-IOS-A11Y-001D]
+  FR-IOS-LIFE-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#9-requirement-adaptation"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [UT-IOS-LIFE-001A, UT-IOS-LIFE-001B, UIT-IOS-LIFE-001A, UIT-IOS-LIFE-001B]
+  FR-IOS-UI-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#9-requirement-adaptation"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [UT-IOS-UI-001A, UIT-IOS-UI-001A, MT-IOS-UI-001A, MT-IOS-UI-001B]
+  FR-IOS-EXP-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#9-requirement-adaptation"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [UT-IOS-EXP-001A, UT-IOS-EXP-001B, IT-IOS-EXP-001A, UIT-IOS-EXP-001A, ST-IOS-EXP-001]
+  FR-IOS-BACK-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#9-requirement-adaptation"
+    decisions: [FORNOW-DECISION-007]
+    release: ios-1.0
+    tests: [UT-IOS-BACK-001A, IT-IOS-BACK-001A, IT-IOS-BACK-001B, IT-IOS-BACK-001C, MT-IOS-BACK-001]
+  FR-IOS-PRIV-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#9-requirement-adaptation"
+    decisions: [FORNOW-DECISION-008]
+    release: ios-1.0
+    tests: [ST-IOS-PRIV-001A, ST-IOS-PRIV-001B, ST-IOS-PRIV-001C, MT-IOS-PRIV-001]
+  FR-IOS-REL-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#9-requirement-adaptation"
+    decisions: [FORNOW-DECISION-012]
+    release: ios-1.0
+    tests: [IT-IOS-REL-001A, IT-IOS-REL-001B, ST-IOS-REL-001A, MT-IOS-REL-001A, MT-IOS-REL-001B]
+  FR-IOS-SYNC-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#10-phasing"
+    decisions: [FORNOW-DECISION-007]
+    release: ios-1.0
+    tests: [IT-IOS-SYNC-001A, IT-IOS-SYNC-001B, IT-IOS-SYNC-001C, IT-IOS-SYNC-001D, IT-IOS-SYNC-001E, IT-IOS-SYNC-001F, IT-IOS-SYNC-001G, IT-IOS-SYNC-001H, IT-IOS-SYNC-001I, IT-IOS-SYNC-001J, IT-IOS-SYNC-001K, IT-IOS-SYNC-001L, IT-IOS-SYNC-001M, IT-IOS-SYNC-001N, IT-IOS-SYNC-001O]
+  FR-IOS-EXT-001:
+    source: "01_IOS_PRODUCT_DESIGN.md#11-fixed-10-decisions-and-deferred-research"
+    decisions: [FORNOW-DECISION-011]
+    release: post-ios-1.0-research
+    tests: [SP-IOS-EXT-001A, SP-IOS-EXT-001B, ST-IOS-EXT-001A, MT-IOS-EXT-001A]

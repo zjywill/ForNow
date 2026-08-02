@@ -1,10 +1,12 @@
 # ForNow for iPhone - Product And Interaction Design
 
-Status: design draft. This document does not change the macOS 1.0 plan. It
-defines the iOS product so that the platform-neutral packages
+Status: implementation-ready iOS 1.0 plan. This document does not change the
+macOS 1.0 plan and is not evidence of AntiNote iOS parity. It defines the
+iOS product so that the platform-neutral packages
 (`ForNowCore`, `ForNowModes`, `ForNowPersistence`) can be built once and
-reused, and so that iOS-specific work has a traceable contract before any
-code exists.
+reused, and so that iOS-specific work has a traceable contract before code
+exists. Release-blocking defaults and fallbacks are fixed; only explicitly
+post-1.0 research remains feasibility-gated.
 
 Relationship to existing documents:
 
@@ -16,6 +18,16 @@ Relationship to existing documents:
 - `../03_IMPLEMENTATION_PLAYBOOK.md` Step 6.2 (iCloud And iOS) is the
   scheduled integration point. Building iOS earlier than that is a product
   decision to record as `FORNOW-DECISION`, not an assumption.
+
+Platform references reviewed on 2026-08-02:
+
+- App Intents: `https://developer.apple.com/documentation/appintents`
+- ActivityKit: `https://developer.apple.com/documentation/activitykit`
+- Core Spotlight: `https://developer.apple.com/documentation/corespotlight`
+- VisionKit data scanning:
+  `https://developer.apple.com/documentation/visionkit/datascannerviewcontroller`
+- App Review Guidelines:
+  `https://developer.apple.com/app-store/review/guidelines/`
 
 ## 1. Positioning On iPhone
 
@@ -39,32 +51,39 @@ It is not:
 - a knowledge base, document editor, or task manager;
 - a cloud account service or AI chat application.
 
+iOS 1.0 targets iPhone (`TARGETED_DEVICE_FAMILY = 1`). iPad-specific
+multicolumn layout, pointer interactions, and drag/drop are deferred; an iPad
+running the iPhone-compatible build receives no separate layout promise.
+
 ## 2. The Core Problem: Invocation Without A Global Hotkey
 
 On macOS, time-to-note is solved by the global hotkey (`AN-WIN-001`). iOS
 offers no equivalent. The iOS design therefore replaces one hotkey with a
-stack of system capture surfaces, ordered by speed:
+stack of system capture surfaces. Availability depends on OS version, device,
+user configuration, lock state, and system scheduling:
 
-| Surface | Time to typing | Mechanism |
+| Surface | Availability | Mechanism |
 |---|---|---|
-| Lock Screen widget | ~2 s | Widget button launches app directly into a fresh transient note |
-| Action Button (Pro models) | ~2 s | App Intent `CaptureNoteIntent` bound by the user in Settings |
-| Control Center control | ~3 s | iOS 18 Controls API, opens capture surface |
-| Home Screen quick action | ~3 s | Long-press icon -> "New Note" |
-| Back Tap | ~3 s | User-bound Shortcut calling `CaptureNoteIntent` |
-| Siri / App Shortcuts | ~4 s | "Capture in ForNow" phrase, optional dictated content |
-| Spotlight | ~4 s | App Shortcuts appear as top-hit actions |
-| Home Screen icon | ~5 s | Cold open resumes the most recent note |
+| Lock Screen widget | Supported devices; unlock may be required | Widget action opens a fresh transient note |
+| Action Button | Supported devices and user configuration | User binds a ForNow App Shortcut or Control |
+| Control Center control | iOS 18+ | Control opens the capture route |
+| Home Screen quick action | iOS baseline | Long-press icon -> "New Note" |
+| Back Tap | User-configured Accessibility shortcut | Shortcut calls `CaptureNoteIntent` |
+| Siri / App Shortcuts | Locale and system support vary | Capture phrase with optional dictated content |
+| Spotlight | App Shortcut availability varies | Capture action may appear in system search |
+| Home Screen icon | iOS baseline | Cold open follows the configured resume policy |
 
 Rules:
 
-- Every capture surface lands in the same state: editor focused, insertion
-  point restored, keyboard up, autosave armed. No interstitial screens.
+- Every available capture surface targets the same ready state: editor focused,
+  insertion point restored, keyboard requested, autosave armed. Authentication,
+  permission, or system-owned confirmation UI is allowed when iOS requires it.
 - Capture surfaces that accept content (Siri dictation, share sheet,
   shortcut input) create the note with that content already committed.
 - All capture surfaces are implemented through one versioned App Intents
   surface, mirroring the macOS URL router contract (`FR-URL-001`), so every
-  external entry point is testable and rate-limited the same way.
+  external entry point is decoded and tested consistently. A URL route may
+  delegate to the same command layer but is not replaced by App Intents.
 
 ## 3. Interaction Redesign Matrix
 
@@ -79,13 +98,13 @@ interaction replaces it; `Drop` means the platform makes it impossible.
 | Pin window / auto-hide | `AN-WIN-003` | Drop |
 | Spaces, full-screen overlay, multi-display | `AN-WIN-004` | Drop |
 | Command-W/O close and toggle | `AN-WIN-005` | Drop: iOS app lifecycle handles this |
-| Two-finger swipe between notes | `AN-NAV-002` | Port: horizontal swipe gesture between notes |
+| Two-finger swipe between notes | `AN-NAV-002` | Redesign: conflict-aware paging gesture between notes |
 | Command-left/right bracket | `AN-NAV-002` | Port for hardware keyboards via `UIKeyCommand`; gesture is primary |
 | Create at newest edge, discard blank | `AN-NAV-003`, `AN-NAV-004` | Port unchanged |
 | Jump to front / promote | `AN-NAV-005` | Port: toolbar buttons; hardware-keyboard shortcuts when present |
 | Confirmed deletion Command-D | `AN-LIFE-002` | Redesign: swipe action or toolbar delete with the same confirmation and suppression semantics |
 | Cursor entry after navigation | `AN-NAV-007` | Drop on touch (no pre-edit focus state); hardware keyboards keep arrow-entry |
-| Cross-note search Command-F | `AN-NAV-006` | Redesign: pull-down or toolbar search field; results promote on tap. Spotlight indexing (Core Spotlight) makes notes findable system-wide |
+| Cross-note search Command-F | `AN-NAV-006` | Redesign: explicit toolbar search; optional, privacy-gated Core Spotlight indexing |
 | Find and replace | `AN-NAV-006` | Port with touch UI; same matching modes and source-coordinate rules |
 | Contextual copy decision table | `AN-CLIP-001` | Port unchanged (selection > inline code > block > whole note) |
 | Clean copy projection | `AN-CLIP-002` | Port unchanged |
@@ -98,14 +117,14 @@ interaction replaces it; `Drop` means the platform makes it impossible.
 | Menu-bar timer status | `AN-TIME-002` | Redesign: Live Activity + Dynamic Island |
 | Screenshot/image OCR | `AN-OCR-001`, `AN-OCR-002` | Port, plus camera scanning via VisionKit (section 7) |
 | AutoPaste session | `AN-AUTO-001`, `AN-AUTO-002` | Drop: iOS forbids background clipboard polling. Replacement in section 5 |
-| Link shortening and expansion | `AN-TXT-003` | Port; long-press replaces Command-click gestures |
+| Link shortening and expansion | `AN-TXT-003` | Port; a standard context menu exposes open and expand/shorten actions |
 | Simple Markdown, code mode | `AN-MD-001`, `AN-CODE-001` | Port unchanged |
 | URL schemes / automation | `AN-URL-001` | Port and extend: keep the URL router, add App Intents as the primary iOS automation surface |
-| JavaScript extensions (`::` palette) | `AN-EXT-001` through `AN-EXT-004` | Port (post-1.0): shared manifest, sandbox, scopes, and bridges; iOS provides only the palette presentation |
+| JavaScript extensions (`::` palette) | `AN-EXT-001` through `AN-EXT-004` | Research only: shared runtime requires technical and App Review feasibility gates |
 | Quick export and app adapters | `AN-EXP-001..003` | Redesign around the system share sheet; same canonical export document and adapters |
 | Themes, paper, text size | `AN-UI-001` | Port; add Dynamic Type support as the iOS-native text-size path |
 | RTL layout override | `AN-REV-002` | Port |
-| Expiration, backups, bulk delete | `AN-LIFE-001`, `AN-BACK-001`, `AN-NOTE-SET-001` | Port; backups stored on-device and optionally in iCloud Drive (user-visible folder) |
+| Expiration, backups, bulk delete | `AN-LIFE-001`, `AN-BACK-001`, `AN-NOTE-SET-001` | Adapt: local backups plus explicit Files export/import; no assumed always-visible database folder |
 | No usage analytics | `AN-PRIV-001` | Port unchanged |
 
 ## 4. In-App Interaction Model
@@ -113,13 +132,15 @@ interaction replaces it; `Drop` means the platform makes it impossible.
 ### Navigation
 
 - One note on screen at a time, matching `AN-NAV-001`.
-- Horizontal edge-independent swipe moves previous/next. Swiping past the
-  newest note creates the transient blank note; leaving it blank discards it
-  (unchanged lifecycle rules).
-- A bottom bar carries: note count (configurable), search, new note, and
-  overflow menu. It collapses while the keyboard is up.
-- Hardware keyboards (iPad, paired keyboards) get the full macOS shortcut
-  set through `UIKeyCommand` where the OS allows it.
+- A paging gesture moves previous/next only after a horizontal-intent threshold.
+  It does not begin during marked text, text selection handles, link gestures,
+  or horizontal code scrolling. Boundary resistance previews the transient
+  blank note before the gesture commits.
+- A bottom toolbar carries note count (configurable), search, new note, and
+  overflow. While the keyboard is visible, the essential actions remain
+  available through a compact input accessory or safe-area toolbar.
+- Hardware keyboards get an explicit iOS shortcut table through `UIKeyCommand`.
+  Windowing-only macOS shortcuts are excluded and system conflicts win.
 
 ### Editor
 
@@ -128,22 +149,25 @@ interaction replaces it; `Drop` means the platform makes it impossible.
   `../02_ARCHITECTURE.md` section 6 applies unchanged: source text only,
   versioned projections, decorations never serialized.
 - Slash picker renders as a suggestion strip docked above the keyboard,
-  filterable by typing, selectable by tap or number row; VoiceOver
-  navigable.
-- Links: tap opens (with confirmation sheet), long-press toggles
-  expanded/shortened. Same caret-exit shortening rule.
+  filterable by typing and selectable by tap. Hardware number keys select
+  numbered entries; VoiceOver actions expose the same choices.
+- Links use a standard context menu for Open and Expand/Shorten. A direct tap
+  follows the configured link-opening policy. Same caret-exit shortening rule.
 - Checkboxes and math results are tappable decorations with the same
   source-range command paths as macOS.
 
 ### Search
 
-- Pull down on the note to reveal the search field (Notes-app idiom), or
-  tap the bottom-bar search button.
+- Tap the toolbar search button to present cross-note search. Pull-to-reveal is
+  reserved for a future note-list surface and is not attached to the editor
+  scroll gesture.
 - Empty query lists all notes, newest first; tapping a result promotes it,
   matching `FR-NOTE-007` semantics.
-- Notes are indexed in Core Spotlight with `NSUserActivity` donation so
-  system Spotlight finds and opens them; deletion and expiration remove
-  index entries in the same transaction.
+- Core Spotlight indexing is disabled by default. When the user opts in, a
+  transactional outbox records index work beside note mutations and an
+  asynchronous worker applies bounded title/snippet metadata. Reconciliation
+  repairs missed updates. Core Spotlight is never described as part of the
+  SQLite transaction (`FORNOW-DECISION-008`).
 
 ## 5. AutoPaste Replacement: Deliberate Import
 
@@ -154,14 +178,17 @@ impossible; pretending otherwise would produce a broken feature.
 Replacement stack, all explicit and session-scoped:
 
 1. **Share Extension** - "Send to ForNow" from any app's share sheet.
-   Target choice: append to current note or create a new note. Text, URLs,
-   and images (images route to OCR per user setting).
+   Target choice: append to the note that was active when the share target
+   snapshot was written, or create a new note. The staged payload carries a
+   stable note ID; if it is stale or absent, the import creates a new note
+   rather than appending to an unrelated future "current" note. Text, URLs,
+   and images are accepted; images route to OCR per user setting.
 2. **Paste-on-open banner** - when the app becomes active and the
-   pasteboard `changeCount` differs from the last seen value, a
-   non-modal banner offers "Paste what you copied". One tap, one undo
-   group, then the banner dismisses. No silent reads: the check uses
-   `UIPasteboard.general.hasStrings` metadata patterns that do not trigger
-   the system paste prompt; content is read only after the tap.
+   pasteboard `changeCount` differs from the last seen value, a non-modal
+   banner presents a system `UIPasteControl` configured for text and URLs.
+   The app does not read pasteboard content to decide whether to show the
+   banner. The user's tap performs the paste as one undo group, then the
+   banner dismisses.
 3. **App Intents ingestion** - Shortcuts can append clipboard or other
    content through `AppendToNoteIntent`, subject to the same normalization
    pipeline as paste (`FR-CLIP-003`).
@@ -172,25 +199,33 @@ extension and intent ingestion.
 
 ## 6. Timer: Live Activity Replaces The Menu Bar
 
-- Starting any timer registers a Live Activity; countdowns and stopwatches
-  show in the Dynamic Island and on the Lock Screen.
-- Pause/resume and stop are Live Activity buttons routed to the same
-  `TimerStateMachine` transitions as in-app commands.
+- Starting a supported timer may register a Live Activity; countdowns and
+  stopwatches show in supported Lock Screen and Dynamic Island presentations.
+- iOS 1.0 Live Activities are read-only. Tapping the activity opens the app at
+  the timer, where pause/resume/stop execute through the normal state machine.
+  Interactive background controls are a later enhancement gated by a platform
+  spike and the single-writer database rule (`FORNOW-DECISION-009`).
 - Completion produces the same notification/sound settings as macOS
   (`FR-TIME-003`), mapped to `UNUserNotificationCenter` time-sensitive
   notifications where the user has granted permission.
-- Full-screen takeover becomes a critical-banner style local notification;
-  iOS has no overlay window concept.
+- The macOS full-screen takeover is dropped. ForNow does not request or imply
+  Critical Alerts entitlement; time-sensitive delivery remains subject to
+  user and system policy.
+- The activity uses timestamp-derived display and a stale date. Without remote
+  push or granted background execution, completion cannot promise that iOS
+  will end the activity within a fixed number of seconds; final cleanup occurs
+  on the next execution opportunity.
 - Timer state persists through termination exactly as in
   `FR-TIME-001`: timestamps, not decremented counters.
 
 ## 7. OCR Plus Camera
 
-- Paste, drag (iPad), share sheet, and an in-app camera button all feed
+- Paste, share sheet, and an in-app camera button all feed
   the same `OCRService` protocol from `ForNowIntegrations`.
 - Camera input uses VisionKit's `DataScannerViewController` for live text
-  capture and `VNDocumentCameraViewController` for document scans; both
-  stay on-device.
+  capture when `isSupported` and `isAvailable` are true, with still-image or
+  document-scan fallback when live scanning is unavailable.
+- `VNDocumentCameraViewController` and Vision recognition stay on-device.
 - The documented format validation, atomic insertion, and one-undo-group
   rules (`FR-OCR-001..003`) apply unchanged.
 
@@ -198,7 +233,7 @@ extension and intent ingestion.
 
 ### Package reuse
 
-Reused without modification:
+Targeted for reuse after cross-platform compile and behavior tests:
 
 - `ForNowCore` - models, state machines, use cases;
 - `ForNowModes` - all parsers, evaluators, dependency graphs;
@@ -206,8 +241,8 @@ Reused without modification:
 
 Reused with iOS implementations behind the same protocols:
 
-- `ForNowPersistence` - same GRDB schema and migrations, stored in the App
-  Group container;
+- `ForNowPersistence` - same logical GRDB schema and migrations, with the
+  container path and protection policy injected per platform;
 - `ForNowIntegrations` - iOS implementations of OCR, notifications, rate
   providers, export adapters, URL router.
 
@@ -222,14 +257,14 @@ New iOS-only modules:
 
 ### App Group and extensions
 
-- App, share extension, widgets, and Live Activity share one
-  `DatabasePool` location inside the App Group container.
+- One SQLite store lives in the App Group container and is opened only by the
+  app process (`FORNOW-DECISION-009`).
 - Extensions never write SQLite directly. The share extension stages
   payloads as files in the App Group inbox plus a `DarwinNotification`;
   the app imports them through the same use cases as UI commands on next
   activation, and processes any backlog on launch.
-- Widgets and Live Activities read through an immutable snapshot file
-  written by the app, never through the database.
+- Widgets and Live Activities read immutable snapshot files written by the
+  app, never through the database.
 
 ### Concurrency and limits
 
@@ -239,39 +274,46 @@ logs, sandboxed extensions, Keychain for future secrets.
 
 ## 9. Requirement Adaptation
 
-macOS FRs carry over unchanged unless listed here.
+macOS requirements do not carry over by default. Each group has an explicit
+iOS disposition:
 
-- `FR-WIN-001..005` -> replaced by `FR-IOS-CAPTURE-*` (capture surface
-  stack, section 2). The macOS requirements remain authoritative for the
-  desktop app.
-- `FR-AUTO-001..002` -> replaced by `FR-IOS-IMPORT-*` (section 5).
-  `FR-AUTO-003` survives as shared formatting policy.
-- `FR-TIME-002` external visibility -> Live Activity path (section 6).
-- `FR-NOTE-007` search -> extended with Spotlight indexing (section 4).
-- `FR-EXP-003` adapters -> share-sheet presentation on iOS; adapter
-  internals unchanged.
-- New `FR-IOS-SYNC-001` (post-1.0, with Step 6.2): iPhone and Mac share
-  one note store through CloudKit with deterministic conflict rules;
-  until then both apps remain independent local stores.
+| macOS requirements | iOS disposition |
+|---|---|
+| `FR-WIN-001..005` | Not applicable; replaced by `FR-IOS-CAP-*` |
+| `FR-NOTE-001..006`, `008`, `010` | Shared behavior |
+| `FR-NOTE-007`, `009` | Adapted by `FR-IOS-SRCH-001` and `FR-IOS-LIFE-001` |
+| `FR-EDIT-*`, `FR-CLIP-*`, `FR-CMD-*`, `FR-LIST-*`, `FR-MATH-*` | Shared source semantics; touch and keyboard presentation are iOS-specific |
+| `FR-TIME-001..002` | Shared state machine; external visibility adapted by `FR-IOS-TIME-001` |
+| `FR-OCR-*` | Shared recognition/insertion contracts; camera availability adapted by `FR-IOS-OCR-001` |
+| `FR-AUTO-001..002` | Not applicable; replaced by `FR-IOS-IMP-*` |
+| `FR-AUTO-003` | Shared formatting policy |
+| `FR-EXP-*` | Adapted by `FR-IOS-EXP-001` |
+| `FR-BACK-*` | Adapted by `FR-IOS-BACK-001` |
+| `FR-UI-001`, `003` | Shared intent; adapted by `FR-IOS-UI-001` |
+| `FR-UI-002` | Paper styles may port; macOS translucency does not |
+| `FR-UI-004` | Deferred with custom-theme work |
+| `FR-URL-001..002` | Only the documented safe subset in `FR-IOS-EXP-001`; hotkey, pin, and database reload routes do not port |
+| `FR-INT-001` | Not applicable on iOS |
+| `FR-EXT-*` | Research only under `FR-IOS-EXT-001` and `FORNOW-DECISION-011` |
+| `FR-UPD-001`, `FR-SUP-001`, `FR-DIST-001` | Replaced by `FR-IOS-REL-001` |
+| `FR-PRIV-001` | Shared, extended by `FR-IOS-PRIV-001` |
 
-All iOS additions must cite this document as their source, the same way
-macOS requirements cite `AN-*` evidence. Nothing in this document
-reinterprets an `AN-*` fact.
+Every iOS addition cites this design set and the controlling
+`FORNOW-DECISION-*` where one exists. Nothing in this document reinterprets an
+`AN-*` fact or claims parity with an unpublished AntiNote iOS interaction.
 
 ## 10. Phasing
 
-iOS work starts only after one of:
-
-1. macOS 1.0 ships (the playbook default), or
-2. a recorded `FORNOW-DECISION` moves it earlier - in which case Phase 0
-   spike 0.5 (persistence) still gates everything, because both platforms
-   share the schema.
+iOS feasibility and editor spikes may start after macOS 1.0. Public iOS 1.0 is
+blocked until the sync engine and local-only fallback pass the Step 6.2 exit
+criteria (`FORNOW-DECISION-007`).
 
 Suggested iOS sequence when started:
 
-- **iOS Step 0** - prove `UITextView` projection parity with the macOS
-  editor spike fixtures (same mandatory fixture list), prove App Group
-  database sharing between app and share extension.
+- **iOS Step 0** - prove `UITextView` projection parity; prove App Group inbox
+  staging without extension database access; spike App Intent execution,
+  Live Activity controls, Spotlight outbox, VisionKit fallback, and App Store
+  extension policy.
 - **iOS Step 1** - capture stack: app shell, transient notes, navigation
   gestures, Lock Screen widget, App Intents.
 - **iOS Step 2** - editor parity: copy/paste, links, Markdown, code,
@@ -280,17 +322,17 @@ Suggested iOS sequence when started:
   integration - expected to be fast because the parsers are done).
 - **iOS Step 4** - timer with Live Activity, OCR with camera, share
   extension and import banner, search with Spotlight.
-- **iOS Step 5** - themes, export, expiration, backups, release.
+- **iOS Step 5** - sync migration, themes, export, expiration, backups,
+  accessibility, privacy, App Store release.
 
-## 11. Open Questions
+## 11. Fixed 1.0 Decisions And Deferred Research
 
-- Whether iOS 1.0 ships before CloudKit sync (two independent stores) or
-  waits for Step 6.2 (one shared store). Shipping independently first
-  risks a migration story for early users with notes on both platforms.
-- Paste-on-open banner behavior under iOS paste-consent changes; the
-  consent UX must be revalidated on each major iOS release.
-- Whether Control Center and Action Button surfaces should open a fresh
-  note or resume the most recent one; current decision: fresh transient
-  note, matching Journey J-002.
-- Widget and Live Activity snapshot refresh budget under iOS background
-  execution limits.
+- Every explicit capture surface opens a fresh transient note. Ordinary Home
+  Screen launch follows `FR-IOS-LIFE-001`.
+- Paste-on-open uses `UIPasteControl`; paste-consent behavior is revalidated on
+  every major iOS release without changing the no-pre-read rule.
+- Widget and Live Activity snapshots are best-effort and may be stale until the
+  next permitted refresh; the app view is authoritative.
+- iOS 1.0 Live Activities are read-only and open the app for control.
+- User-installable JavaScript extensions are post-1.0 research and cannot block
+  the core iOS release.

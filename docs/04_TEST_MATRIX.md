@@ -385,13 +385,13 @@ The matrix is complete when:
 |---|---|---|
 | `FR-EXT-001` | `UT-EXT-001A` through `UT-EXT-001E` | Manifest schema, versioning, quarantine, load order, sandbox isolation |
 | `FR-EXT-002` | `UT-EXT-002A` through `UT-EXT-002E`, `ET-EXT-002` | Palette filtering, four command types, scope immutability, undo grouping |
-| `FR-EXT-003` | `UT-EXT-003A` through `UT-EXT-003D`, `ST-EXT-003` | Placeholder substitution, endpoint prefix validation, identity spoofing, denied-by-default |
+| `FR-EXT-003` | `UT-EXT-003A` through `UT-EXT-003F`, `ST-EXT-003` | Placeholder substitution, parsed endpoint and redirect validation, lookalike-host/path escapes, identity spoofing, denied-by-default |
 | `FR-EXT-004` | `UT-EXT-004A` through `UT-EXT-004C`, `IT-EXT-004` | MathEvaluator parity with math mode, preferences, service dependencies |
 
 Hostile-extension fixtures:
 
 - scope escape attempts (line-scoped code requesting full text);
-- endpoint mismatch and redirect following;
+- lookalike host, path-boundary escape, endpoint mismatch, and redirect escape;
 - identity spoofing of another extension;
 - oversized output and infinite loop (execution limits);
 - malformed manifest, missing files, undeclared JS files.

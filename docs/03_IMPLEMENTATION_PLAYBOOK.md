@@ -1234,16 +1234,46 @@ Tasks:
 Evidence:
 
 - `AN-BETA-002`
+- `FORNOW-DECISION-007` through `FORNOW-DECISION-009`
+
+Requirements:
+
+- `FR-IOS-SYNC-001`
+- the iOS 1.0 requirements in `docs/ios/traceability.yml`
 
 Tasks:
 
-1. Add tombstones and revision metadata.
-2. Implement `SyncEngine`.
-3. Add private CloudKit schema.
-4. Define deterministic conflicts.
-5. Add offline operation log.
-6. Run two-device and clock-skew tests.
-7. Build iOS editor only after sync passes.
+1. Execute `docs/ios/05_IOS_IMPLEMENTATION_PLAYBOOK.md` in order.
+2. Add tombstones, hybrid logical clocks, sync metadata, ingestion receipts,
+   and the Spotlight outbox.
+3. Implement the private CloudKit custom zone with `CKSyncEngine`.
+4. Apply the documented edit/edit and edit/delete recovery-note policy.
+5. Add local-only mode, later iCloud enablement, account-loss handling, and
+   restore-as-merge.
+6. Build the iOS editor and system-surface spikes after macOS 1.0 shared
+   packages are stable.
+7. Run the complete iOS test matrix, including two-device, clock-skew,
+   seven-day offline, migration, backup, privacy, accessibility, and App Store
+   validation cells.
+
+Deliverables:
+
+- the five iOS design/requirements/architecture/test/playbook documents;
+- `docs/ios/traceability.yml` with no orphan 1.0 requirement;
+- reproducible iPhone project and CI jobs;
+- production-ready sync engine and migration;
+- TestFlight release candidate with JavaScript extensions absent.
+
+Exit criteria:
+
+- every `release: ios-1.0` traceability entry is green;
+- CloudKit conflict fixtures preserve all user-authored text;
+- local-only mode works with iCloud and network disabled;
+- backup restore merges safely with synchronized data;
+- the app-only SQLite writer invariant holds across widgets, intents, and the
+  share extension;
+- privacy, accessibility, physical-device, performance, and App Store gates
+  pass.
 
 Do not advertise end-to-end encryption unless its exact protection model has
 been independently verified.
@@ -1265,8 +1295,9 @@ Tasks:
    four documented command types (insert, replaceLine, replaceAll, openURL).
 4. Enforce immutable input scopes: none, line, full.
 5. Return results as source-edit operations with status, message, payload.
-6. Add the Keychain `{{API_KEY}}` placeholder bridge with endpoint prefix
-   validation and host-verified extension identity (`AN-EXT-002`).
+6. Add the Keychain `{{API_KEY}}` placeholder bridge with structural endpoint
+   validation, redirect revalidation, and host-verified extension identity
+   (`AN-EXT-002`, `FORNOW-DECISION-010`).
 7. Add the MathEvaluator bridge backed by the shared math engine, and the
    preferences API (`AN-EXT-004`).
 8. Add the service-extension dependency model; centralize AI access in one
@@ -1290,8 +1321,8 @@ Tests:
 
 - `UT-EXT-001A` through `UT-EXT-004C`, `ET-EXT-002`, `IT-EXT-004`, and
   `ST-EXT-003` per test matrix section 19;
-- hostile-extension fixtures: scope escape, endpoint mismatch, identity
-  spoofing, oversized output, infinite loop;
+- hostile-extension fixtures: scope escape, lookalike host, path-boundary
+  escape, redirect escape, identity spoofing, oversized output, infinite loop;
 - replay fixtures: identical manifest plus input snapshot produces
   identical source edits across runs and machines.
 

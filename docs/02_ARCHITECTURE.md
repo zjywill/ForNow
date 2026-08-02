@@ -832,7 +832,8 @@ Extensions are post-1.0 and follow the documented AntiNote extension design
 - immutable input snapshot carrying scope-limited text and locale settings;
 - returned edits represented as source edit operations with status, message,
   and payload;
-- endpoint allowlist with prefix validation;
+- structural endpoint allowlist validation over scheme, normalized host,
+  effective port, and path boundaries, including redirect revalidation;
 - Keychain-held secrets substituted by the host into `{{API_KEY}}`
   placeholders, never exposed to JavaScript;
 - host-mediated, versioned bridges for math evaluation, preferences, and

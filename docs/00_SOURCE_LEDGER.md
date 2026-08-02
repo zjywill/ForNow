@@ -690,6 +690,93 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
   not application behavior.
 - Constraint: Every supported upgrade path preserves notes and preferences.
 
+### FORNOW-DECISION-004 - Case-insensitive mode aliases
+
+- Decision: ForNow matches built-in and user-defined mode aliases
+  case-insensitively by default.
+- Reason: This is predictable for command-like input and is supported by press
+  observation `AN-REV-001`, but it is a ForNow product choice rather than a
+  user-manual parity claim.
+- Constraint: Alias collision validation uses the same normalization as runtime
+  matching.
+
+### FORNOW-DECISION-005 - Remappable quick-action shortcuts
+
+- Decision: Navigation, new-note, promote, delete, search, pin, and text-size
+  shortcuts are user remappable.
+- Reason: Press coverage reports this behavior, and configurable shortcuts
+  improve accessibility and international keyboard support.
+- Constraint: System-reserved or conflicting bindings fail validation and leave
+  the previous binding active.
+
+### FORNOW-DECISION-006 - Text layout direction override
+
+- Decision: Settings provide natural, left-to-right, and right-to-left editor
+  layout modes.
+- Reason: This is useful for mixed-language scratch text and is supported by
+  press observation `AN-REV-002`.
+- Constraint: The setting changes presentation only and never rewrites source
+  text.
+
+### FORNOW-DECISION-007 - iOS release is sync-gated
+
+- Decision: iOS editor and capture spikes may begin after macOS 1.0, but a
+  public iOS 1.0 does not ship until CloudKit synchronization, conflict rules,
+  migration, and two-device recovery tests pass.
+- Reason: Shipping two independent stores would create an avoidable and
+  confusing merge problem for a companion product.
+- Constraint: The shipped sync engine supports a clearly labeled local-only
+  mode when iCloud is unavailable or disabled; enabling iCloud later runs the
+  documented merge and recovery flow.
+
+### FORNOW-DECISION-008 - Spotlight is private and eventually consistent
+
+- Decision: iOS system indexing is opt-in, indexes only bounded metadata, and
+  uses a transactional outbox plus reconciliation rather than pretending that
+  Core Spotlight and SQLite share one atomic transaction.
+- Reason: Scratch notes may be sensitive, and Core Spotlight is a separate
+  subsystem with asynchronous indexing APIs.
+
+### FORNOW-DECISION-009 - iOS keeps one database writer
+
+- Decision: Only the iOS application process opens the SQLite store.
+  Extensions and background entry points stage versioned, idempotent commands
+  or open the app; they do not mutate the database directly.
+- Reason: This preserves repository invariants and avoids undefined
+  multi-process database ownership.
+- Constraint: Any interactive Live Activity action that cannot satisfy this
+  rule falls back to opening the app until a platform spike proves a safe
+  execution path.
+
+### FORNOW-DECISION-010 - Extension endpoint checks are structural
+
+- Decision: Extension network permission compares parsed URL scheme, normalized
+  host, effective port, and path boundaries. Raw string prefix checks are
+  forbidden, and every redirect is revalidated.
+- Reason: A raw prefix check can authorize lookalike hosts or escape the
+  declared path.
+
+### FORNOW-DECISION-011 - iOS JavaScript extensions require a store-review gate
+
+- Decision: The shared JavaScript extension runtime is not committed for iOS
+  until a prototype and App Review policy assessment prove that installation,
+  permission disclosure, content moderation, and downloadable-code behavior
+  are acceptable.
+- Reason: Technical availability of JavaScriptCore does not by itself make a
+  user-installable extension system distributable through the App Store.
+
+### FORNOW-DECISION-012 - iPhone 1.0 platform adaptation
+
+- Decision: ForNow iOS 1.0 targets iPhone and uses explicit system capture,
+  share-extension staging, `UIPasteControl`, touch-safe paging, read-only Live
+  Activities, on-device camera OCR with fallback, system export/Files flows,
+  Dynamic Type, and App Store distribution as defined in `docs/ios/`.
+- Reason: AntiNote's macOS interaction model cannot be ported literally to
+  iPhone. These behaviors are ForNow product choices with explicit fallbacks,
+  not claims about an unpublished AntiNote iOS interface.
+- Constraint: iPad-specific layout, interactive background Live Activity
+  controls, and user-installable JavaScript extensions are outside iOS 1.0.
+
 ## Sync, Slots, And Extensions
 
 ### AN-BETA-001 - Slotted notes
@@ -703,11 +790,16 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
 ### AN-BETA-002 - iCloud and iOS work
 
 - Level: `B`
-- Source: Changelog and product FAQ.
+- Source: Changelog and product FAQ:
+  `https://antinote.io/changelog`.
 - Confirmed behavior: Beta development includes iCloud synchronization and iOS
   support.
+- Confirmed detail: The official changelog describes an iOS TestFlight beta and
+  instructs participants to use current beta builds on both platforms for
+  synchronization.
 - ForNow consequence: Keep identity and persistence sync-ready, but do not make
-  sync a 1.0 dependency.
+  sync a macOS 1.0 dependency. Public iOS release is separately sync-gated by
+  `FORNOW-DECISION-007`.
 
 ### AN-EXT-001 - Manifest-based JavaScript extensions
 
@@ -813,20 +905,23 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
 ### AN-REV-001 - Commands are case-insensitive
 
 - Level: `R`
-- Source: Digital Trends review.
+- Source: Digital Trends review:
+  `https://www.digitaltrends.com/computing/this-mac-app-is-the-perfect-way-to-capture-your-ideas-and-stay-organized/`.
 - Reported behavior: Commands are not case sensitive, whether custom or
   default keywords.
-- ForNow consequence: Alias matching is case-insensitive by default. Validate
-  against the live app before claiming parity.
+- ForNow consequence: Treat this as design input for
+  `FORNOW-DECISION-004`. Validate against the live app before describing it as
+  AntiNote parity.
 
 ### AN-REV-002 - Forced right-to-left layout
 
 - Level: `R`
-- Source: Digital Trends review.
+- Source: Digital Trends review:
+  `https://www.digitaltrends.com/computing/this-mac-app-is-the-perfect-way-to-capture-your-ideas-and-stay-organized/`.
 - Reported behavior: Settings can force the text layout to right-to-left,
   which the reviewer used for Urdu and Persian snippets.
-- ForNow consequence: Provide a layout direction override that changes
-  presentation only and never rewrites source text.
+- ForNow consequence: Treat this as design input for
+  `FORNOW-DECISION-006`, not as a user-manual parity fact.
 
 ## Open Questions
 

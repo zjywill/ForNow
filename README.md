@@ -22,6 +22,22 @@ technical spikes in `docs/03_IMPLEMENTATION_PLAYBOOK.md` pass.
 - `docs/04_TEST_MATRIX.md`: requirement-to-test traceability.
 - `docs/05_AI_POLICY.md`: rules for using AI during development and in-product.
 - `docs/06_MANUAL_WALKTHROUGH.md`: tab-by-tab manual coverage and release scope.
+- `docs/ios/01_IOS_PRODUCT_DESIGN.md`: iPhone product and interaction decisions.
+- `docs/ios/02_IOS_REQUIREMENTS.md`: iOS-specific functional requirements.
+- `docs/ios/03_IOS_ARCHITECTURE.md`: iOS platform boundaries and feasibility gates.
+- `docs/ios/04_IOS_TEST_MATRIX.md`: iOS requirement-to-test traceability.
+- `docs/ios/05_IOS_IMPLEMENTATION_PLAYBOOK.md`: ordered iOS build and release plan.
+- `docs/ios/traceability.yml`: machine-readable iOS requirement/test map.
+
+The iOS set is an implementation-ready platform adaptation plan, not evidence
+of AntiNote iOS parity. Work proceeds through its ordered spikes and release
+gates; post-1.0 JavaScript extensions remain research only.
+
+Validate the iOS document set with:
+
+```bash
+scripts/validate-ios-docs.rb
+```
 
 ## Non-negotiable Rules
 
