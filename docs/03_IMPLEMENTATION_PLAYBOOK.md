@@ -608,12 +608,13 @@ Estimated effort: 3 days.
 Evidence:
 
 - `AN-MD-001`
-- manual Code section
+- `AN-CODE-001`
 
 Requirements:
 
 - `FR-EDIT-003`
 - `FR-CLIP-001`
+- `FR-CMD-004`
 
 Tasks:
 
@@ -649,7 +650,7 @@ Tasks:
 2. Implement matching modes and case toggle.
 3. Add regex validation.
 4. Expand links while panel is open and restore presentation on close.
-5. Implement Enter/Shift-Enter field-specific commands.
+5. Implement Tab-to-replace and Enter/Shift-Enter field-specific commands.
 6. Ensure replacement is source-coordinate based.
 
 Exit criteria:
@@ -667,6 +668,7 @@ Estimated effort: 3 days.
 Evidence:
 
 - `AN-CMD-001` through `AN-CMD-003`
+- `AN-REV-001`
 
 Requirements:
 
@@ -861,6 +863,8 @@ Tasks:
    settings.
 9. Add pause-on-quit and volume `0...100`.
 10. Reconcile clock changes and sleep/wake.
+11. Show the timer command tutorial when `timer` is entered at the start of a
+    note.
 
 Exit criteria:
 
@@ -933,11 +937,13 @@ Evidence:
 
 - `AN-UI-001`
 - `AN-NOTE-SET-001`
+- `AN-REV-002`
 - manual Themes and Visuals sections
 
 Requirements:
 
 - `FR-UI-001` through `FR-UI-003`
+- `FR-EDIT-007`
 - `FR-NOTE-009`
 
 Tasks:
@@ -953,6 +959,8 @@ Tasks:
 9. Add validated keyword/shortcut settings.
 10. Add macOS 15+ translucent mode only after opaque themes pass.
 11. Add opacity `0...90` and mismatch preview warning.
+12. Add a natural/LTR/RTL text layout direction override that never rewrites
+    source.
 
 Exit criteria:
 
@@ -1249,14 +1257,51 @@ Evidence:
 
 Tasks:
 
-1. Define manifest schema.
-2. Implement JavaScriptCore sandbox.
-3. Add immutable input scopes.
-4. Add returned source-edit operations.
-5. Add endpoint allowlists and Keychain secret references.
-6. Add execution limits.
-7. Add extension manager and diagnostics.
-8. Security review before public installation support.
+1. Define the versioned manifest schema per `AN-EXT-001`: name, version,
+   author, category, dataScope, endpoints, requiredAPIKeys, dependencies,
+   isService, and ordered files.
+2. Implement the JavaScriptCore ES6 sandbox with sequential file loading.
+3. Implement the `::` palette with filtering, typed parameter forms, and the
+   four documented command types (insert, replaceLine, replaceAll, openURL).
+4. Enforce immutable input scopes: none, line, full.
+5. Return results as source-edit operations with status, message, payload.
+6. Add the Keychain `{{API_KEY}}` placeholder bridge with endpoint prefix
+   validation and host-verified extension identity (`AN-EXT-002`).
+7. Add the MathEvaluator bridge backed by the shared math engine, and the
+   preferences API (`AN-EXT-004`).
+8. Add the service-extension dependency model; centralize AI access in one
+   service consistent with `05_AI_POLICY.md`.
+9. Add the extensions folder, explicit reload, catalog browsing, and logging
+   panel.
+10. Add execution time, memory, and output limits.
+11. Security review before public installation support.
+
+Deliverables:
+
+- versioned manifest schema and validator with fixtures;
+- sandboxed runtime with scope enforcement;
+- `::` palette UI;
+- Keychain secret bridge and network allowlist;
+- MathEvaluator and preferences bridges;
+- extension manager with folder, reload, catalog browsing, and logging
+  panel.
+
+Tests:
+
+- `UT-EXT-001A` through `UT-EXT-004C`, `ET-EXT-002`, `IT-EXT-004`, and
+  `ST-EXT-003` per test matrix section 19;
+- hostile-extension fixtures: scope escape, endpoint mismatch, identity
+  spoofing, oversized output, infinite loop;
+- replay fixtures: identical manifest plus input snapshot produces
+  identical source edits across runs and machines.
+
+Exit criteria:
+
+- every test-matrix extension row passes;
+- a hostile extension cannot read out-of-scope text, reach undeclared
+  endpoints, or access secrets;
+- malformed extensions quarantine without affecting built-in behavior;
+- command execution is reproducible from manifest plus input snapshot.
 
 ### Step 6.4 - Custom Themes
 

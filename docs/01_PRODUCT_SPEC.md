@@ -253,6 +253,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 - Matching modes include contains, whole word, line prefix, line suffix, and
   regular expression, with an independent case-sensitive toggle.
 - Opening find/replace temporarily expands shortened links.
+- Tab in the search field opens the replace field.
 - Enter and Shift-Enter navigate forward/backward in search and perform
   replace/replace-all in the replacement field.
 
@@ -330,6 +331,13 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 - Chinese input methods, marked text, Emoji, and combining characters must not
   corrupt source ranges.
 
+#### FR-EDIT-007 - Layout direction override
+
+- Source: `AN-REV-002`.
+- Settings can force left-to-right or right-to-left text layout; the default
+  follows the natural direction of the content.
+- The override changes presentation only and never rewrites source text.
+
 ### Clipboard
 
 #### FR-CLIP-001 - Contextual copy
@@ -346,6 +354,8 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 - Source: `AN-CLIP-002`.
 - Remove mode control lines only when the export policy declares them
   non-content.
+- A mode header's optional title after the colon remains content and is
+  preserved.
 - Expand shortened visual links.
 - Preserve user-authored whitespace unless normalization is explicitly part of
   the selected export target.
@@ -357,6 +367,8 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 - Normalize line endings.
 - Strip rich-text-only style.
 - Apply smart link and whitespace cleanup through separately testable rules.
+- Independent settings control stripping of leading whitespace (for example
+  tabs), list numbers, bullets, Markdown, and empty lines.
 
 #### FR-CLIP-004 - Raw paste
 
@@ -378,8 +390,9 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-CMD-002 - Mode header
 
-- Source: `AN-CMD-001`.
+- Source: `AN-CMD-001`, `AN-REV-001`.
 - Only the configured leading region can select a mode.
+- Alias matching is case-insensitive by default.
 - Invalid keywords remain ordinary content.
 - Removing the mode header returns the note to plain mode without data loss.
 
@@ -391,6 +404,16 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 - Number keys select displayed entries.
 - Selecting a mode replaces an existing mode header when present.
 - Selecting a mode performs one undoable source edit.
+
+#### FR-CMD-004 - Code mode
+
+- Source: `AN-CODE-001`.
+- A `code` mode header with an optional language after the colon enables
+  syntax highlighting for that language.
+- Without a language, the configured default language applies.
+- Default language and highlighting theme are configurable settings.
+- Code notes disable paste indent stripping and all hyperlink features while
+  preserving source text.
 
 ### Lists
 
@@ -499,6 +522,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 - Supported commands cover stopwatch, decimal-minute and `m:ss` countdown,
   titled countdown, custom work/rest cycle, standard 25/5 cycle,
   pause/resume, restart, and stop.
+- Entering `timer` at the beginning of a note displays the command tutorial.
 
 #### FR-TIME-002 - Pause, resume, reset, complete
 
@@ -653,6 +677,8 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 - Source: `AN-CMD-003`, `AN-UI-001`.
 - Text sizes are XS, S, M, L, and XL, with a separate double-size setting.
 - Command-plus and Command-minus increase and decrease text size.
+- Quick-action shortcuts (navigation, new note, promote, delete, search, pin,
+  text size) are user remappable.
 - Shortcut and keyword conflicts are validated before save.
 - Invalid custom configuration cannot make the app impossible to invoke.
 
@@ -697,6 +723,50 @@ References: `AN-EXP-001`, `AN-EXP-002`.
   search notes, and toggle pin using only the versioned URL surface.
 - Integrations contain no direct database writes and publish setup,
   compatibility, and uninstall instructions.
+
+#### FR-EXT-001 - Extension manifest and runtime
+
+- Source: `AN-EXT-001`.
+- Target: `1.x`.
+- The manifest schema is versioned and declares name, version, author,
+  category, dataScope, endpoints, requiredAPIKeys, dependencies, isService,
+  and ordered files.
+- The manifest parses and validates before any script executes; invalid
+  extensions are quarantined with diagnostics and never affect built-in
+  behavior.
+- Execution uses a JavaScriptCore ES6 context per invocation with
+  sequential file loading.
+
+#### FR-EXT-002 - Extension palette and scopes
+
+- Source: `AN-EXT-003`.
+- Target: `1.x`.
+- `::` opens the command palette with filtering, typed parameter forms, and
+  the four command types: insert, replaceLine, replaceAll, openURL.
+- Input scopes none, line, and full are declared per extension, shown to
+  users, and enforced with immutable snapshots.
+- Command results are source-edit operations carrying status, message, and
+  payload; each successful command is one undo group.
+
+#### FR-EXT-003 - Extension network and secrets
+
+- Source: `AN-EXT-002`.
+- Target: `1.x`.
+- API keys are stored in Keychain and never exposed to JavaScript; the host
+  substitutes `{{API_KEY}}` placeholders when executing declared calls.
+- Request URLs must prefix-match declared endpoints; extension identity is
+  host-verified and cannot be spoofed.
+- Network capability is denied by default without declared endpoints.
+
+#### FR-EXT-004 - Extension bridges and services
+
+- Source: `AN-EXT-004`.
+- Target: `1.x`.
+- Host bridges (math evaluation, preferences) are versioned APIs backed by
+  the shared engines.
+- Service extensions export functions through declared dependencies.
+- AI access is centralized in one service extension consistent with
+  `05_AI_POLICY.md`.
 
 #### FR-UPD-001 - Update consent and controls
 

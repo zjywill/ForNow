@@ -259,7 +259,8 @@ Required setting contracts:
 - `WindowSettings`: Option-A default hotkey, presence mode, pin, auto-hide,
   dropdown width, and dropdown height;
 - `EditorSettings`: link shortening enabled, hyperlink features enabled,
-  keyword omission on copy, checklist-trigger omission, and code defaults;
+  keyword omission on copy, checklist-trigger omission, code defaults, and
+  text layout direction override;
 - `PasteSettings`: independent leading whitespace, list-number, bullet,
   Markdown, and empty-line transforms;
 - `ModeSettings`: alias sets, exactly one main slash alias per mode, keyword
@@ -485,7 +486,7 @@ Alias matching:
 
 - first eligible source line only;
 - exact normalized alias before optional colon;
-- case behavior is an explicit setting;
+- aliases match case-insensitively by default (`AN-REV-001`);
 - longest-match wins only after collision validation;
 - an invalid or disabled alias yields plain mode.
 
@@ -818,15 +819,26 @@ It may not write the database directly.
 
 ## 15. Future Extension Boundary
 
-Extensions are post-1.0:
+Extensions are post-1.0 and follow the documented AntiNote extension design
+(`AN-EXT-001` through `AN-EXT-004`):
 
-- JavaScriptCore context per invocation;
-- versioned manifest;
-- input scope: none, current line, or full note;
-- immutable input snapshot;
-- returned edits represented as source edit operations;
-- endpoint allowlist;
-- Keychain secret references;
+- JavaScriptCore ES6 context per invocation;
+- versioned manifest: name, version, author, category, dataScope, endpoints,
+  requiredAPIKeys, dependencies, isService, and ordered files;
+- `::` command palette with typed, defaultable parameters and four command
+  types: insert, replaceLine, replaceAll, openURL;
+- input scope: none, current line, or full note, declared in the manifest and
+  visible to users;
+- immutable input snapshot carrying scope-limited text and locale settings;
+- returned edits represented as source edit operations with status, message,
+  and payload;
+- endpoint allowlist with prefix validation;
+- Keychain-held secrets substituted by the host into `{{API_KEY}}`
+  placeholders, never exposed to JavaScript;
+- host-mediated, versioned bridges for math evaluation, preferences, and
+  service-extension dependencies;
+- AI access centralized in one service extension, consistent with
+  `05_AI_POLICY.md`;
 - execution time, memory, and output limits;
 - no filesystem, pasteboard, or process access by default.
 

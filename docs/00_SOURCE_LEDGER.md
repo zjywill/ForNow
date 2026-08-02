@@ -16,6 +16,9 @@ Research date: **2026-08-02**
   extension page.
 - `C`: Engineering inference based on documented behavior. It must be
   validated by a prototype and must never be presented as an AntiNote fact.
+- `R`: Reported by a third-party press review. Useful for corroboration and
+  UX intent, but it must be validated against the official manual or a
+  controlled live-app observation before any parity claim.
 
 ## Authoritative Sources
 
@@ -27,9 +30,16 @@ Research date: **2026-08-02**
 - Extension repository:
   https://github.com/johnsonfung/antinote-extensions
 
+Press reviews (third-party, non-authoritative):
+
+- Digital Trends:
+  https://www.digitaltrends.com/computing/i-tried-a-5-scratchpad-app-for-the-mac-ill-never-go-back-to-apple-notes/
+- Lifehacker:
+  https://lifehacker.com/tech/try-this-mac-based-notepad-alternative-to-give-your-stick-notes-superpowers
+
 The official manual is authoritative for stable interaction behavior. The
 changelog is authoritative for version-specific and beta behavior. Marketing
-copy may explain intent but does not override the manual.
+copy and press reviews may explain intent but do not override the manual.
 
 ## Product Intent
 
@@ -239,6 +249,9 @@ copy may explain intent but does not override the manual.
 - Source: User manual, copy section.
 - Confirmed behavior: Whole-note copy removes mode/control syntax where
   appropriate and expands shortened links.
+- Confirmed detail: The keyword line is omitted from copied text, but an
+  optional title after the keyword colon (for example "My Optional Title" in
+  `math: My Optional Title`) is included.
 - ForNow consequence: Implement a deterministic `ExportProjection` instead of
   copying rendered attributed text.
 
@@ -248,6 +261,10 @@ copy may explain intent but does not override the manual.
 - Source: User manual, paste section.
 - Confirmed behavior: Normal paste cleans incoming content; a modified paste
   command preserves the original text more closely.
+- Confirmed detail: Five independent settings control stripping of leading
+  spaces (for example tabs), list numbers, bullets, Markdown, and empty lines.
+- Confirmed detail: Command-V pastes with stripping while Command-Shift-V
+  pastes as-is.
 - ForNow consequence: Paste normalization is a reversible policy with a
   separate raw-paste command.
 
@@ -277,7 +294,27 @@ copy may explain intent but does not override the manual.
 - Source: User manual settings; product page.
 - Confirmed behavior: Keywords and shortcuts can be customized.
 - Confirmed detail: All keyword behavior can be disabled from settings.
+- Confirmed detail: Press reviews report that every quick-action shortcut
+  (new note, promote, delete, search, pin, text size) is remappable (`R`).
 - ForNow consequence: Separate canonical mode IDs from user-facing aliases.
+
+### AN-CODE-001 - Code mode
+
+- Level: `A`
+- Source: User manual, code section.
+- Confirmed behavior: A `code` keyword note holds code snippets for review or
+  limited editing and is not intended to be an IDE.
+- Confirmed detail: A language after the colon (for example `code: py`)
+  enables syntax highlighting; without a language, the default language from
+  Settings > Misc is used, and the highlighting theme is also chosen in
+  Settings > Misc.
+- Confirmed detail: With nothing selected, Command-C with the caret inside a
+  code block copies the block contents.
+- Confirmed detail: Indent stripping and all hyperlink features are disabled
+  inside code notes.
+- ForNow consequence: Code mode needs a language-header grammar, default
+  language and theme settings, and explicit feature-disable rules rather than
+  IDE ambitions.
 
 ## Lists
 
@@ -393,6 +430,8 @@ copy may explain intent but does not override the manual.
   the first line.
 - Confirmed detail: Click pauses, double-click stops, and Escape stops a running
   timer.
+- Confirmed detail: Typing `timer` at the beginning of a note displays the
+  timer command tutorial.
 - ForNow consequence: Timer state is persistent application data, not merely a
   UI animation, and command parsing is line-scoped.
 
@@ -675,18 +714,80 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
 - Level: `B`
 - Source: Extensions page and public extension repository.
 - Confirmed behavior: Extensions declare metadata, command triggers, input
-  scope, and code.
+  scope, and code. The feature requires Antinote v2.0.4+ Beta.
+- Confirmed detail: An extension folder contains an `extension.json` manifest
+  and an `index.js` entry point. Multi-file extensions declare a `files`
+  array with `index.js` first; files are concatenated and loaded
+  sequentially. JavaScriptCore provides full ES6 on macOS 14+.
+- Confirmed detail: Manifest fields are name, version, author, category,
+  dataScope, endpoints, requiredAPIKeys, dependencies, and isService.
+  Commands declare a name, typed parameters (float, int, bool, string,
+  paragraph, expression), required/optional flags with defaults, help text,
+  and tutorial examples.
+- Confirmed detail: Extensions install by placement in an extensions folder
+  (default `~/Library/Application Support/Antinote/Extensions`,
+  customizable) followed by an explicit Reload command. Settings browse
+  official and community catalogs. A logging panel shows extension console
+  output for debugging.
 - ForNow consequence: A future extension manifest must be versioned and parsed
   before script execution.
 
 ### AN-EXT-002 - Restricted network and secret access
 
 - Level: `B`
-- Source: Extensions page.
+- Source: Extensions page and public extension repository.
 - Confirmed behavior: Extension networking and API secrets are explicitly
   configured rather than implicitly available.
+- Confirmed detail: API keys are stored in macOS Keychain and never exposed
+  to JavaScript. Extension code uses a `{{API_KEY}}` placeholder that the
+  Swift host substitutes when executing the declared `callAPI(apiKeyId, url,
+  method, headers, body)` bridge.
+- Confirmed detail: The host validates request URLs against the manifest's
+  declared endpoints by prefix matching, and extension identity is
+  determined by the host so extensions cannot impersonate each other.
 - ForNow consequence: Use endpoint allowlists, Keychain-backed secrets, and
   denied-by-default capabilities.
+
+### AN-EXT-003 - Extension command palette and command types
+
+- Level: `B`
+- Source: Extensions page and public extension repository.
+- Confirmed behavior: Typing `::` anywhere in a note opens the extensions
+  palette; typing filters commands, arrow keys plus Enter select, parameters
+  are filled with guidance, and Tab or Enter executes.
+- Confirmed detail: Four command types exist: `insert` (insert at cursor),
+  `replaceLine` (replace the current line), `replaceAll` (replace the whole
+  document), and `openURL` (open a URL or scheme).
+- Confirmed detail: Data scopes are `none` (no note content), `line`
+  (current line), and `full` (entire note), and are visible to users in
+  settings.
+- Confirmed detail: The execution payload carries raw parameters,
+  scope-limited text, and userSettings (decimal and thousands separators);
+  commands return a status, user-facing message, and payload object.
+- ForNow consequence: The ForNow palette, scope enforcement, and result
+  contract should match this documented shape so community expectations
+  transfer.
+
+### AN-EXT-004 - Host bridges and service extensions
+
+- Level: `B`
+- Source: Extensions page and public extension repository.
+- Confirmed behavior: The host exposes versioned bridges to extension code
+  instead of raw platform access.
+- Confirmed detail: A `MathEvaluator` bridge (eval, evalSafe,
+  isMathExpression, parseNumeric) lets parameters contain expressions such
+  as `0.05/12`, evaluated in Swift by the same engine as the `math` keyword.
+- Confirmed detail: A preferences API supports bool, string, paragraph,
+  selectOne, and selectMultiple types, read through
+  `getExtensionPreference`.
+- Confirmed detail: Service extensions (`isService: true`) export functions
+  to dependents through a declared `dependencies` list. The official
+  `ai_providers` service centralizes OpenAI, Anthropic, Google AI,
+  OpenRouter, and Ollama behind one `callAIProvider` bridge with
+  user-configured keys.
+- ForNow consequence: Bridges are host-mediated, versioned APIs. AI access
+  lives in exactly one service extension, consistent with
+  `05_AI_POLICY.md`.
 
 ## AI
 
@@ -706,6 +807,26 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
   platform vision capabilities.
 - ForNow consequence: Describe OCR accurately as on-device recognition, not as
   an AI assistant feature.
+
+## Press Review Evidence
+
+### AN-REV-001 - Commands are case-insensitive
+
+- Level: `R`
+- Source: Digital Trends review.
+- Reported behavior: Commands are not case sensitive, whether custom or
+  default keywords.
+- ForNow consequence: Alias matching is case-insensitive by default. Validate
+  against the live app before claiming parity.
+
+### AN-REV-002 - Forced right-to-left layout
+
+- Level: `R`
+- Source: Digital Trends review.
+- Reported behavior: Settings can force the text layout to right-to-left,
+  which the reviewer used for Urdu and Persian snippets.
+- ForNow consequence: Provide a layout direction override that changes
+  presentation only and never rewrites source text.
 
 ## Open Questions
 

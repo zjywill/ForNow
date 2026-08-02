@@ -85,6 +85,7 @@ Required text fixtures:
 | `FR-EDIT-004` | `UT-EDIT-004A` through `UT-EDIT-004L`, `ET-EDIT-004` | Caret exit, duplicates, toggle, copy, auto-shortening off, all links off |
 | `FR-EDIT-005` | `ET-EDIT-005A` through `ET-EDIT-005H` | Type, paste, checkbox, OCR, replace-all, parser no-op |
 | `FR-EDIT-006` | `ET-EDIT-006A` through `ET-EDIT-006G` | IME marked text, Emoji, composed text, UTF-16 bounds |
+| `FR-EDIT-007` | `UT-EDIT-007`, `ET-EDIT-007` | Forced RTL/LTR presentation, source unchanged |
 
 Property tests:
 
@@ -124,8 +125,9 @@ Paste source fixtures:
 | Requirement | Test IDs | Minimum verification |
 |---|---|---|
 | `FR-CMD-001` | `UT-CMD-001A` through `UT-CMD-001G` | Canonical IDs, aliases, one main alias, conflicts, keyword master switch |
-| `FR-CMD-002` | `UT-CMD-002A` through `UT-CMD-002F`, `ET-CMD-002` | Header, title, invalid keyword, removal, undo |
+| `FR-CMD-002` | `UT-CMD-002A` through `UT-CMD-002G`, `ET-CMD-002` | Header, title, invalid keyword, case-insensitive matching, removal, undo |
 | `FR-CMD-003` | `UT-CMD-003`, `UIT-CMD-003`, `MT-CMD-003` | Slash eligibility, filter, number, replace, VoiceOver |
+| `FR-CMD-004` | `UT-CMD-004A` through `UT-CMD-004D`, `ET-CMD-004` | Language header, default language, indent stripping and links disabled |
 | `FR-LIST-001` | `UT-LIST-001A` through `UT-LIST-001F` | Empty, comment, headings, ordinary items, math disabled |
 | `FR-LIST-002` | `UT-LIST-002`, `ET-LIST-002A`, `ET-LIST-002B` | Pointer/keyboard parity, undo, caret stability |
 | `FR-LIST-003` | `UT-LIST-003A` through `UT-LIST-003E` | Custom marker, source mutation, clean copy, settings change preserves source |
@@ -376,3 +378,23 @@ The matrix is complete when:
 5. offline and privacy tests pass;
 6. performance budgets pass or have approved exceptions;
 7. every fixed P0/P1 issue has a regression test.
+
+## 19. Extensions (Post-1.0)
+
+| Requirement | Test IDs | Minimum verification |
+|---|---|---|
+| `FR-EXT-001` | `UT-EXT-001A` through `UT-EXT-001E` | Manifest schema, versioning, quarantine, load order, sandbox isolation |
+| `FR-EXT-002` | `UT-EXT-002A` through `UT-EXT-002E`, `ET-EXT-002` | Palette filtering, four command types, scope immutability, undo grouping |
+| `FR-EXT-003` | `UT-EXT-003A` through `UT-EXT-003D`, `ST-EXT-003` | Placeholder substitution, endpoint prefix validation, identity spoofing, denied-by-default |
+| `FR-EXT-004` | `UT-EXT-004A` through `UT-EXT-004C`, `IT-EXT-004` | MathEvaluator parity with math mode, preferences, service dependencies |
+
+Hostile-extension fixtures:
+
+- scope escape attempts (line-scoped code requesting full text);
+- endpoint mismatch and redirect following;
+- identity spoofing of another extension;
+- oversized output and infinite loop (execution limits);
+- malformed manifest, missing files, undeclared JS files.
+
+Replay fixtures: an identical manifest plus input snapshot must produce
+identical source edits across repeated runs and across machines.
