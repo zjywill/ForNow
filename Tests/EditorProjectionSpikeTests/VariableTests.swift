@@ -248,6 +248,7 @@ final class VariableTests: XCTestCase {
       defer: false
     )
     window.contentView = container
+    window.isReleasedWhenClosed = false
     window.makeKeyAndOrderFront(nil)
     defer { window.close() }
     container.textView.setSelectedRange(NSRange(location: source.utf16.count, length: 0))
@@ -285,6 +286,7 @@ final class VariableTests: XCTestCase {
       defer: false
     )
     window.contentView = container
+    window.isReleasedWhenClosed = false
     window.makeKeyAndOrderFront(nil)
     defer { window.close() }
     container.textView.setSelectedRange(NSRange(location: prefix.utf16.count, length: 0))

@@ -514,7 +514,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-TIME-001 - Persistent timer model
 
-- Source: `AN-TIME-001`.
+- Source: `AN-TIME-001`, `FORNOW-DECISION-013`.
 - Timer state stores type, duration, start instant, accumulated elapsed time,
   state, and linked note ID.
 - Display derives from timestamps rather than decrementing persisted counters.
@@ -526,7 +526,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-TIME-002 - Pause, resume, reset, complete
 
-- Source: `AN-TIME-001`.
+- Source: `AN-TIME-001`, `FORNOW-DECISION-013`.
 - Each transition is validated by a state machine.
 - Repeated commands are idempotent or produce a documented no-op.
 - Single click pauses/resumes, double-click stops, and Escape stops a running
@@ -534,7 +534,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-TIME-003 - External visibility
 
-- Source: `AN-TIME-002`.
+- Source: `AN-TIME-002`, `FORNOW-DECISION-013`.
 - Active status may appear in the menu bar.
 - Completion may produce a local notification after permission is granted.
 - Denied notification permission does not break timer completion.

@@ -1780,13 +1780,13 @@
     },
     "FR-TIME-001": {
       "title": "Persistent timer model",
-      "classification": "parity",
-      "sourceDescription": "`AN-TIME-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-TIME-001`, `FORNOW-DECISION-013`.",
       "evidence": [
         "AN-TIME-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-013"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -1810,13 +1810,13 @@
     },
     "FR-TIME-002": {
       "title": "Pause, resume, reset, complete",
-      "classification": "parity",
-      "sourceDescription": "`AN-TIME-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-TIME-001`, `FORNOW-DECISION-013`.",
       "evidence": [
         "AN-TIME-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-013"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -1842,13 +1842,13 @@
     },
     "FR-TIME-003": {
       "title": "External visibility",
-      "classification": "parity",
-      "sourceDescription": "`AN-TIME-002`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-TIME-002`, `FORNOW-DECISION-013`.",
       "evidence": [
         "AN-TIME-002"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-013"
       ],
       "release": "macos-1.0",
       "tests": [

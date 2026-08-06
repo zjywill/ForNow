@@ -1,8 +1,9 @@
 import AppKit
 import ForNowCore
-import ForNowEditor
 import ForNowModes
 import XCTest
+
+@testable import ForNowEditor
 
 final class TimerCommandTests: XCTestCase {
   func test_UT_TIME_001A_StopwatchAndFirstLineTutorialParse() throws {
@@ -188,6 +189,7 @@ final class TimerCommandTests: XCTestCase {
       defer: false
     )
     window.contentView = container
+    window.isReleasedWhenClosed = false
     window.makeKeyAndOrderFront(nil)
     defer { window.close() }
     var interactions: [EditorTimerInteraction] = []
@@ -225,8 +227,16 @@ final class TimerCommandTests: XCTestCase {
     )
     let actions = try XCTUnwrap(timerButton.accessibilityCustomActions())
     XCTAssertEqual(actions.map(\.name), ["Pause or resume timer", "Stop timer"])
-    XCTAssertEqual(actions[0].handler?(), true)
-    XCTAssertEqual(actions[1].handler?(), true)
+    XCTAssertTrue(actions.allSatisfy { $0.target === container })
+    XCTAssertEqual(
+      actions.compactMap(\.selector).map(NSStringFromSelector),
+      [
+        "performTimerPauseOrResumeAccessibilityAction",
+        "performTimerStopAccessibilityAction",
+      ]
+    )
+    XCTAssertTrue(container.performTimerPauseOrResumeAccessibilityAction())
+    XCTAssertTrue(container.performTimerStopAccessibilityAction())
     XCTAssertEqual(interactions, [.singleClick, .stop])
 
     let escape = try XCTUnwrap(

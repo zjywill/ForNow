@@ -261,6 +261,7 @@ final class ListModeTests: XCTestCase {
       defer: false
     )
     window.contentView = container
+    window.isReleasedWhenClosed = false
     window.makeKeyAndOrderFront(nil)
     container.layoutSubtreeIfNeeded()
     return (window, container)

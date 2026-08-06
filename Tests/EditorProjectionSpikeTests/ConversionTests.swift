@@ -298,6 +298,7 @@ final class ConversionTests: XCTestCase {
       defer: false
     )
     window.contentView = container
+    window.isReleasedWhenClosed = false
     window.makeKeyAndOrderFront(nil)
     defer {
       window.close()

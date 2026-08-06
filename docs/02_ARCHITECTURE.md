@@ -1062,6 +1062,19 @@ enum TimerCommand {
 
 The `TimerStateMachine` is the only owner of valid transitions.
 
+`TimerClock` is the actor-owned application timer coordinator. It combines the
+state machine with a monotonic live anchor, persists only lifecycle checkpoints,
+and publishes immutable snapshots and one-shot events. `TimerModel` consumes
+those values on the main actor and independently updates the editor decoration,
+status item, notifications, sound, and takeover surfaces.
+
+The editor timer button is enabled only while the current timer is running or
+paused. In those states it exposes pause/resume and stop accessibility actions;
+completed and cancelled buttons remain visible as source-free history but are
+disabled, expose no custom actions, and direct users to the restart command.
+Escape and double-click route through the same stop transition. The status item
+contains timer text only for running or paused state.
+
 ## 8. Window Architecture
 
 ### Components

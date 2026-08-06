@@ -157,6 +157,7 @@ final class AggregateTests: XCTestCase {
       backing: .buffered,
       defer: false
     )
+    window.isReleasedWhenClosed = false
     defer {
       window.close()
       pasteboard.clearContents()

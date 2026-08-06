@@ -1165,16 +1165,16 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       button.toolTip = snapshot.isRunning ? "Pause timer" : "Resume timer"
       button.setAccessibilityHelp("Click to pause or resume. Double-click to stop.")
       button.setAccessibilityCustomActions([
-        NSAccessibilityCustomAction(name: "Pause or resume timer") { [weak self] in
-          guard let self else { return false }
-          self.performTimerInteraction(.singleClick)
-          return true
-        },
-        NSAccessibilityCustomAction(name: "Stop timer") { [weak self] in
-          guard let self else { return false }
-          self.performTimerInteraction(.stop)
-          return true
-        },
+        NSAccessibilityCustomAction(
+          name: "Pause or resume timer",
+          target: self,
+          selector: #selector(performTimerPauseOrResumeAccessibilityAction)
+        ),
+        NSAccessibilityCustomAction(
+          name: "Stop timer",
+          target: self,
+          selector: #selector(performTimerStopAccessibilityAction)
+        ),
       ])
     } else {
       button.toolTip = snapshot.timer.state == .completed ? "Timer completed" : "Timer stopped"
@@ -1295,6 +1295,16 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
 
   public func performTimerInteraction(_ interaction: EditorTimerInteraction) {
     timerInteractionHandler?(interaction)
+  }
+
+  @objc func performTimerPauseOrResumeAccessibilityAction() -> Bool {
+    performTimerInteraction(.singleClick)
+    return true
+  }
+
+  @objc func performTimerStopAccessibilityAction() -> Bool {
+    performTimerInteraction(.stop)
+    return true
   }
 
   private func handleTimerClick() {

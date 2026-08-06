@@ -65,6 +65,14 @@ whole-line fraction and malformed-number isolation, stable header-anchored resul
 copying, and source-only diagnostics. Count includes each non-empty non-comment
 body line. Per `FORNOW-DECISION-002`, ForNow 1.0 intentionally omits Grade Level
 and Reading Ease until a versioned formula and independent fixtures are approved.
+Step 4.1 Timers is complete with a versioned command and clock contract, one
+persisted application-wide timer, monotonic live display with timestamp recovery,
+stopwatch, countdown, titled countdown, custom work/rest and 25/5 commands,
+pause/resume/restart/stop controls, menu-bar status, independent notification,
+sound and takeover settings, pause-on-quit, volume, and a source-free accessible
+editor projection. Relaunch, sleep/wake, wall-clock changes, terminal controls,
+denied notification permission, SQLite/FTS isolation, and real Escape-to-stop
+behavior are verified.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and
