@@ -384,6 +384,13 @@ uses a separate UserDefaults key and is recorded by the window-close path rather
 than inferred from process termination. Threshold comparisons are inclusive; a
 backward clock change does not create a new note.
 
+The Step 3.3 `MathSettings` version-1 payload stores only result digits and the
+independent thousands-grouping switch. It rejects result digits outside `0...7`
+before writing, falls back to defaults for an unsupported or malformed payload,
+and rolls the published application value back when persistence fails. Later
+unit, currency, and rate phases extend this payload through explicit migrations;
+they do not overload either Basic Math display field.
+
 `PasteSettings` is stored in a separate versioned UserDefaults payload. The
 composition root loads it before the window coordinator creates the editor and
 publishes later changes to both the active editor and the store. Preview and
@@ -853,39 +860,80 @@ never migrates, normalizes, or rewrites existing source or SQLite/FTS content.
 
 ### Math
 
-Pipeline:
+The frozen Basic Math grammar is `docs/math/GRAMMAR_V1.md`, identified as
+`fornow-math-expression-v1`. `BasicMathDocumentParser` runs only when the first
+source line resolves through the current `ModeSettings` to canonical mode ID
+`math`. It ignores the header, comments, lines without a trailing equals sign,
+and every non-math mode. Its active pipeline is:
 
 ```text
-source line
- -> comment exclusion
+canonical math body line
  -> trailing-equals detection
- -> assignment split
- -> unit/currency target split
- -> tokenization
+ -> locale-profile tokenization
  -> expression AST
- -> variable dependency resolution
  -> Decimal evaluation
- -> conversion
- -> locale-aware formatting
- -> result decoration
+ -> canonical value + independent display formatting
+ -> result decoration or source-free diagnostic
 ```
 
-Use `Decimal` for user-facing decimal arithmetic where possible. Define
-overflow, division-by-zero, NaN, and precision behavior explicitly.
+The lexer emits UTF-16 source ranges, applies longest-match rules for `**` and
+`!!`, validates period-decimal or comma-decimal grouping, and rejects spaces or
+tabs used as thousands separators. It recognizes the frozen arithmetic,
+percentage, factorial, root, logarithm, ceiling, and floor syntax. One line is
+bounded to 512 tokens and 64 parser levels; factorial operands are nonnegative
+integers no greater than 1,000.
 
-AST:
+The Basic Math AST is deliberately platform-neutral:
 
 ```swift
 indirect enum ExpressionNode {
     case decimal(Decimal)
-    case variable(VariableID)
-    case unary(UnaryOperator, ExpressionNode)
-    case binary(BinaryOperator, ExpressionNode, ExpressionNode)
-    case function(FunctionID, [ExpressionNode])
+    case unary(MathUnaryOperator, ExpressionNode)
+    case binary(MathBinaryOperator, ExpressionNode, ExpressionNode)
+    case function(MathFunctionID, ExpressionNode)
+    case percentage(ExpressionNode)
+    case factorial(MathFactorialKind, ExpressionNode)
 }
 ```
 
-Never use `NSExpression`, JavaScript evaluation, or `eval` for note math.
+Ordinary arithmetic, integral powers, percentages, factorials, ceiling, and
+floor use Foundation `Decimal` operations and inspect every calculation status.
+Roots, logarithms, and non-integral powers alone cross a bounded `Double` bridge;
+non-finite input or output and failed conversion back to `Decimal` become stable
+diagnostics. Division by zero, domain errors, overflow, underflow, invalid input,
+and resource limits never emit a result.
+
+`BasicMathFormatter` keeps two outputs separate. The canonical copy value is
+locale-independent, ungrouped, and uses a period decimal separator. Display
+rounding uses decimal half-even with zero through seven maximum fractional
+digits, while thousands grouping is an independent setting. Neither display
+choice changes the AST value or canonical copy value.
+
+`ProductionProjectionParser` maps a successful line to a `.result` anchored
+immediately after the source equals sign. The visible button therefore contains
+only the formatted result, not a second equals sign. Its accessibility label
+announces the source expression and display result. With no source selection,
+activation copies the canonical value; the existing section 6.9 priority still
+lets a non-empty source selection win. Diagnostics remain separate projection
+objects with stable codes, bounded UTF-16 ranges, accessible error messages, and
+no source text in telemetry.
+
+Assignments, unit/currency targets, dependency resolution, and conversions are
+not part of Basic Math V1. Later phases insert those stages around the frozen
+numeric parser as follows:
+
+```text
+source line
+ -> assignment split
+ -> unit/currency target split
+ -> Basic Math V1 expression AST and evaluation
+ -> variable dependency resolution
+ -> conversion
+ -> result decoration
+```
+
+Never use `NSExpression`, JavaScript evaluation, `eval`, an LLM, or a network
+service for Basic Math.
 
 ### Variables
 

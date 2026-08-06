@@ -30,10 +30,16 @@ public struct LinkPresentation: Sendable, Equatable {
 }
 
 public struct CalculationPresentation: Sendable, Equatable {
+  public let expressionText: String?
   public let canonicalValue: String
   public let displayText: String
 
-  public init(canonicalValue: String, displayText: String) {
+  public init(
+    expressionText: String? = nil,
+    canonicalValue: String,
+    displayText: String
+  ) {
+    self.expressionText = expressionText
     self.canonicalValue = canonicalValue
     self.displayText = displayText
   }
@@ -304,6 +310,7 @@ public struct SpikeProjectionParser: Sendable {
           .result(
             anchor: SourceOffset(utf16Offset: result.anchorUTF16Offset),
             presentation: CalculationPresentation(
+              expressionText: (text as NSString).substring(with: result.expressionRange),
               canonicalValue: result.canonicalValue,
               displayText: result.displayText
             )

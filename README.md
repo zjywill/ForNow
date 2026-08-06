@@ -45,6 +45,11 @@ gutter checkboxes, configurable trailing checked markers, pointer and keyboard
 toggle parity, source-only Undo/Redo, math suppression, and independently
 configured clean-copy marker omission. Changing the marker reparses
 presentation without rewriting existing note source.
+Step 3.3 Basic Math is complete with a frozen versioned grammar, checked Decimal
+evaluation, documented operators and functions, period- and comma-decimal
+profiles, stable source-free diagnostics, independently configurable result
+digits and thousands grouping, accessible inline result copying, and exact
+source-only SQLite/FTS persistence.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and

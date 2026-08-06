@@ -1,3 +1,4 @@
+import AppKit
 import ForNowEditor
 import ForNowModes
 import XCTest
@@ -159,10 +160,12 @@ final class BasicMathTests: XCTestCase {
     let source = "math: Budget\r\n  1 + 2 =  \r\n"
     let result = try result(from: XCTUnwrap(BasicMathDocumentParser().parse(in: source).first))
     let expectedRange = (source as NSString).range(of: "1 + 2")
-    let equalsRange = (source as NSString).range(of: "=", options: [], range: expectedRangeToEnd(
-      expectedRange,
-      source: source
-    ))
+    let equalsRange = (source as NSString).range(
+      of: "=", options: [],
+      range: expectedRangeToEnd(
+        expectedRange,
+        source: source
+      ))
 
     XCTAssertEqual(result.expressionRange, expectedRange)
     XCTAssertEqual(result.anchorUTF16Offset, NSMaxRange(equalsRange))
@@ -235,6 +238,65 @@ final class BasicMathTests: XCTestCase {
     XCTAssertEqual(source.text, "math\n12345.678 =")
   }
 
+  @MainActor
+  func test_ET_MATH_006A_AppKitResultsAndDiagnosticsAreAccessibleAndSourceFree() async throws {
+    let source = "math\n12345.678 ="
+    let pasteboard = NSPasteboard(name: NSPasteboard.Name(UUID().uuidString))
+    let resultEditor = makeEditor(
+      source: source,
+      mathSettings: MathSettings(significantDigits: 2, separatesThousands: true),
+      pasteboard: pasteboard
+    )
+    let diagnosticSource = "math\n1 / 0 ="
+    let diagnosticEditor = makeEditor(source: diagnosticSource)
+    defer {
+      resultEditor.window.close()
+      diagnosticEditor.window.close()
+      pasteboard.clearContents()
+    }
+    await settle(resultEditor.container)
+    await settle(diagnosticEditor.container)
+
+    let resultButton = try XCTUnwrap(
+      resultEditor.container.decorationAccessibilityContainer.subviews
+        .compactMap { $0 as? NSButton }
+        .first { $0.title == "12,345.68" }
+    )
+    XCTAssertEqual(resultButton.accessibilityRole(), .button)
+    XCTAssertEqual(
+      resultButton.accessibilityLabel(),
+      "Calculation 12345.678. Result 12,345.68. Copy result"
+    )
+    XCTAssertEqual(resultEditor.container.textView.string, source)
+
+    resultEditor.container.textView.setSelectedRange(
+      NSRange(location: source.utf16.count, length: 0)
+    )
+    resultButton.performClick(nil)
+    XCTAssertEqual(pasteboard.string(forType: .string), "12345.678")
+    XCTAssertEqual(resultEditor.container.textView.string, source)
+
+    resultEditor.container.textView.setSelectedRange(NSRange(location: 5, length: 4))
+    resultButton.performClick(nil)
+    XCTAssertEqual(pasteboard.string(forType: .string), "1234")
+    XCTAssertEqual(resultEditor.container.textView.string, source)
+
+    let diagnosticButton = try XCTUnwrap(
+      diagnosticEditor.container.decorationAccessibilityContainer.subviews
+        .compactMap { $0 as? NSButton }
+        .first { $0.accessibilityHelp() == "math-division-by-zero" }
+    )
+    XCTAssertEqual(
+      diagnosticButton.accessibilityLabel(),
+      "Error: Division by zero is undefined."
+    )
+    XCTAssertEqual(
+      diagnosticButton.toolTip,
+      "Division by zero is undefined."
+    )
+    XCTAssertEqual(diagnosticEditor.container.textView.string, diagnosticSource)
+  }
+
   private func evaluation(
     _ expression: String,
     settings: MathSettings = MathSettings(),
@@ -297,6 +359,37 @@ final class BasicMathTests: XCTestCase {
 
   private func expectedRangeToEnd(_ range: NSRange, source: String) -> NSRange {
     NSRange(location: NSMaxRange(range), length: source.utf16.count - NSMaxRange(range))
+  }
+
+  @MainActor
+  private func makeEditor(
+    source: String,
+    mathSettings: MathSettings = MathSettings(),
+    pasteboard: NSPasteboard = .general
+  ) -> (window: NSWindow, container: ProjectionEditorContainer) {
+    let container = ProjectionEditorContainer(
+      initialText: source,
+      mathSettings: mathSettings,
+      pasteboard: pasteboard
+    )
+    let window = NSWindow(
+      contentRect: NSRect(x: 0, y: 0, width: 560, height: 280),
+      styleMask: [.titled, .closable],
+      backing: .buffered,
+      defer: false
+    )
+    window.contentView = container
+    window.makeKeyAndOrderFront(nil)
+    container.layoutSubtreeIfNeeded()
+    return (window, container)
+  }
+
+  @MainActor
+  private func settle(_ container: ProjectionEditorContainer) async {
+    await container.waitForPendingProjection()
+    await Task.yield()
+    try? await Task.sleep(for: .milliseconds(20))
+    container.layoutSubtreeIfNeeded()
   }
 
   private enum TestFailure: Error {

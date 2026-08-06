@@ -200,6 +200,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   private let linkDisplayPolicy = LinkDisplayPolicy()
   private let linkInteractionPolicy = LinkInteractionPolicy()
   private let linkVisibilityPolicy = LinkVisibilityPolicy()
+  private let pasteboard: NSPasteboard
   private var snapshot: SourceSnapshot
   private var projection: EditorProjection
   private var adornments: [NSView] = []
@@ -218,13 +219,15 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     editorSettings: EditorSettings = EditorSettings(),
     modeSettings: ModeSettings = ModeSettings(),
     mathSettings: MathSettings = MathSettings(),
-    parser: (any ProjectionParsing)? = nil
+    parser: (any ProjectionParsing)? = nil,
+    pasteboard: NSPasteboard = .general
   ) {
     let textView = ProjectionTextView(usingTextLayoutManager: true)
     self.textView = textView
     self.editorSettings = editorSettings
     self.modeSettings = modeSettings
     self.mathSettings = mathSettings
+    self.pasteboard = pasteboard
     followsEditorSettingsInParser = parser == nil
     parsePipeline = ProjectionParsePipeline(
       parser: parser
@@ -871,7 +874,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     let precedingSourceRange = NSRange(location: anchorOffset - 1, length: 1)
     guard let anchorRect = editorRect(for: precedingSourceRange) else { return }
     let button = ProjectionAdornmentButton()
-    button.title = "= \(presentation.displayText)"
+    button.title = presentation.displayText
     button.font = .systemFont(ofSize: 15, weight: .semibold)
     button.contentTintColor = .controlAccentColor
     button.sizeToFit()
@@ -880,7 +883,13 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     button.kind = .copy
     button.target = self
     button.action = #selector(activateAdornment(_:))
-    button.setAccessibilityLabel("Calculation result \(presentation.displayText). Copy result")
+    if let expressionText = presentation.expressionText {
+      button.setAccessibilityLabel(
+        "Calculation \(expressionText). Result \(presentation.displayText). Copy result"
+      )
+    } else {
+      button.setAccessibilityLabel("Calculation result \(presentation.displayText). Copy result")
+    }
     install(button)
   }
 
@@ -1047,8 +1056,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   }
 
   private func writeToPasteboard(_ text: String) {
-    NSPasteboard.general.clearContents()
-    NSPasteboard.general.setString(text, forType: .string)
+    pasteboard.clearContents()
+    pasteboard.setString(text, forType: .string)
   }
 }
 

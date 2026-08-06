@@ -231,7 +231,8 @@ public struct BasicMathDocumentParser: Sendable {
   ) -> BasicMathLineEvaluation? {
     var contentStart = lineStart
     var contentEnd = contentsEnd
-    while contentStart < contentEnd, Self.isHorizontalWhitespace(source.character(at: contentStart)) {
+    while contentStart < contentEnd, Self.isHorizontalWhitespace(source.character(at: contentStart))
+    {
       contentStart += 1
     }
     while contentEnd > contentStart,
@@ -376,7 +377,7 @@ private struct MathLexer {
             location += 1
             continue
           }
-          guard (next == 0x002E || next == 0x002C),
+          guard next == 0x002E || next == 0x002C,
             location + 1 < nsSource.length,
             Self.isASCIIDigit(nsSource.character(at: location + 1))
           else { break }
@@ -486,10 +487,12 @@ private struct MathLexer {
     let decimal = NSRegularExpression.escapedPattern(for: locale.decimalSeparator)
     let grouping = NSRegularExpression.escapedPattern(for: locale.groupingSeparator)
     let integer = #"(?:[0-9]{1,3}(?:"# + grouping + #"[0-9]{3})+|[0-9]+)"#
-    let pattern = #"^(?:"# + integer + #"(?:"# + decimal + #"[0-9]+)?|"#
+    let pattern =
+      #"^(?:"# + integer + #"(?:"# + decimal + #"[0-9]+)?|"#
       + decimal + #"[0-9]+)$"#
     guard source.range(of: pattern, options: .regularExpression) != nil else { return nil }
-    let normalized = source
+    let normalized =
+      source
       .replacingOccurrences(of: locale.groupingSeparator, with: "")
       .replacingOccurrences(of: locale.decimalSeparator, with: ".")
     return Decimal(string: normalized, locale: Self.posixLocale)
@@ -658,7 +661,8 @@ private struct MathExpressionParser {
       expression = .percentage(expression)
     }
     if current.kind == .factorial || current.kind == .doubleFactorial {
-      let kind: MathFactorialKind = advance().kind == .factorial
+      let kind: MathFactorialKind =
+        advance().kind == .factorial
         ? .factorial : .doubleFactorial
       expression = .factorial(kind, expression)
     }
@@ -828,8 +832,10 @@ private struct MathDecimalEvaluator {
   private func calculate(
     _ left: Decimal,
     _ right: Decimal,
-    operation: (UnsafeMutablePointer<Decimal>, UnsafePointer<Decimal>, UnsafePointer<Decimal>,
-      Decimal.RoundingMode) -> Decimal.CalculationError
+    operation: (
+      UnsafeMutablePointer<Decimal>, UnsafePointer<Decimal>, UnsafePointer<Decimal>,
+      Decimal.RoundingMode
+    ) -> Decimal.CalculationError
   ) throws -> Decimal {
     var left = left
     var right = right
