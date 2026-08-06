@@ -183,10 +183,16 @@ public struct SpikeProjectionParser: Sendable {
     )
     decorations.append(contentsOf: mathProjection.decorations)
     try checkCancellation(if: checksCancellation)
+    let aggregateProjection = try aggregateProjection(
+      in: snapshot.text,
+      checksCancellation: checksCancellation
+    )
+    decorations.append(contentsOf: aggregateProjection.decorations)
+    try checkCancellation(if: checksCancellation)
     return EditorProjection(
       sourceVersion: snapshot.version,
       decorations: decorations,
-      diagnostics: mathProjection.diagnostics
+      diagnostics: mathProjection.diagnostics + aggregateProjection.diagnostics
     )
   }
 
@@ -342,6 +348,48 @@ public struct SpikeProjectionParser: Sendable {
           )
         )
       }
+    }
+    return (decorations, diagnostics)
+  }
+
+  private func aggregateProjection(
+    in text: String,
+    checksCancellation: Bool
+  ) throws -> (decorations: [EditorDecoration], diagnostics: [ProjectionDiagnostic]) {
+    let parser = AggregateDocumentParser(
+      mathSettings: mathSettings,
+      modeSettings: modeSettings,
+      locale: mathLocale
+    )
+    let evaluation: AggregateDocumentEvaluation?
+    if checksCancellation {
+      evaluation = try parser.parseCancellable(in: text)
+    } else {
+      evaluation = parser.parse(in: text)
+    }
+    guard let evaluation else { return ([], []) }
+
+    let decorations =
+      evaluation.result.map { result in
+        [
+          EditorDecoration.result(
+            anchor: SourceOffset(utf16Offset: result.anchorUTF16Offset),
+            presentation: CalculationPresentation(
+              expressionText: result.modeID.displayName,
+              canonicalValue: result.canonicalValue,
+              displayText: result.displayText,
+              copiedText: result.copiedText
+            )
+          )
+        ]
+      } ?? []
+    let diagnostics = evaluation.diagnostics.map { diagnostic in
+      ProjectionDiagnostic(
+        code: diagnostic.code.rawValue,
+        severity: .error,
+        sourceRange: SourceRange(diagnostic.sourceRange),
+        message: diagnostic.message
+      )
     }
     return (decorations, diagnostics)
   }

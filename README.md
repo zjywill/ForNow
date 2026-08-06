@@ -59,6 +59,12 @@ references, reactive transitive evaluation, stable duplicate/cycle/depth
 diagnostics, numeric-only conversion assignments, and a source-only AppKit
 autocomplete panel. Matching begins after three characters; Tab, number keys,
 and pointer activation perform one validated replacement with an isolated Undo.
+Step 3.6 Sum, Average, and Count is complete with a versioned numeric-extraction
+fixture, whole-note locale-aware aggregation, comment and blank exclusion,
+whole-line fraction and malformed-number isolation, stable header-anchored result
+copying, and source-only diagnostics. Count includes each non-empty non-comment
+body line. Per `FORNOW-DECISION-002`, ForNow 1.0 intentionally omits Grade Level
+and Reading Ease until a versioned formula and independent fixtures are approved.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and

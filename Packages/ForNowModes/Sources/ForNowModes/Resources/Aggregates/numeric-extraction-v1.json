@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "grammarID": "fornow-aggregates-v1",
+  "cases": [
+    {
+      "id": "text",
+      "modeID": "sum",
+      "locale": "periodDecimal",
+      "source": "sum\napples 10\n20 bananas",
+      "expectedCanonicalValue": "30",
+      "expectedConsumedValueCount": 2,
+      "expectedDiagnosticCodes": []
+    },
+    {
+      "id": "currency",
+      "modeID": "average",
+      "locale": "periodDecimal",
+      "source": "avg: Budget\n$10\nEUR 20 dollars",
+      "expectedCanonicalValue": "15",
+      "expectedConsumedValueCount": 2,
+      "expectedDiagnosticCodes": []
+    },
+    {
+      "id": "punctuation",
+      "modeID": "sum",
+      "locale": "periodDecimal",
+      "source": "sum\n(1), [2]; 3.",
+      "expectedCanonicalValue": "6",
+      "expectedConsumedValueCount": 3,
+      "expectedDiagnosticCodes": []
+    },
+    {
+      "id": "blank-comment-text",
+      "modeID": "sum",
+      "locale": "periodDecimal",
+      "source": "sum\n\n  // 100\nno values here\n5",
+      "expectedCanonicalValue": "5",
+      "expectedConsumedValueCount": 1,
+      "expectedDiagnosticCodes": []
+    },
+    {
+      "id": "invalid-number",
+      "modeID": "sum",
+      "locale": "periodDecimal",
+      "source": "sum\n1,23\n4",
+      "expectedCanonicalValue": "4",
+      "expectedConsumedValueCount": 1,
+      "expectedDiagnosticCodes": ["aggregate-invalid-number"]
+    },
+    {
+      "id": "fraction",
+      "modeID": "average",
+      "locale": "periodDecimal",
+      "source": "avg\n1/2\n4\n8",
+      "expectedCanonicalValue": "6",
+      "expectedConsumedValueCount": 2,
+      "expectedDiagnosticCodes": ["aggregate-fraction-unsupported"]
+    },
+    {
+      "id": "comma-locale",
+      "modeID": "sum",
+      "locale": "commaDecimal",
+      "source": "sum\nEUR 1.000,25\n-,25",
+      "expectedCanonicalValue": "1000",
+      "expectedConsumedValueCount": 2,
+      "expectedDiagnosticCodes": []
+    },
+    {
+      "id": "count-eligibility",
+      "modeID": "count",
+      "locale": "periodDecimal",
+      "source": "count\nfirst\n\n // ignored\n1/2\n1,23",
+      "expectedCanonicalValue": "3",
+      "expectedConsumedValueCount": 3,
+      "expectedDiagnosticCodes": []
+    }
+  ]
+}

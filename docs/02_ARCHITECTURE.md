@@ -976,6 +976,38 @@ registration is disabled for that replacement and an explicit inverse action is
 registered in its own group, keeping one-step completion Undo separate from the
 user's preceding paste or typing.
 
+### Aggregate Modes
+
+`fornow-aggregates-v1` is a complete-note pass selected only by canonical `sum`,
+`average`, or `count` mode identity. It runs separately from the line-oriented
+Basic Math and variable graph pipelines:
+
+```text
+canonical note
+ -> mode header and body range
+ -> source-ordered non-empty, non-comment body lines
+ -> locale numeric extraction or Count eligibility
+ -> checked Decimal aggregation
+ -> one result anchored after the header + source-free diagnostics
+```
+
+Sum and Average extract every locale-valid numeric token after treating text,
+currency material, brackets, and punctuation as separators. A malformed number
+or unsupported fraction excludes its complete line and produces a stable
+diagnostic without excluding later valid lines. Sum with no values is zero;
+Average with no values is unavailable. Count does not interpret numeric syntax
+and includes every non-empty, non-comment body line, including text, fractions,
+and malformed numbers.
+
+The pass checks cancellation every 32 lines and numeric candidates and caps both
+body lines and accepted values at 10,000. A single result uses
+`BasicMathFormatter` for display and canonical copy, while the header anchor,
+diagnostics, fixture expectations, and source ranges remain deterministic. The
+versioned bundled extraction fixture validates text, currency, punctuation,
+blank/comment lines, invalid numbers, fractions, both locale profiles, and Count
+eligibility. Per `FORNOW-DECISION-002`, no Grade Level or Reading Ease formula is
+present in ForNow 1.0.
+
 ### Unit Aliases
 
 Store aliases in versioned JSON fixtures:

@@ -457,7 +457,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-MATH-002 - Aggregate modes
 
-- Source: `AN-MATH-002`.
+- Source: `AN-MATH-002`, `FORNOW-DECISION-002`.
 - Sum and average consume valid numeric line results.
 - Sum and average strip non-numeric text using documented rules.
 - Fractions are rejected in parity mode rather than silently miscalculated.

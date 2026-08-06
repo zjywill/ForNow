@@ -1636,13 +1636,13 @@
     },
     "FR-MATH-002": {
       "title": "Aggregate modes",
-      "classification": "parity",
-      "sourceDescription": "`AN-MATH-002`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-MATH-002`, `FORNOW-DECISION-002`.",
       "evidence": [
         "AN-MATH-002"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-002"
       ],
       "release": "macos-1.0",
       "tests": [
