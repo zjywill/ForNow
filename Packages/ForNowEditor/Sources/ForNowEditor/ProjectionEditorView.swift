@@ -172,6 +172,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       } else {
         scheduleAdornmentRefresh()
       }
+      refreshVariableAutocomplete()
     }
   }
   public var mathSettings: MathSettings {
@@ -229,6 +230,12 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   private var isApplyingViewportRestoration = false
   private var lastReportedViewportState: EditorViewportState?
   private weak var slashCommandTarget: EditorSlashCommandTarget?
+  private let variableAutocompleteEngine = VariableAutocompleteEngine()
+  private var variableAutocompleteContext: VariableAutocompleteContext?
+  private var variableAutocompletePanel: VariableAutocompletePanelView?
+  private var isApplyingVariableAutocomplete = false
+  private var suppressedVariableAutocompleteVersion: UInt64?
+  private var suppressedVariableAutocompleteSelection: NSRange?
 
   public init(
     initialText: String,
@@ -333,6 +340,9 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     textView.slashCommandKeyHandler = { [weak self] key in
       self?.slashCommandTarget?.handle(key) ?? false
     }
+    textView.variableAutocompleteKeyHandler = { [weak self] key in
+      self?.handleVariableAutocompleteKey(key) ?? false
+    }
 
     scrollView.contentView.postsBoundsChangedNotifications = true
     NotificationCenter.default.addObserver(
@@ -369,6 +379,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     decorationAccessibilityContainer.frame = textView.bounds
     applyPendingViewportRestoration()
     scheduleAdornmentRefresh()
+    positionVariableAutocompletePanel()
   }
 
   public override func viewDidMoveToWindow() {
@@ -384,6 +395,9 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     sourceDidChange?(textView.string, textView.hasMarkedText())
     reportViewportChange()
     scheduleAdornmentRefresh()
+    if !isApplyingVariableAutocomplete {
+      refreshVariableAutocomplete()
+    }
   }
 
   public func textDidEndEditing(_ notification: Notification) {
@@ -401,6 +415,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       snapshot.clamped(SourceSelection(range: SourceRange(selectedRange))).range.nsRange)
     textView.undoManager?.removeAllActions()
     scheduleAdornmentRefresh()
+    refreshVariableAutocomplete()
   }
 
   public func applyViewportRestoration(_ state: EditorViewportState, token: UInt64) {
@@ -432,6 +447,10 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
 
   public var currentProjection: EditorProjection {
     projection
+  }
+
+  public var currentVariableAutocompleteContext: VariableAutocompleteContext? {
+    variableAutocompleteContext
   }
 
   var slashCommandSource: String {
@@ -468,6 +487,66 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
 
   public func focusEditor() {
     window?.makeFirstResponder(textView)
+  }
+
+  @discardableResult
+  public func performVariableAutocompleteSelection(at index: Int) -> Bool {
+    guard !textView.hasMarkedText(),
+      let context = variableAutocompleteContext,
+      let plan = variableAutocompleteEngine.editPlan(
+        in: snapshot.text,
+        context: context,
+        selecting: index
+      ),
+      plan.expectedSource == snapshot.text,
+      plan.replacementRange.location >= 0,
+      NSMaxRange(plan.replacementRange) <= snapshot.utf16Count
+    else { return false }
+
+    isApplyingVariableAutocomplete = true
+    let applied = performUndoableVariableAutocompleteReplacement(
+      range: plan.replacementRange,
+      replacement: plan.replacement,
+      selectionAfterEdit: plan.selectionAfterEdit
+    )
+    isApplyingVariableAutocomplete = false
+    guard applied else { return false }
+    clearVariableAutocomplete()
+    return true
+  }
+
+  public func refreshVariableAutocomplete() {
+    guard !isApplyingVariableAutocomplete, !textView.hasMarkedText() else {
+      clearVariableAutocomplete()
+      return
+    }
+    let selection = textView.selectedRange()
+    if suppressedVariableAutocompleteVersion == snapshot.version,
+      suppressedVariableAutocompleteSelection == selection
+    {
+      clearVariableAutocomplete()
+      return
+    }
+    suppressedVariableAutocompleteVersion = nil
+    suppressedVariableAutocompleteSelection = nil
+    guard
+      let context = variableAutocompleteEngine.context(
+        in: snapshot.text,
+        selection: selection,
+        modeSettings: modeSettings
+      )
+    else {
+      clearVariableAutocomplete()
+      return
+    }
+    variableAutocompleteContext = context
+    variableAutocompletePanel?.removeFromSuperview()
+    let panel = VariableAutocompletePanelView(context: context) { [weak self] index in
+      _ = self?.performVariableAutocompleteSelection(at: index)
+    }
+    variableAutocompletePanel = panel
+    addSubview(panel, positioned: .above, relativeTo: scrollView)
+    positionVariableAutocompletePanel()
   }
 
   public func contextualCopyText(for selection: NSRange) -> String {
@@ -567,10 +646,96 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   public func textViewDidChangeSelection(_ notification: Notification) {
     reportViewportChange()
     scheduleAdornmentRefresh()
+    if !isApplyingVariableAutocomplete {
+      refreshVariableAutocomplete()
+    }
   }
 
   @objc private func scrollBoundsDidChange(_ notification: Notification) {
     reportViewportChange()
+    positionVariableAutocompletePanel()
+  }
+
+  private func handleVariableAutocompleteKey(_ key: EditorVariableAutocompleteKey) -> Bool {
+    guard variableAutocompleteContext != nil else { return false }
+    switch key {
+    case .acceptFirst:
+      return performVariableAutocompleteSelection(at: 0)
+    case .acceptNumber(let number):
+      return performVariableAutocompleteSelection(at: number - 1)
+    case .dismiss:
+      suppressedVariableAutocompleteVersion = snapshot.version
+      suppressedVariableAutocompleteSelection = textView.selectedRange()
+      clearVariableAutocomplete()
+      return true
+    }
+  }
+
+  private func clearVariableAutocomplete() {
+    variableAutocompleteContext = nil
+    variableAutocompletePanel?.removeFromSuperview()
+    variableAutocompletePanel = nil
+  }
+
+  private func positionVariableAutocompletePanel() {
+    guard let panel = variableAutocompletePanel, let window else { return }
+    var actualRange = NSRange(location: NSNotFound, length: 0)
+    let screenRect = textView.firstRect(
+      forCharacterRange: textView.selectedRange(),
+      actualRange: &actualRange
+    )
+    guard !screenRect.isEmpty else { return }
+    let windowRect = window.convertFromScreen(screenRect)
+    let caretRect = convert(windowRect, from: nil)
+    let margin: CGFloat = 8
+    let proposedBelow = caretRect.minY - panel.frame.height - 4
+    let y =
+      proposedBelow >= margin
+      ? proposedBelow
+      : min(bounds.height - panel.frame.height - margin, caretRect.maxY + 4)
+    let x = min(
+      max(margin, caretRect.minX),
+      max(margin, bounds.width - panel.frame.width - margin)
+    )
+    panel.frame.origin = NSPoint(x: x, y: max(margin, y))
+  }
+
+  private func performUndoableVariableAutocompleteReplacement(
+    range: NSRange,
+    replacement: String,
+    selectionAfterEdit: NSRange
+  ) -> Bool {
+    let sourceLength = textView.string.utf16.count
+    guard range.location >= 0, NSMaxRange(range) <= sourceLength,
+      selectionAfterEdit.location >= 0,
+      NSMaxRange(selectionAfterEdit) <= sourceLength - range.length + replacement.utf16.count
+    else { return false }
+
+    let replacedSource = (textView.string as NSString).substring(with: range)
+    let selectionBeforeEdit = textView.selectedRange()
+    let undoManager = textView.undoManager
+    let isReplayingUndo = undoManager?.isUndoing == true || undoManager?.isRedoing == true
+    textView.breakUndoCoalescing()
+    undoManager?.disableUndoRegistration()
+    textView.insertText(replacement, replacementRange: range)
+    undoManager?.enableUndoRegistration()
+    textView.setSelectedRange(selectionAfterEdit)
+    textView.scrollRangeToVisible(selectionAfterEdit)
+
+    let inverseRange = NSRange(location: range.location, length: replacement.utf16.count)
+    if !isReplayingUndo { undoManager?.beginUndoGrouping() }
+    undoManager?.registerUndo(withTarget: self) { target in
+      _ = target.performUndoableVariableAutocompleteReplacement(
+        range: inverseRange,
+        replacement: replacedSource,
+        selectionAfterEdit: selectionBeforeEdit
+      )
+    }
+    undoManager?.setActionName("Complete Variable")
+    if !isReplayingUndo { undoManager?.endUndoGrouping() }
+    textView.breakUndoCoalescing()
+    reportViewportChange()
+    return true
   }
 
   private func scheduleProjectionParse() {
@@ -1093,6 +1258,7 @@ private final class ProjectionTextView: NSTextView {
   var slashCommandTriggerHandler: (() -> Bool)?
   var slashCommandKeyHandler: ((EditorSlashCommandKey) -> Bool)?
   var slashCommandsAreActive = false
+  var variableAutocompleteKeyHandler: ((EditorVariableAutocompleteKey) -> Bool)?
 
   private var gestureInterpreter = HorizontalNavigationGestureInterpreter()
   private let detachedUndoManager = UndoManager()
@@ -1165,6 +1331,11 @@ private final class ProjectionTextView: NSTextView {
   override func keyDown(with event: NSEvent) {
     let commandModifiers = event.modifierFlags.intersection([.command, .control, .option])
     if commandModifiers.isEmpty {
+      if let variableKey = variableAutocompleteKey(for: event),
+        variableAutocompleteKeyHandler?(variableKey) == true
+      {
+        return
+      }
       if slashCommandsAreActive {
         if let slashKey = slashCommandKey(for: event) {
           _ = slashCommandKeyHandler?(slashKey)
@@ -1246,6 +1417,25 @@ private final class ProjectionTextView: NSTextView {
       })
     else { return nil }
     return .append(characters)
+  }
+
+  private func variableAutocompleteKey(for event: NSEvent) -> EditorVariableAutocompleteKey? {
+    guard !event.modifierFlags.contains(.shift) else { return nil }
+    switch event.keyCode {
+    case 48:
+      return .acceptFirst
+    case 53:
+      return .dismiss
+    default:
+      break
+    }
+    guard let characters = event.charactersIgnoringModifiers,
+      characters.count == 1,
+      let character = characters.first,
+      let number = character.wholeNumberValue,
+      (1...9).contains(number)
+    else { return nil }
+    return .acceptNumber(number)
   }
 
   private static func payload(from pasteboard: NSPasteboard) -> PasteboardPayload {

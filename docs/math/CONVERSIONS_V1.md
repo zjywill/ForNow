@@ -16,7 +16,9 @@ Basic Math grammar `fornow-math-expression-v1`.
 - The numeric amount before a source unit or currency is evaluated by Basic Math
   V1. Arithmetic before conversion is valid; arithmetic after a conversion
   target produces `conversion-composition-unsupported`.
-- Assignments and variables remain unavailable until Step 3.5.
+- Step 3.5 variable assignments may use a complete conversion as their right
+  side. The graph stores only its canonical numeric value; unit, currency, rate,
+  and freshness metadata remain presentation-only.
 
 ## Unit Syntax
 

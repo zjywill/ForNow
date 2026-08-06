@@ -921,11 +921,14 @@ objects with stable codes, bounded UTF-16 ranges, accessible error messages, and
 no source text in telemetry.
 
 Step 3.4 inserts unit and currency target recognition around the unchanged Basic
-Math V1 expression engine. Assignments and dependency resolution remain deferred
-to Step 3.5. The active pipeline is:
+Math V1 expression engine. Step 3.5 wraps that evaluator in a document-scoped
+assignment and dependency pass. The active pipeline is:
 
 ```text
 source line
+ -> assignment candidate and colon-prose disambiguation
+ -> whole-document reference graph
+ -> dependency substitution
  -> trailing-equals detection
  -> unit/currency target split
  -> Basic Math V1 expression AST and evaluation
@@ -945,15 +948,33 @@ service for Basic Math.
 
 ### Variables
 
-Build a graph each source version:
+`fornow-variables-v1` rebuilds an immutable graph for every source version:
 
 - assignment declaration nodes;
-- reference edges;
-- stable source order;
-- duplicate-name diagnostic policy;
+- longest complete, case-insensitive reference edges with folded whitespace;
+- forward and backward references in stable source order;
+- a duplicate-name error policy with no cursor-dependent shadowing;
 - depth-first cycle detection;
 - topological evaluation;
-- bounded maximum dependency depth.
+- a maximum dependency path of 64 and 128 selected declarations;
+- transitive dependency IDs attached to result projections.
+
+A first colon creates only an assignment candidate. A name referenced elsewhere
+is always selected; otherwise the right side must contain only frozen math,
+unit/currency, or declared-variable vocabulary. Other prose continues through
+Basic Math, preserving inputs such as `Lunch: $10 + USD 20 dollars =` without
+consuming the declaration limit. Conversion declarations retain only their
+canonical Decimal value in the graph, so references never inherit unit,
+currency, or rate metadata.
+
+`VariableAutocompleteEngine` derives up to nine source-ordered candidates from
+an empty Math-body selection after three matching letters or digits. The AppKit
+panel is an accessibility group outside `Note.body`; showing or dismissing it
+does not mutate source. Tab, displayed number keys, and pointer activation apply
+one source/version-validated `NSTextView` replacement. Automatic undo
+registration is disabled for that replacement and an explicit inverse action is
+registered in its own group, keeping one-step completion Undo separate from the
+user's preceding paste or typing.
 
 ### Unit Aliases
 

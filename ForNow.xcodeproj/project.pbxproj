@@ -33,6 +33,7 @@
 		48A8AFBA121ACED0A21C8835 /* FindReplaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F785A68154FECDDDF1ACFFB /* FindReplaceTests.swift */; };
 		50D8D230E6AB32BDB3496622 /* MathSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F43A4CF0D2DCAD2D414CD2F4 /* MathSettingsTests.swift */; };
 		53A911D79E707A2C6F274E72 /* ForNowWindowing in Frameworks */ = {isa = PBXBuildFile; productRef = 49D8667D12771F5CB2486B54 /* ForNowWindowing */; };
+		5403CD1B6739405F6167788D /* VariableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794607665EA05A63B5B699A9 /* VariableTests.swift */; };
 		554524835CBE96DA69D6008E /* CurrencyRateRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */; };
 		696EC8A4DBBA9B4C2841DF86 /* MathSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83438E0397825990C9A3E35E /* MathSettingsStore.swift */; };
 		69DCD06192AC7A0A196EFDC1 /* ClipboardProjectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F2B741B69F54E829AE36311 /* ClipboardProjectionTests.swift */; };
@@ -121,6 +122,7 @@
 		5E0E56B44D1A023F913AE146 /* ForNowDesign */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowDesign; path = Packages/ForNowDesign; sourceTree = SOURCE_ROOT; };
 		62CB4F6D0A139B41E33B6E72 /* LaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchTests.swift; sourceTree = "<group>"; };
 		630A12794722B65AA2A383DC /* ForNowPerformanceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ForNowPerformanceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		794607665EA05A63B5B699A9 /* VariableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariableTests.swift; sourceTree = "<group>"; };
 		7C165CAC35383E2282C38E89 /* NoteLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteLifecycleTests.swift; sourceTree = "<group>"; };
 		815E92B8F3AA85DCB5AC5FF3 /* FindReplaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindReplaceModel.swift; sourceTree = "<group>"; };
 		83438E0397825990C9A3E35E /* MathSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathSettingsStore.swift; sourceTree = "<group>"; };
@@ -315,6 +317,7 @@
 				EC02F5CE9A748D269BC51A8A /* ListModeTests.swift */,
 				1864F88C94C6124652292DF3 /* MarkdownProjectionTests.swift */,
 				2DB7E618DAE770E36D79FA9F /* ModeCommandTests.swift */,
+				794607665EA05A63B5B699A9 /* VariableTests.swift */,
 			);
 			path = EditorProjectionSpikeTests;
 			sourceTree = "<group>";
@@ -724,6 +727,7 @@
 				0A7DCA311471B3AF0E11FDCE /* ListModeTests.swift in Sources */,
 				1726945452B96DC6269DFB3A /* MarkdownProjectionTests.swift in Sources */,
 				E08A4FED503EB50A6177101D /* ModeCommandTests.swift in Sources */,
+				5403CD1B6739405F6167788D /* VariableTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

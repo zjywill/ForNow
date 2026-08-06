@@ -34,17 +34,20 @@ public struct CalculationPresentation: Sendable, Equatable {
   public let canonicalValue: String
   public let displayText: String
   public let copiedText: String
+  public let dependencyIDs: [String]
 
   public init(
     expressionText: String? = nil,
     canonicalValue: String,
     displayText: String,
-    copiedText: String? = nil
+    copiedText: String? = nil,
+    dependencyIDs: [String] = []
   ) {
     self.expressionText = expressionText
     self.canonicalValue = canonicalValue
     self.displayText = displayText
     self.copiedText = copiedText ?? canonicalValue
+    self.dependencyIDs = dependencyIDs
   }
 }
 
@@ -324,7 +327,8 @@ public struct SpikeProjectionParser: Sendable {
               expressionText: (text as NSString).substring(with: result.expressionRange),
               canonicalValue: result.canonicalValue,
               displayText: result.displayText,
-              copiedText: result.copiedText
+              copiedText: result.copiedText,
+              dependencyIDs: result.dependencyIDs
             )
           )
         )

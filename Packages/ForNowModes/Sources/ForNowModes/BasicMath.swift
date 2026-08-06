@@ -256,6 +256,12 @@ public enum BasicMathDiagnosticCode: String, Sendable, Equatable {
   case currencyRatesUnavailable = "currency-rates-unavailable"
   case currencyRateMissing = "currency-rate-missing"
   case currencyInvalidRate = "currency-invalid-rate"
+  case variableInvalidDeclaration = "variable-invalid-declaration"
+  case variableDuplicateName = "variable-duplicate-name"
+  case variableCycle = "variable-cycle"
+  case variableDepthLimit = "variable-depth-limit"
+  case variableDependencyUnavailable = "variable-dependency-unavailable"
+  case variableResourceLimit = "variable-resource-limit"
 }
 
 public struct BasicMathDiagnostic: Error, Sendable, Equatable {
@@ -281,6 +287,7 @@ public struct BasicMathResult: Sendable, Equatable {
   public let canonicalValue: String
   public let displayText: String
   public let copiedText: String
+  public let dependencyIDs: [String]
 
   public init(
     expressionRange: NSRange,
@@ -288,7 +295,8 @@ public struct BasicMathResult: Sendable, Equatable {
     expression: ExpressionNode,
     canonicalValue: String,
     displayText: String,
-    copiedText: String
+    copiedText: String,
+    dependencyIDs: [String] = []
   ) {
     self.expressionRange = expressionRange
     self.anchorUTF16Offset = anchorUTF16Offset
@@ -296,6 +304,7 @@ public struct BasicMathResult: Sendable, Equatable {
     self.canonicalValue = canonicalValue
     self.displayText = displayText
     self.copiedText = copiedText
+    self.dependencyIDs = dependencyIDs
   }
 }
 
@@ -343,135 +352,16 @@ public struct BasicMathDocumentParser: Sendable {
       header.bodyRange.length > 0
     else { return [] }
 
-    let settings = (try? mathSettings.validated()) ?? MathSettings()
-    let nsSource = source as NSString
-    var evaluations: [BasicMathLineEvaluation] = []
-    var location = header.bodyRange.location
-    var lineIndex = 0
-    while location < NSMaxRange(header.bodyRange) {
-      if checksCancellation, lineIndex.isMultiple(of: 32) {
-        try Task.checkCancellation()
-      }
-      var lineStart = 0
-      var lineEnd = 0
-      var contentsEnd = 0
-      nsSource.getLineStart(
-        &lineStart,
-        end: &lineEnd,
-        contentsEnd: &contentsEnd,
-        for: NSRange(location: location, length: 0)
-      )
-      if let evaluation = evaluateLine(
-        in: nsSource,
-        lineStart: lineStart,
-        contentsEnd: contentsEnd,
-        settings: settings
-      ) {
-        evaluations.append(evaluation)
-      }
-      let nextLocation = min(lineEnd, NSMaxRange(header.bodyRange))
-      location = nextLocation > location ? nextLocation : location + 1
-      lineIndex += 1
-    }
-    return evaluations
-  }
-
-  private func evaluateLine(
-    in source: NSString,
-    lineStart: Int,
-    contentsEnd: Int,
-    settings: MathSettings
-  ) -> BasicMathLineEvaluation? {
-    var contentStart = lineStart
-    var contentEnd = contentsEnd
-    while contentStart < contentEnd, Self.isHorizontalWhitespace(source.character(at: contentStart))
-    {
-      contentStart += 1
-    }
-    while contentEnd > contentStart,
-      Self.isHorizontalWhitespace(source.character(at: contentEnd - 1))
-    {
-      contentEnd -= 1
-    }
-    guard contentStart < contentEnd else { return nil }
-    let trimmedRange = NSRange(location: contentStart, length: contentEnd - contentStart)
-    guard !source.substring(with: trimmedRange).hasPrefix("//") else { return nil }
-    guard source.character(at: contentEnd - 1) == Self.equals else { return nil }
-
-    let equalsRange = NSRange(location: contentEnd - 1, length: 1)
-    var expressionStart = contentStart
-    var expressionEnd = contentEnd - 1
-    while expressionStart < expressionEnd,
-      Self.isHorizontalWhitespace(source.character(at: expressionStart))
-    {
-      expressionStart += 1
-    }
-    while expressionEnd > expressionStart,
-      Self.isHorizontalWhitespace(source.character(at: expressionEnd - 1))
-    {
-      expressionEnd -= 1
-    }
-    let expressionRange = NSRange(
-      location: expressionStart,
-      length: expressionEnd - expressionStart
-    )
-    guard expressionRange.length > 0 else {
-      return .diagnostic(
-        BasicMathDiagnostic(
-          code: .emptyExpression,
-          sourceRange: equalsRange,
-          message: "Enter an expression before the equals sign."
-        )
-      )
-    }
-
-    let expressionSource = source.substring(with: expressionRange)
-    if let conversion = ConversionLineParser(
-      settings: settings,
+    return try VariableDocumentEvaluator(
+      settings: (try? mathSettings.validated()) ?? MathSettings(),
       locale: locale,
       catalogs: conversionCatalogs,
-      context: currencyContext
+      currencyContext: currencyContext
     ).evaluate(
-      source: expressionSource,
-      sourceRange: expressionRange,
-      anchorUTF16Offset: NSMaxRange(equalsRange)
-    ) {
-      return conversion
-    }
-    do {
-      let evaluation = try BasicMathExpressionEngine(locale: locale).evaluate(
-        expressionSource,
-        sourceRange: expressionRange
-      )
-      let formatter = BasicMathFormatter(settings: settings, locale: locale)
-      let canonicalValue = formatter.canonical(evaluation.value)
-      return .result(
-        BasicMathResult(
-          expressionRange: expressionRange,
-          anchorUTF16Offset: NSMaxRange(equalsRange),
-          expression: evaluation.expression,
-          canonicalValue: canonicalValue,
-          displayText: formatter.display(evaluation.value),
-          copiedText: canonicalValue
-        )
-      )
-    } catch let diagnostic as BasicMathDiagnostic {
-      return .diagnostic(diagnostic)
-    } catch {
-      return .diagnostic(
-        BasicMathDiagnostic(
-          code: .unexpectedToken,
-          sourceRange: expressionRange,
-          message: "The expression could not be parsed."
-        )
-      )
-    }
-  }
-
-  private static let equals: unichar = 0x003D
-
-  private static func isHorizontalWhitespace(_ character: unichar) -> Bool {
-    character == 0x0020 || character == 0x0009
+      source: source,
+      bodyRange: header.bodyRange,
+      checksCancellation: checksCancellation
+    )
   }
 }
 

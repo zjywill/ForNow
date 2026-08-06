@@ -54,6 +54,11 @@ Step 3.4 Units and Currency is complete with versioned unit and ISO currency
 fixtures, Foundation Measurement conversions, deterministic custom/cached/ECB
 rate precedence, opt-in throttled refresh, explicit rate-age labels, versioned
 currency settings, accessible canonical copying, and source-only persistence.
+Step 3.5 Variables is complete with spaced names, whole-note forward and backward
+references, reactive transitive evaluation, stable duplicate/cycle/depth
+diagnostics, numeric-only conversion assignments, and a source-only AppKit
+autocomplete panel. Matching begins after three characters; Tab, number keys,
+and pointer activation perform one validated replacement with an isolated Undo.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and
