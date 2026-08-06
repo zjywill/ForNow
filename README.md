@@ -50,6 +50,10 @@ evaluation, documented operators and functions, period- and comma-decimal
 profiles, stable source-free diagnostics, independently configurable result
 digits and thousands grouping, accessible inline result copying, and exact
 source-only SQLite/FTS persistence.
+Step 3.4 Units and Currency is complete with versioned unit and ISO currency
+fixtures, Foundation Measurement conversions, deterministic custom/cached/ECB
+rate precedence, opt-in throttled refresh, explicit rate-age labels, versioned
+currency settings, accessible canonical copying, and source-only persistence.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and

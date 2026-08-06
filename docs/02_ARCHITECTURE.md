@@ -385,11 +385,13 @@ than inferred from process termination. Threshold comparisons are inclusive; a
 backward clock change does not create a new note.
 
 The Step 3.3 `MathSettings` version-1 payload stores only result digits and the
-independent thousands-grouping switch. It rejects result digits outside `0...7`
-before writing, falls back to defaults for an unsupported or malformed payload,
-and rolls the published application value back when persistence fails. Later
-unit, currency, and rate phases extend this payload through explicit migrations;
-they do not overload either Basic Math display field.
+independent thousands-grouping switch. Step 3.4 migrates it to version 2 by
+supplying defaults for primary and secondary currency, primary symbol, automatic
+refresh, and custom rates, then rewriting the decoded payload. Version 2 rejects
+digits outside `0...7`, currencies absent from the bundled ISO fixture, malformed
+symbols, nonpositive or same-currency custom rates, duplicate directed pairs,
+and more than 128 custom rates. Unsupported or malformed payloads fall back to
+defaults, and a failed write rolls the published application value back.
 
 `PasteSettings` is stored in a separate versioned UserDefaults payload. The
 composition root loads it before the window coordinator creates the editor and
@@ -918,19 +920,25 @@ lets a non-empty source selection win. Diagnostics remain separate projection
 objects with stable codes, bounded UTF-16 ranges, accessible error messages, and
 no source text in telemetry.
 
-Assignments, unit/currency targets, dependency resolution, and conversions are
-not part of Basic Math V1. Later phases insert those stages around the frozen
-numeric parser as follows:
+Step 3.4 inserts unit and currency target recognition around the unchanged Basic
+Math V1 expression engine. Assignments and dependency resolution remain deferred
+to Step 3.5. The active pipeline is:
 
 ```text
 source line
- -> assignment split
+ -> trailing-equals detection
  -> unit/currency target split
  -> Basic Math V1 expression AST and evaluation
- -> variable dependency resolution
  -> conversion
  -> result decoration
 ```
+
+The conversion parser accepts `in` and `to`, evaluates arithmetic only before
+the source unit or currency, and rejects arithmetic after the target. Unit
+results use Foundation `Measurement`; currency results resolve a direct custom
+rate, then an inverse custom rate, then a provider cross-rate. Display text
+includes the target and rate date/state, while copied text contains only the
+canonical value and target symbol or code.
 
 Never use `NSExpression`, JavaScript evaluation, `eval`, an LLM, or a network
 service for Basic Math.
@@ -957,18 +965,32 @@ Resources/Units/v1/area.json
 Resources/Units/v1/volume.json
 Resources/Units/v1/mass.json
 Resources/Units/v1/temperature.json
-Resources/Currencies/iso-4217.json
+Resources/Currencies/iso-4217-v1.json
 ```
 
-Each fixture contains:
+Each unit fixture contains a schema version, fixed category, canonical unit IDs,
+display symbols, and normalized aliases. The currency fixture contains a schema
+version, uppercase ISO code, display name, and non-conflicting aliases. Startup
+validation rejects missing categories, unsupported schema versions, category
+mismatches, duplicate IDs/codes/aliases, malformed codes, and unit IDs without a
+runtime mapping. Every documented distance, area, volume, mass, and temperature
+ID maps explicitly to a Foundation dimension.
 
-- canonical ID;
-- aliases;
-- symbols;
-- regional spellings;
-- Foundation unit mapping;
-- provenance;
-- last review date.
+### Currency Rates
+
+`CurrencyRateProvider` has disabled, fixture, cached, and ECB implementations.
+The ECB adapter sends a body-free GET only to the fixed daily HTTPS endpoint,
+accepts XML, caps the streamed response at 1 MB, disables external entity
+resolution, and validates the dated-cube structure, codes, rates, and base
+conversion. Note source is never passed into this boundary.
+
+Snapshots and the last automatic-attempt date use a separate versioned
+UserDefaults cache. Automatic refresh is off by default, runs in the background
+after startup only when enabled, records the attempt before requesting, and
+makes at most one attempt per rolling 24 hours. Manual refresh is always an
+explicit user command. Network failure may retain a compatible cached snapshot;
+cancellation never becomes cached success. A cache age of exactly 24 hours is
+stale.
 
 ### Timers
 

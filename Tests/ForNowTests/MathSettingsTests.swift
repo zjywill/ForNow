@@ -1,3 +1,4 @@
+import ForNowCore
 import ForNowModes
 import XCTest
 
@@ -8,7 +9,28 @@ final class MathSettingsTests: XCTestCase {
   func testMathSettingsRoundTripAndEnvironmentLoadsThem() async throws {
     let suiteName = "ForNowMathSettingsTests.\(UUID().uuidString)"
     defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
-    let settings = MathSettings(significantDigits: 6, separatesThousands: false)
+    let settings = MathSettings(
+      significantDigits: 6,
+      separatesThousands: false,
+      primaryCurrency: CurrencyCode(rawValue: "GBP"),
+      secondaryCurrency: CurrencyCode(rawValue: "JPY"),
+      primaryCurrencySymbol: "GBP",
+      automaticCurrencyRefreshEnabled: true,
+      customCurrencyRates: [
+        CustomCurrencyRate(
+          source: CurrencyCode(rawValue: "GBP"),
+          target: CurrencyCode(rawValue: "JPY"),
+          rate: 192.5,
+          updatedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        ),
+        CustomCurrencyRate(
+          source: CurrencyCode(rawValue: "USD"),
+          target: CurrencyCode(rawValue: "EUR"),
+          rate: 0.8,
+          updatedAt: Date(timeIntervalSince1970: 1_700_000_100)
+        ),
+      ]
+    )
     let store = UserDefaultsMathSettingsStore(suiteName: suiteName)
 
     try await store.save(settings)
@@ -19,7 +41,22 @@ final class MathSettingsTests: XCTestCase {
     try await environment.start()
     XCTAssertEqual(environment.mathSettings, settings)
 
-    let updated = MathSettings(significantDigits: 1, separatesThousands: true)
+    let updated = MathSettings(
+      significantDigits: 1,
+      separatesThousands: true,
+      primaryCurrency: CurrencyCode(rawValue: "CAD"),
+      secondaryCurrency: CurrencyCode(rawValue: "AUD"),
+      primaryCurrencySymbol: "CA$",
+      automaticCurrencyRefreshEnabled: false,
+      customCurrencyRates: [
+        CustomCurrencyRate(
+          source: CurrencyCode(rawValue: "CAD"),
+          target: CurrencyCode(rawValue: "AUD"),
+          rate: 1.1,
+          updatedAt: Date(timeIntervalSince1970: 1_700_000_200)
+        )
+      ]
+    )
     try await environment.updateMathSettings(updated)
     XCTAssertEqual(environment.mathSettings, updated)
     let updatedLoaded = await store.load()
@@ -50,6 +87,49 @@ final class MathSettingsTests: XCTestCase {
     }
     let afterRejectedSave = await store.load()
     XCTAssertEqual(afterRejectedSave, MathSettings())
+  }
+
+  func testMathSettingsRejectInvalidAndDuplicateCustomRates() async throws {
+    let suiteName = "ForNowMathSettingsCustomRateTests.\(UUID().uuidString)"
+    defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
+    let store = UserDefaultsMathSettingsStore(suiteName: suiteName)
+    let usd = CurrencyCode(rawValue: "USD")
+    let eur = CurrencyCode(rawValue: "EUR")
+    let date = Date(timeIntervalSince1970: 1_700_000_000)
+
+    let invalid = MathSettings(
+      customCurrencyRates: [
+        CustomCurrencyRate(source: usd, target: eur, rate: 0, updatedAt: date)
+      ]
+    )
+    do {
+      try await store.save(invalid)
+      XCTFail("A nonpositive custom rate must be rejected")
+    } catch {
+      XCTAssertEqual(
+        error as? MathSettingsValidationError,
+        .invalidCustomRate(usd, eur)
+      )
+    }
+
+    let duplicate = MathSettings(
+      customCurrencyRates: [
+        CustomCurrencyRate(source: usd, target: eur, rate: 0.8, updatedAt: date),
+        CustomCurrencyRate(source: usd, target: eur, rate: 0.9, updatedAt: date),
+      ]
+    )
+    do {
+      try await store.save(duplicate)
+      XCTFail("Duplicate custom currency pairs must be rejected")
+    } catch {
+      XCTAssertEqual(
+        error as? MathSettingsValidationError,
+        .duplicateCustomRate(usd, eur)
+      )
+    }
+
+    let persisted = await store.load()
+    XCTAssertEqual(persisted, MathSettings())
   }
 
   @MainActor
