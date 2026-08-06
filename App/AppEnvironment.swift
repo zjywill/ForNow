@@ -19,6 +19,7 @@ struct AppDependencies {
   let windowCoordinator: any WindowCoordinating
   let clipboard: any ClipboardService
   let ocr: any OCRService
+  let ocrSettings: any OCRSettingsStoring
   let notifications: any NotificationService
   let rateProvider: any CurrencyRateProvider
   let rateCache: any CurrencyRateCaching
@@ -61,6 +62,7 @@ final class AppEnvironment: ObservableObject {
   let windowCoordinator: any WindowCoordinating
   let clipboard: any ClipboardService
   let ocr: any OCRService
+  let ocrSettingsStore: any OCRSettingsStoring
   let notifications: any NotificationService
   let rateProvider: any CurrencyRateProvider
   let rateCache: any CurrencyRateCaching
@@ -80,6 +82,7 @@ final class AppEnvironment: ObservableObject {
   let slashCommand: SlashCommandModel
   let deleteConfirmationCoordinator: DeleteConfirmationCoordinator
   let timerModel: TimerModel
+  let ocrModel: OCRWorkflowModel
   private let currencyRateCoordinator: CurrencyRateRefreshCoordinator
 
   @Published private(set) var windowConfiguration = WindowConfiguration()
@@ -115,6 +118,7 @@ final class AppEnvironment: ObservableObject {
     windowCoordinator = dependencies.windowCoordinator
     clipboard = dependencies.clipboard
     ocr = dependencies.ocr
+    ocrSettingsStore = dependencies.ocrSettings
     notifications = dependencies.notifications
     rateProvider = dependencies.rateProvider
     rateCache = dependencies.rateCache
@@ -152,6 +156,10 @@ final class AppEnvironment: ObservableObject {
       notifications: dependencies.notifications,
       soundPlayer: dependencies.timerSoundPlayer,
       windowCoordinator: dependencies.windowCoordinator
+    )
+    ocrModel = OCRWorkflowModel(
+      service: dependencies.ocr,
+      settingsStore: dependencies.ocrSettings
     )
     findReplace = FindReplaceModel()
     slashCommand = SlashCommandModel()
@@ -204,6 +212,7 @@ final class AppEnvironment: ObservableObject {
         windowCoordinator: SwiftUIWindowCoordinator(),
         clipboard: DisabledClipboardService(),
         ocr: VisionOCRService(),
+        ocrSettings: UserDefaultsOCRSettingsStore(),
         notifications: UserNotificationService(),
         rateProvider: CachedCurrencyRateProvider(
           upstream: ECBCurrencyRateProvider(),
@@ -236,6 +245,7 @@ final class AppEnvironment: ObservableObject {
         windowCoordinator: DisabledWindowCoordinator(),
         clipboard: DisabledClipboardService(),
         ocr: UnavailableOCRService(),
+        ocrSettings: InMemoryOCRSettingsStore(),
         notifications: DisabledNotificationService(),
         rateProvider: DisabledCurrencyRateProvider(),
         rateCache: InMemoryCurrencyRateCache(),
@@ -262,6 +272,7 @@ final class AppEnvironment: ObservableObject {
     windowCoordinator: any WindowCoordinating = DisabledWindowCoordinator(),
     clipboard: any ClipboardService = DisabledClipboardService(),
     ocr: any OCRService = UnavailableOCRService(),
+    ocrSettings: any OCRSettingsStoring = InMemoryOCRSettingsStore(),
     notifications: any NotificationService = DisabledNotificationService(),
     rateProvider: any CurrencyRateProvider = DisabledCurrencyRateProvider(),
     rateCache: any CurrencyRateCaching = InMemoryCurrencyRateCache(),
@@ -287,6 +298,7 @@ final class AppEnvironment: ObservableObject {
         windowCoordinator: windowCoordinator,
         clipboard: clipboard,
         ocr: ocr,
+        ocrSettings: ocrSettings,
         notifications: notifications,
         rateProvider: rateProvider,
         rateCache: rateCache,
@@ -342,6 +354,7 @@ final class AppEnvironment: ObservableObject {
       await logger.record(.serviceStarted(.windowCoordinator))
       try await timerModel.start()
       timerIsStarted = true
+      await ocrModel.start()
       state = .running
       await logger.record(.startupCompleted)
       scheduleAutomaticCurrencyRefreshIfNeeded()
@@ -365,6 +378,7 @@ final class AppEnvironment: ObservableObject {
     releaseSearch(restoresEditorFocus: false)
     releaseFindReplace(restoresEditorFocus: false)
     releaseSlashCommand(restoresEditorFocus: false)
+    ocrModel.cancel()
     await windowCoordinator.waitForPendingTransitions()
     if repositoryIsPrepared {
       do {
@@ -442,6 +456,7 @@ final class AppEnvironment: ObservableObject {
   }
 
   func windowWillClose() async throws {
+    ocrModel.cancel()
     let closeDate = clock.now()
     do {
       if repositoryIsPrepared {
@@ -611,6 +626,10 @@ final class AppEnvironment: ObservableObject {
 
   func updateTimerSettings(_ settings: TimerSettings) async throws {
     try await timerModel.updateSettings(settings)
+  }
+
+  func updateOCRSettings(_ settings: OCRSettings) async throws {
+    try await ocrModel.updateSettings(settings)
   }
 
   var currencyConversionContext: CurrencyConversionContext {

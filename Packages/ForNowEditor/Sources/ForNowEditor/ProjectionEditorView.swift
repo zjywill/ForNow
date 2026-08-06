@@ -45,6 +45,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
   private let linkExpansionDidToggle: (@MainActor (LinkIdentity) -> Void)?
   private let findReplaceTarget: EditorFindReplaceTarget?
   private let slashCommandTarget: EditorSlashCommandTarget?
+  private let ocrTarget: EditorOCRTarget?
   private let timerCommandDidCommit: (@MainActor (TimerCommand, String) -> Void)?
   private let timerInteractionHandler: (@MainActor (EditorTimerInteraction) -> Void)?
 
@@ -68,6 +69,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     linkExpansionDidToggle = nil
     findReplaceTarget = nil
     slashCommandTarget = nil
+    ocrTarget = nil
     timerCommandDidCommit = nil
     timerInteractionHandler = nil
   }
@@ -88,6 +90,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     expandedLinkIdentities: Set<LinkIdentity> = [],
     findReplaceTarget: EditorFindReplaceTarget? = nil,
     slashCommandTarget: EditorSlashCommandTarget? = nil,
+    ocrTarget: EditorOCRTarget? = nil,
     sourceDidChange: @escaping @MainActor (String, Bool) -> Void,
     viewportDidChange: @escaping @MainActor (EditorViewportState) -> Void,
     navigationHandler: @escaping @MainActor (NoteNavigationDirection) -> Void,
@@ -110,6 +113,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     self.expandedLinkIdentities = expandedLinkIdentities
     self.findReplaceTarget = findReplaceTarget
     self.slashCommandTarget = slashCommandTarget
+    self.ocrTarget = ocrTarget
     self.sourceDidChange = sourceDidChange
     self.viewportDidChange = viewportDidChange
     self.navigationHandler = navigationHandler
@@ -141,6 +145,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     container.timerInteractionHandler = timerInteractionHandler
     findReplaceTarget?.attach(to: container)
     slashCommandTarget?.attach(to: container)
+    ocrTarget?.attach(to: container)
     container.textView.setAccessibilityLabel(accessibilityLabel)
     container.applyViewportRestoration(viewportState, token: viewportRestorationToken)
     container.armDirectionalEntry(token: navigationEntryToken)
@@ -167,6 +172,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     nsView.timerInteractionHandler = timerInteractionHandler
     findReplaceTarget?.attach(to: nsView)
     slashCommandTarget?.attach(to: nsView)
+    ocrTarget?.attach(to: nsView)
     nsView.textView.setAccessibilityLabel(accessibilityLabel)
     nsView.applyExternalSource(sourceText)
     nsView.applyViewportRestoration(viewportState, token: viewportRestorationToken)
@@ -268,6 +274,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   private var isApplyingViewportRestoration = false
   private var lastReportedViewportState: EditorViewportState?
   private weak var slashCommandTarget: EditorSlashCommandTarget?
+  private weak var ocrTarget: EditorOCRTarget?
   private let variableAutocompleteEngine = VariableAutocompleteEngine()
   private var variableAutocompleteContext: VariableAutocompleteContext?
   private var variableAutocompletePanel: VariableAutocompletePanelView?
@@ -372,6 +379,16 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     textView.pasteHandler = { [weak self] payload, mode in
       self?.paste(payload, mode: mode)
     }
+    textView.ocrPasteboardHandler = { [weak self] pasteboard, source, replacementRange in
+      self?.submitOCRInput(
+        from: pasteboard,
+        source: source,
+        replacementRange: replacementRange
+      ) ?? false
+    }
+    textView.registerForDraggedTypes(
+      Array(Set(textView.registeredDraggedTypes + EditorOCRPasteboardReader.registeredTypes))
+    )
     textView.toggleCommentHandler = { [weak self] in
       self?.toggleComments() ?? false
     }
@@ -634,6 +651,87 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       context: isCodeContext ? .code : .plain
     )
     textView.insertText(replacement, replacementRange: textView.selectedRange())
+  }
+
+  @discardableResult
+  public func submitOCRInput(
+    from pasteboard: NSPasteboard,
+    source: EditorOCRInputSource,
+    replacementRange: NSRange? = nil
+  ) -> Bool {
+    guard let ocrTarget else { return false }
+    let reader = EditorOCRPasteboardReader()
+    guard reader.hasImageCandidate(in: pasteboard) else { return false }
+    do {
+      guard let image = try reader.imageInput(from: pasteboard) else { return false }
+      let range = replacementRange ?? textView.selectedRange()
+      guard range.location >= 0, range.length >= 0, NSMaxRange(range) <= snapshot.utf16Count else {
+        ocrTarget.failCapture(with: .unreadableImage)
+        return true
+      }
+      ocrTarget.submit(
+        EditorOCRRequest(
+          image: image,
+          source: source,
+          anchor: EditorOCRInsertionAnchor(
+            sourceVersion: snapshot.version,
+            replacementRange: SourceRange(range)
+          )
+        )
+      )
+      return true
+    } catch let error as EditorOCRCaptureError {
+      ocrTarget.failCapture(with: error)
+      return true
+    } catch {
+      ocrTarget.failCapture(with: .unreadableImage)
+      return true
+    }
+  }
+
+  public func performOCRInsertion(
+    _ recognizedText: String,
+    at anchor: EditorOCRInsertionAnchor
+  ) -> EditorOCRInsertionOutcome {
+    guard snapshot.version == anchor.sourceVersion else { return .sourceChanged }
+    guard
+      performUndoableOCRInsertion(
+        recognizedText,
+        replacementRange: anchor.replacementRange.nsRange
+      )
+    else {
+      return .editorUnavailable
+    }
+    return .inserted
+  }
+
+  public func performOCRInsertionAtCurrentSelection(_ recognizedText: String) -> Bool {
+    performUndoableOCRInsertion(recognizedText, replacementRange: textView.selectedRange())
+  }
+
+  func attachOCRTarget(_ target: EditorOCRTarget) {
+    ocrTarget = target
+  }
+
+  func detachOCRTarget(_ target: EditorOCRTarget) {
+    guard ocrTarget === target else { return }
+    ocrTarget = nil
+  }
+
+  private func performUndoableOCRInsertion(
+    _ recognizedText: String,
+    replacementRange: NSRange
+  ) -> Bool {
+    guard !recognizedText.isEmpty,
+      !textView.hasMarkedText(),
+      replacementRange.location >= 0,
+      replacementRange.length >= 0,
+      NSMaxRange(replacementRange) <= snapshot.utf16Count
+    else { return false }
+    textView.breakUndoCoalescing()
+    textView.insertText(recognizedText, replacementRange: replacementRange)
+    textView.breakUndoCoalescing()
+    return true
   }
 
   public func armDirectionalEntry(token: UInt64) {
@@ -1468,6 +1566,7 @@ private final class ProjectionTextView: NSTextView {
   var cancelDirectionalEntryHandler: (() -> Void)?
   var navigationHandler: ((NoteNavigationDirection) -> Void)?
   var pasteHandler: ((PasteboardPayload, PasteMode) -> Void)?
+  var ocrPasteboardHandler: ((NSPasteboard, EditorOCRInputSource, NSRange?) -> Bool)?
   var toggleCommentHandler: (() -> Bool)?
   var slashCommandTriggerHandler: (() -> Bool)?
   var slashCommandKeyHandler: ((EditorSlashCommandKey) -> Bool)?
@@ -1493,11 +1592,47 @@ private final class ProjectionTextView: NSTextView {
   }
 
   override func paste(_ sender: Any?) {
+    if ocrPasteboardHandler?(.general, .paste, nil) == true {
+      return
+    }
     guard let pasteHandler else {
       super.paste(sender)
       return
     }
     pasteHandler(Self.payload(from: .general), .normal)
+  }
+
+  override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
+    if ocrPasteboardHandler != nil,
+      EditorOCRPasteboardReader().hasImageCandidate(in: sender.draggingPasteboard)
+    {
+      return .copy
+    }
+    return super.draggingEntered(sender)
+  }
+
+  override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation {
+    if ocrPasteboardHandler != nil,
+      EditorOCRPasteboardReader().hasImageCandidate(in: sender.draggingPasteboard)
+    {
+      return .copy
+    }
+    return super.draggingUpdated(sender)
+  }
+
+  override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
+    if ocrPasteboardHandler != nil,
+      EditorOCRPasteboardReader().hasImageCandidate(in: sender.draggingPasteboard)
+    {
+      let point = convert(sender.draggingLocation, from: nil)
+      let location = characterIndexForInsertion(at: point)
+      return ocrPasteboardHandler?(
+        sender.draggingPasteboard,
+        .dragAndDrop,
+        NSRange(location: location, length: 0)
+      ) == true
+    }
+    return super.performDragOperation(sender)
   }
 
   @objc func pasteRaw(_ sender: Any?) {

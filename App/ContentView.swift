@@ -11,6 +11,7 @@ struct ContentView: View {
   @ObservedObject private var slashCommand: SlashCommandModel
   @ObservedObject private var environmentModel: AppEnvironment
   @ObservedObject private var timerModel: TimerModel
+  @ObservedObject private var ocrModel: OCRWorkflowModel
 
   init(environment: AppEnvironment) {
     self.environment = environment
@@ -20,6 +21,7 @@ struct ContentView: View {
     _slashCommand = ObservedObject(wrappedValue: environment.slashCommand)
     _environmentModel = ObservedObject(wrappedValue: environment)
     _timerModel = ObservedObject(wrappedValue: environment.timerModel)
+    _ocrModel = ObservedObject(wrappedValue: environment.ocrModel)
   }
 
   var body: some View {
@@ -50,6 +52,7 @@ struct ContentView: View {
           ),
           findReplaceTarget: findReplace.editorTarget,
           slashCommandTarget: slashCommand.editorTarget,
+          ocrTarget: ocrModel.editorTarget,
           sourceDidChange: { source, hasMarkedText in
             noteSession.editorTextChanged(source, hasMarkedText: hasMarkedText)
           },
@@ -128,7 +131,73 @@ struct ContentView: View {
         )
         .padding(.leading, 12)
       }
+
+      if ocrModel.isRecognizing {
+        VStack(spacing: 0) {
+          Spacer()
+          HStack(spacing: 8) {
+            ProgressView()
+              .controlSize(.small)
+            Text("Recognizing text")
+              .font(.callout)
+            Spacer()
+            Button {
+              ocrModel.cancel()
+            } label: {
+              Image(systemName: "xmark")
+            }
+            .buttonStyle(.borderless)
+            .frame(width: 28, height: 28)
+            .help("Cancel text recognition")
+          }
+          .padding(.horizontal, 12)
+          .frame(height: 40)
+          .background(Color(nsColor: .windowBackgroundColor))
+          .overlay(alignment: .top) { Divider() }
+          .accessibilityElement(children: .combine)
+          .accessibilityLabel("Recognizing text")
+        }
+      }
     }
+    .alert("Text changed during recognition", isPresented: staleInsertionBinding) {
+      Button("Cancel", role: .cancel) {
+        ocrModel.declineStaleInsertion()
+      }
+      Button("Insert at Current Cursor") {
+        ocrModel.confirmInsertionAtCurrentSelection()
+      }
+    } message: {
+      Text("The original insertion point is no longer current.")
+    }
+    .alert("Text Recognition Failed", isPresented: errorBinding) {
+      Button("OK") {
+        ocrModel.dismissError()
+      }
+    } message: {
+      Text(ocrModel.errorMessage ?? "Text recognition failed.")
+    }
+  }
+
+  private var staleInsertionBinding: Binding<Bool> {
+    Binding(
+      get: { ocrModel.requiresInsertionConfirmation },
+      set: { isPresented in
+        if !isPresented {
+          ocrModel.declineStaleInsertion()
+        }
+      }
+    )
+  }
+
+  private var errorBinding: Binding<Bool> {
+    Binding(
+      get: { ocrModel.errorMessage != nil },
+      set: { isPresented in
+        if !isPresented {
+          ocrModel.dismissError()
+        }
+      }
+    )
   }
 }
 

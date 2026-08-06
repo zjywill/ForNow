@@ -1,6 +1,7 @@
 import AppKit
 import ForNowCore
 import ForNowEditor
+import ForNowIntegrations
 import ForNowModes
 import ForNowWindowing
 import SwiftUI
@@ -11,6 +12,7 @@ struct SettingsView: View {
   @ObservedObject private var noteSession: NoteSessionModel
   @ObservedObject private var environmentModel: AppEnvironment
   @ObservedObject private var timerModel: TimerModel
+  @ObservedObject private var ocrModel: OCRWorkflowModel
   @State private var newCustomRateSource = CurrencyCode(rawValue: "USD")
   @State private var newCustomRateTarget = CurrencyCode(rawValue: "EUR")
   @State private var newCustomRateValue = "1"
@@ -20,6 +22,7 @@ struct SettingsView: View {
     _noteSession = ObservedObject(wrappedValue: environment.noteSession)
     _environmentModel = ObservedObject(wrappedValue: environment)
     _timerModel = ObservedObject(wrappedValue: environment.timerModel)
+    _ocrModel = ObservedObject(wrappedValue: environment.ocrModel)
   }
 
   var body: some View {
@@ -93,6 +96,19 @@ struct SettingsView: View {
         Toggle("Remove bullets", isOn: pasteBinding(\.stripsBullets))
         Toggle("Remove Markdown formatting", isOn: pasteBinding(\.stripsMarkdown))
         Toggle("Remove empty lines", isOn: pasteBinding(\.stripsEmptyLines))
+      }
+
+      Section("Text Recognition") {
+        Picker("Language", selection: ocrLanguagePreference) {
+          ForEach(OCRLanguagePreference.allCases, id: \.self) { preference in
+            Text(preference.displayName).tag(preference)
+          }
+        }
+        if ocrModel.hasSettingsPersistenceFailure {
+          Text("Recognition language could not be saved.")
+            .font(.caption)
+            .foregroundStyle(.red)
+        }
       }
 
       Section("Editor") {
@@ -391,6 +407,17 @@ struct SettingsView: View {
         var settings = timerModel.settings
         settings[keyPath: keyPath] = value
         Task { try? await environment.updateTimerSettings(settings) }
+      }
+    )
+  }
+
+  private var ocrLanguagePreference: Binding<OCRLanguagePreference> {
+    Binding(
+      get: { ocrModel.settings.languagePreference },
+      set: { preference in
+        var settings = ocrModel.settings
+        settings.languagePreference = preference
+        Task { try? await environment.updateOCRSettings(settings) }
       }
     )
   }
