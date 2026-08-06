@@ -129,6 +129,8 @@ targets:
     dependencies:
       - package: ForNowCore
         product: ForNowCore
+      - package: ForNowDesign
+        product: ForNowDesign
       - package: ForNowEditor
         product: ForNowEditor
       - package: ForNowModes
@@ -145,6 +147,8 @@ targets:
     sources:
       - path: Spikes/EditorProjectionSpike
     dependencies:
+      - package: ForNowDesign
+        product: ForNowDesign
       - package: ForNowEditor
         product: ForNowEditor
     settings:

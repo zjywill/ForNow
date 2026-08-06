@@ -2,25 +2,45 @@ import CryptoKit
 import ForNowModes
 import Foundation
 
+public enum EditorLayoutDirection: String, CaseIterable, Codable, Sendable {
+  case natural
+  case leftToRight
+  case rightToLeft
+
+  public var displayName: String {
+    switch self {
+    case .natural:
+      "Natural"
+    case .leftToRight:
+      "Left to Right"
+    case .rightToLeft:
+      "Right to Left"
+    }
+  }
+}
+
 public struct EditorSettings: Codable, Sendable, Equatable {
   public var automaticallyShortensLinks: Bool
   public var hyperlinkFeaturesEnabled: Bool
   public var defaultCodeLanguage: CodeLanguage
   public var codeHighlightTheme: CodeHighlightTheme
   public var omitsChecklistTriggersOnExport: Bool
+  public var layoutDirection: EditorLayoutDirection
 
   public init(
     automaticallyShortensLinks: Bool = true,
     hyperlinkFeaturesEnabled: Bool = true,
     defaultCodeLanguage: CodeLanguage = .plainText,
     codeHighlightTheme: CodeHighlightTheme = .adaptive,
-    omitsChecklistTriggersOnExport: Bool = true
+    omitsChecklistTriggersOnExport: Bool = true,
+    layoutDirection: EditorLayoutDirection = .natural
   ) {
     self.automaticallyShortensLinks = automaticallyShortensLinks
     self.hyperlinkFeaturesEnabled = hyperlinkFeaturesEnabled
     self.defaultCodeLanguage = defaultCodeLanguage
     self.codeHighlightTheme = codeHighlightTheme
     self.omitsChecklistTriggersOnExport = omitsChecklistTriggersOnExport
+    self.layoutDirection = layoutDirection
   }
 
   private enum CodingKeys: String, CodingKey {
@@ -29,6 +49,7 @@ public struct EditorSettings: Codable, Sendable, Equatable {
     case defaultCodeLanguage
     case codeHighlightTheme
     case omitsChecklistTriggersOnExport
+    case layoutDirection
   }
 
   public init(from decoder: any Decoder) throws {
@@ -58,6 +79,11 @@ public struct EditorSettings: Codable, Sendable, Equatable {
         Bool.self,
         forKey: .omitsChecklistTriggersOnExport
       ) ?? true
+    layoutDirection =
+      try values.decodeIfPresent(
+        EditorLayoutDirection.self,
+        forKey: .layoutDirection
+      ) ?? .natural
   }
 
   public func encode(to encoder: any Encoder) throws {
@@ -70,6 +96,7 @@ public struct EditorSettings: Codable, Sendable, Equatable {
       omitsChecklistTriggersOnExport,
       forKey: .omitsChecklistTriggersOnExport
     )
+    try values.encode(layoutDirection, forKey: .layoutDirection)
   }
 }
 

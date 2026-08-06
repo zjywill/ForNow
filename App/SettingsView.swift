@@ -1,5 +1,6 @@
 import AppKit
 import ForNowCore
+import ForNowDesign
 import ForNowEditor
 import ForNowIntegrations
 import ForNowModes
@@ -14,9 +15,12 @@ struct SettingsView: View {
   @ObservedObject private var timerModel: TimerModel
   @ObservedObject private var ocrModel: OCRWorkflowModel
   @ObservedObject private var autoPasteModel: AutoPasteModel
+  @Environment(\.colorScheme) private var colorScheme
   @State private var newCustomRateSource = CurrencyCode(rawValue: "USD")
   @State private var newCustomRateTarget = CurrencyCode(rawValue: "EUR")
   @State private var newCustomRateValue = "1"
+  @State private var confirmsMismatchedTranslucency = false
+  @State private var accessibilityDisplayRevision = false
 
   init(environment: AppEnvironment) {
     self.environment = environment
@@ -167,9 +171,103 @@ struct SettingsView: View {
             Text(theme.displayName).tag(theme)
           }
         }
+        Picker(
+          "Text layout direction",
+          selection: editorBinding(\.layoutDirection)
+        ) {
+          ForEach(EditorLayoutDirection.allCases, id: \.self) { direction in
+            Text(direction.displayName).tag(direction)
+          }
+        }
+      }
+
+      Section("Appearance") {
+        Picker("Light mode theme", selection: appearanceBinding(\.lightThemeID)) {
+          ForEach(BuiltInThemeID.allCases, id: \.self) { themeID in
+            Text("\(themeID.displayName) (\(themeID.intendedAppearance.displayName))")
+              .tag(themeID)
+          }
+        }
+        Picker("Dark mode theme", selection: appearanceBinding(\.darkThemeID)) {
+          ForEach(BuiltInThemeID.allCases, id: \.self) { themeID in
+            Text("\(themeID.displayName) (\(themeID.intendedAppearance.displayName))")
+              .tag(themeID)
+          }
+        }
+        Picker("Paper", selection: appearanceBinding(\.paperStyle)) {
+          ForEach(PaperStyle.allCases, id: \.self) { style in
+            Text(style.displayName).tag(style)
+          }
+        }
+        Picker("Paper visibility", selection: appearanceBinding(\.paperOpacity)) {
+          ForEach(PaperOpacity.allCases, id: \.self) { opacity in
+            Text(opacity.displayName).tag(opacity)
+          }
+        }
+        Picker(
+          "List spacing on lined paper",
+          selection: appearanceBinding(\.linedPaperListSpacing)
+        ) {
+          ForEach(ListSpacing.allCases, id: \.self) { spacing in
+            Text(spacing.displayName).tag(spacing)
+          }
+        }
+        Picker(
+          "List spacing on blank or grid paper",
+          selection: appearanceBinding(\.blankPaperListSpacing)
+        ) {
+          ForEach(ListSpacing.allCases, id: \.self) { spacing in
+            Text(spacing.displayName).tag(spacing)
+          }
+        }
+        Picker("Text size", selection: appearanceBinding(\.textSize)) {
+          ForEach(EditorTextSize.allCases, id: \.self) { size in
+            Text(size.displayName).tag(size)
+          }
+        }
+        .pickerStyle(.segmented)
+        Toggle("Double text size", isOn: appearanceBinding(\.doublesTextSize))
+
+        Toggle("Translucent background", isOn: translucentMode)
+          .disabled(!appearancePresentation.translucentModeIsAvailable)
+
+        LabeledContent("Background opacity") {
+          HStack(spacing: 10) {
+            Slider(value: backgroundOpacity, in: 0...90, step: 1)
+              .frame(width: 180)
+            Text("\(environmentModel.appearanceSettings.backgroundOpacity)%")
+              .monospacedDigit()
+              .frame(width: 42, alignment: .trailing)
+          }
+        }
+        .disabled(!environmentModel.appearanceSettings.translucentModeEnabled)
+
+        if !appearancePresentation.translucentModeIsAvailable {
+          Text("Translucent background requires macOS 15 or newer.")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        } else if NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency,
+          environmentModel.appearanceSettings.translucentModeEnabled
+        {
+          Text("Reduced Transparency is active; a solid background is in use.")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+
+        if appearancePresentation.showsThemeMismatchWarning,
+          environmentModel.appearanceSettings.translucentModeEnabled
+        {
+          Label(
+            "The selected theme does not match the current system appearance.",
+            systemImage: "exclamationmark.triangle"
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        }
       }
 
       ModeSettingsSection(environment: environment)
+      QuickActionSettingsSection(environment: environment)
 
       Section("Math") {
         Stepper(
@@ -310,6 +408,25 @@ struct SettingsView: View {
     .frame(width: 640, height: 820)
     .onAppear { environment.settingsDidAppear() }
     .onDisappear { environment.settingsDidDisappear() }
+    .onReceive(
+      NSWorkspace.shared.notificationCenter.publisher(
+        for: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification
+      )
+    ) { _ in
+      accessibilityDisplayRevision.toggle()
+    }
+    .alert("Theme Appearance Mismatch", isPresented: $confirmsMismatchedTranslucency) {
+      Button("Cancel", role: .cancel) {}
+      Button("Enable Translucency") {
+        var settings = environmentModel.appearanceSettings
+        settings.translucentModeEnabled = true
+        Task { try? await environment.updateAppearanceSettings(settings) }
+      }
+    } message: {
+      Text(
+        "The selected theme targets a different system appearance. Preview contrast before continuing."
+      )
+    }
   }
 
   private var createsNewNoteOnLaunch: Binding<Bool> {
@@ -409,6 +526,62 @@ struct SettingsView: View {
         settings[keyPath: keyPath] = value
         Task { try? await environment.updateEditorSettings(settings) }
       }
+    )
+  }
+
+  private func appearanceBinding<Value>(
+    _ keyPath: WritableKeyPath<AppearanceSettings, Value>
+  ) -> Binding<Value> {
+    Binding(
+      get: { environmentModel.appearanceSettings[keyPath: keyPath] },
+      set: { value in
+        var settings = environmentModel.appearanceSettings
+        settings[keyPath: keyPath] = value
+        Task { try? await environment.updateAppearanceSettings(settings) }
+      }
+    )
+  }
+
+  private var translucentMode: Binding<Bool> {
+    Binding(
+      get: { environmentModel.appearanceSettings.translucentModeEnabled },
+      set: { enabled in
+        var settings = environmentModel.appearanceSettings
+        if enabled, settings.hasThemeMismatch(for: interfaceAppearance) {
+          confirmsMismatchedTranslucency = true
+          return
+        }
+        settings.translucentModeEnabled = enabled
+        Task { try? await environment.updateAppearanceSettings(settings) }
+      }
+    )
+  }
+
+  private var backgroundOpacity: Binding<Double> {
+    Binding(
+      get: { Double(environmentModel.appearanceSettings.backgroundOpacity) },
+      set: { value in
+        var settings = environmentModel.appearanceSettings
+        settings.backgroundOpacity = Int(value.rounded())
+        Task { try? await environment.updateAppearanceSettings(settings) }
+      }
+    )
+  }
+
+  private var interfaceAppearance: InterfaceAppearance {
+    colorScheme == .dark ? .dark : .light
+  }
+
+  private var appearancePresentation: AppearancePresentation {
+    _ = accessibilityDisplayRevision
+    return AppearancePresentation.resolve(
+      settings: environmentModel.appearanceSettings,
+      environment: AppearanceEnvironment(
+        operatingSystemMajorVersion: ProcessInfo.processInfo.operatingSystemVersion.majorVersion,
+        interfaceAppearance: interfaceAppearance,
+        reducesTransparency: NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency,
+        increasesContrast: NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
+      )
     )
   }
 

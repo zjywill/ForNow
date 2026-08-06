@@ -11,6 +11,20 @@ final class LaunchTests: XCTestCase {
   }
 
   @MainActor
+  func test_UIT_UI_003_AppearanceAndLongestShortcutLabelsFitSettingsWindow() {
+    let app = XCUIApplication()
+    app.launchEnvironment["FORNOW_UI_TESTING"] = "1"
+    app.launch()
+    app.typeKey(",", modifierFlags: .command)
+
+    XCTAssertTrue(
+      app.staticTexts["List spacing on blank or grid paper"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["Increase Text Size"].exists)
+    XCTAssertTrue(app.staticTexts["Text layout direction"].exists)
+    XCTAssertTrue(app.switches["Translucent background"].exists)
+  }
+
+  @MainActor
   func test_UIT_AUTO_001_CommandShowsActionableDestinationIndicator() {
     let app = XCUIApplication()
     app.launchEnvironment["FORNOW_UI_TESTING"] = "1"

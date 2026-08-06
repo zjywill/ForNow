@@ -1,5 +1,6 @@
 import AppKit
 import ForNowCore
+import ForNowDesign
 import ForNowModes
 import SwiftUI
 
@@ -36,6 +37,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
   private let navigationHandler: (@MainActor (NoteNavigationDirection) -> Void)?
   private let pasteSettings: PasteSettings
   private let editorSettings: EditorSettings
+  private let appearanceSettings: AppearanceSettings
   private let modeSettings: ModeSettings
   private let mathSettings: MathSettings
   private let currencyContext: CurrencyConversionContext
@@ -64,6 +66,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     navigationHandler = nil
     pasteSettings = PasteSettings()
     editorSettings = EditorSettings()
+    appearanceSettings = AppearanceSettings()
     modeSettings = ModeSettings()
     mathSettings = MathSettings()
     currencyContext = CurrencyConversionContext()
@@ -90,6 +93,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     navigationEntryToken: UInt64,
     pasteSettings: PasteSettings,
     editorSettings: EditorSettings = EditorSettings(),
+    appearanceSettings: AppearanceSettings = AppearanceSettings(),
     modeSettings: ModeSettings = ModeSettings(),
     mathSettings: MathSettings = MathSettings(),
     currencyContext: CurrencyConversionContext = CurrencyConversionContext(),
@@ -118,6 +122,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     self.navigationEntryToken = navigationEntryToken
     self.pasteSettings = pasteSettings
     self.editorSettings = editorSettings
+    self.appearanceSettings = appearanceSettings
     self.modeSettings = modeSettings
     self.mathSettings = mathSettings
     self.currencyContext = currencyContext
@@ -143,6 +148,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     let container = ProjectionEditorContainer(
       initialText: sourceText,
       editorSettings: editorSettings,
+      appearanceSettings: appearanceSettings,
       modeSettings: modeSettings,
       mathSettings: mathSettings,
       currencyContext: currencyContext
@@ -182,6 +188,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     nsView.navigationHandler = navigationHandler
     nsView.pasteSettings = pasteSettings
     nsView.editorSettings = editorSettings
+    nsView.appearanceSettings = appearanceSettings
     nsView.modeSettings = modeSettings
     nsView.mathSettings = mathSettings
     nsView.currencyContext = currencyContext
@@ -222,6 +229,13 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       } else {
         scheduleAdornmentRefresh()
       }
+      applyAppearance()
+    }
+  }
+  public var appearanceSettings: AppearanceSettings {
+    didSet {
+      guard appearanceSettings != oldValue else { return }
+      applyAppearance()
     }
   }
   public var modeSettings: ModeSettings {
@@ -233,6 +247,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
         scheduleAdornmentRefresh()
       }
       refreshVariableAutocomplete()
+      applyAppearance()
     }
   }
   public var mathSettings: MathSettings {
@@ -284,6 +299,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   public var pasteboardDidWrite: (@MainActor () -> Void)?
 
   private let scrollView = NSScrollView()
+  private let materialView = NSVisualEffectView()
+  private let paperBackgroundView = PaperBackgroundView()
   private var parsePipeline: ProjectionParsePipeline
   private let followsEditorSettingsInParser: Bool
   private let copyPolicy = ProjectionCopyPolicy()
@@ -312,10 +329,20 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   private var suppressedVariableAutocompleteSelection: NSRange?
   private var pendingTimerSingleClickTask: Task<Void, Never>?
   private var shownTimerTutorialVersion: UInt64?
+  public private(set) var currentAppearancePresentation = AppearancePresentation.resolve(
+    settings: AppearanceSettings(),
+    environment: AppearanceEnvironment(
+      operatingSystemMajorVersion: 14,
+      interfaceAppearance: .light,
+      reducesTransparency: false,
+      increasesContrast: false
+    )
+  )
 
   public init(
     initialText: String,
     editorSettings: EditorSettings = EditorSettings(),
+    appearanceSettings: AppearanceSettings = AppearanceSettings(),
     modeSettings: ModeSettings = ModeSettings(),
     mathSettings: MathSettings = MathSettings(),
     currencyContext: CurrencyConversionContext = CurrencyConversionContext(),
@@ -325,6 +352,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     let textView = ProjectionTextView(usingTextLayoutManager: true)
     self.textView = textView
     self.editorSettings = editorSettings
+    self.appearanceSettings = appearanceSettings
     self.modeSettings = modeSettings
     self.mathSettings = mathSettings
     self.currencyContext = currencyContext
@@ -346,7 +374,13 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     super.init(frame: .zero)
 
     wantsLayer = true
-    layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
+
+    materialView.blendingMode = .behindWindow
+    materialView.material = .underWindowBackground
+    materialView.state = .active
+    materialView.isHidden = true
+    addSubview(materialView)
+    addSubview(paperBackgroundView)
 
     scrollView.drawsBackground = false
     scrollView.hasVerticalScroller = true
@@ -367,9 +401,10 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     textView.isAutomaticDashSubstitutionEnabled = false
     textView.drawsBackground = false
     textView.textContainerInset = NSSize(width: 24, height: 24)
-    textView.font = .systemFont(ofSize: 18, weight: .regular)
-    textView.textColor = .textColor
-    textView.insertionPointColor = .controlAccentColor
+    textView.font = .systemFont(
+      ofSize: CGFloat(appearanceSettings.effectiveTextSize),
+      weight: .regular
+    )
     textView.isVerticallyResizable = true
     textView.isHorizontallyResizable = false
     textView.autoresizingMask = [.width]
@@ -447,7 +482,14 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       name: NSView.boundsDidChangeNotification,
       object: scrollView.contentView
     )
+    NSWorkspace.shared.notificationCenter.addObserver(
+      self,
+      selector: #selector(accessibilityDisplayOptionsDidChange(_:)),
+      name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+      object: nil
+    )
 
+    applyAppearance()
     scheduleProjectionParse()
     scheduleAdornmentRefresh()
   }
@@ -460,6 +502,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       await parsePipeline.cancel()
     }
     NotificationCenter.default.removeObserver(self)
+    NSWorkspace.shared.notificationCenter.removeObserver(self)
   }
 
   @available(*, unavailable)
@@ -469,6 +512,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
 
   public override func layout() {
     super.layout()
+    materialView.frame = bounds
+    paperBackgroundView.frame = bounds
     scrollView.frame = bounds
     let contentSize = scrollView.contentSize
     textView.frame.size.width = contentSize.width
@@ -482,12 +527,19 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   public override func viewDidMoveToWindow() {
     super.viewDidMoveToWindow()
     guard let window else { return }
+    applyAppearance()
     window.makeFirstResponder(textView)
     scheduleAdornmentRefresh()
   }
 
+  public override func viewDidChangeEffectiveAppearance() {
+    super.viewDidChangeEffectiveAppearance()
+    applyAppearance()
+  }
+
   public func textDidChange(_ notification: Notification) {
     snapshot = SourceSnapshot(version: snapshot.version + 1, text: textView.string)
+    applyAppearance()
     scheduleProjectionParse()
     sourceDidChange?(textView.string, textView.hasMarkedText())
     reportViewportChange()
@@ -511,6 +563,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     textView.setSelectedRange(
       snapshot.clamped(SourceSelection(range: SourceRange(selectedRange))).range.nsRange)
     textView.undoManager?.removeAllActions()
+    applyAppearance()
     scheduleAdornmentRefresh()
     refreshVariableAutocomplete()
   }
@@ -830,8 +883,92 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   }
 
   @objc private func scrollBoundsDidChange(_ notification: Notification) {
+    paperBackgroundView.verticalScrollOffset = scrollView.contentView.bounds.origin.y
     reportViewportChange()
     positionVariableAutocompletePanel()
+  }
+
+  @objc private func accessibilityDisplayOptionsDidChange(_ notification: Notification) {
+    applyAppearance()
+  }
+
+  private func applyAppearance() {
+    let interfaceAppearance: InterfaceAppearance =
+      effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+      ? .dark : .light
+    let environment = AppearanceEnvironment(
+      operatingSystemMajorVersion: ProcessInfo.processInfo.operatingSystemVersion.majorVersion,
+      interfaceAppearance: interfaceAppearance,
+      reducesTransparency: NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency,
+      increasesContrast: NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
+    )
+    let presentation = AppearancePresentation.resolve(
+      settings: appearanceSettings,
+      environment: environment
+    )
+    currentAppearancePresentation = presentation
+
+    materialView.isHidden = !presentation.usesTranslucentMaterial
+    paperBackgroundView.settings = appearanceSettings
+    paperBackgroundView.presentation = presentation
+    paperBackgroundView.verticalScrollOffset = scrollView.contentView.bounds.origin.y
+
+    let font = NSFont.systemFont(
+      ofSize: CGFloat(appearanceSettings.effectiveTextSize),
+      weight: .regular
+    )
+    let isListMode =
+      ModeHeaderParser(settings: modeSettings).parse(in: snapshot.text)?.modeID == .list
+    let paragraph = NSMutableParagraphStyle()
+    paragraph.lineSpacing =
+      isListMode ? CGFloat(appearanceSettings.effectiveListSpacing.points) : 0
+    switch editorSettings.layoutDirection {
+    case .natural:
+      paragraph.baseWritingDirection = .natural
+      paragraph.alignment = .natural
+    case .leftToRight:
+      paragraph.baseWritingDirection = .leftToRight
+      paragraph.alignment = .left
+    case .rightToLeft:
+      paragraph.baseWritingDirection = .rightToLeft
+      paragraph.alignment = .right
+    }
+
+    textView.font = font
+    textView.textColor = presentation.theme.primaryText.nsColor
+    textView.insertionPointColor = presentation.theme.accent.nsColor
+    textView.baseWritingDirection = paragraph.baseWritingDirection
+    textView.alignment = paragraph.alignment
+    textView.defaultParagraphStyle = paragraph
+    textView.typingAttributes = [
+      .font: font,
+      .foregroundColor: presentation.theme.primaryText.nsColor,
+      .paragraphStyle: paragraph,
+    ]
+    textView.selectedTextAttributes = [
+      .backgroundColor: presentation.theme.selection.nsColor,
+      .foregroundColor: presentation.theme.primaryText.nsColor,
+    ]
+
+    if let layoutManager = textView.layoutManager, snapshot.utf16Count > 0 {
+      let fullRange = NSRange(location: 0, length: snapshot.utf16Count)
+      layoutManager.removeTemporaryAttribute(.paragraphStyle, forCharacterRange: fullRange)
+      layoutManager.addTemporaryAttribute(
+        .paragraphStyle,
+        value: paragraph,
+        forCharacterRange: fullRange
+      )
+    }
+    paperBackgroundView.lineHeight = textView.layoutManager?.defaultLineHeight(for: font) ?? 22
+
+    layer?.borderWidth = presentation.drawsContrastBorder ? 1 : 0
+    layer?.borderColor = presentation.theme.primaryText.nsColor.cgColor
+    if let window {
+      window.isOpaque = !presentation.usesTranslucentMaterial
+      window.backgroundColor =
+        presentation.usesTranslucentMaterial ? .clear : presentation.theme.canvas.nsColor
+    }
+    scheduleAdornmentRefresh()
   }
 
   private func handleVariableAutocompleteKey(_ key: EditorVariableAutocompleteKey) -> Bool {
@@ -1053,10 +1190,11 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     guard utf16Offset >= 0, utf16Offset < snapshot.utf16Count,
       let layoutManager = textView.layoutManager
     else { return false }
-    return !layoutManager.temporaryAttributes(
+    let attributes = layoutManager.temporaryAttributes(
       atCharacterIndex: utf16Offset,
       effectiveRange: nil
-    ).isEmpty
+    )
+    return Self.presentationAttributeKeys.contains { attributes[$0] != nil }
   }
 
   private func refreshPresentationStyles() {
@@ -1082,8 +1220,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     let baseSize = textView.font?.pointSize ?? 18
     switch style {
     case .heading(let level):
-      let headingSizes: [Int: CGFloat] = [1: 26, 2: 22, 3: 20]
-      let size = max(baseSize, headingSizes[level] ?? baseSize)
+      let headingScale: [Int: CGFloat] = [1: 1.44, 2: 1.22, 3: 1.11]
+      let size = baseSize * (headingScale[level] ?? 1)
       return [.font: NSFont.systemFont(ofSize: size, weight: .semibold)]
     case .bold:
       return [.font: NSFont.systemFont(ofSize: baseSize, weight: .semibold)]
@@ -1385,7 +1523,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     view.setAccessibilityElement(true)
     view.setAccessibilityRole(view.kind == .checkbox ? .checkBox : .button)
     view.wantsLayer = true
-    view.layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
+    view.layer?.backgroundColor = currentAppearancePresentation.theme.canvas.nsColor.cgColor
     view.layer?.cornerRadius = 3
     view.frame = decorationAccessibilityContainer.convert(view.frame, from: textView)
     decorationAccessibilityContainer.addSubview(view)

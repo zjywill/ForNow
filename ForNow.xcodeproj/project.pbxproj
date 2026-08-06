@@ -20,7 +20,7 @@
 		1F742C1A2932ED30288F47E1 /* DeleteConfirmationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E66ADFC63F4CE218733F734 /* DeleteConfirmationCoordinator.swift */; };
 		209C4BB78932FB59EB721A7F /* TimerModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60EFF7C10ED7CB8644B7C0FE /* TimerModel.swift */; };
 		22A02A581FD66F6688DDC161 /* PasteSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B5AB93D61A3D40ADC4367E /* PasteSettingsStore.swift */; };
-		23494DCE15F89633C3FB9E70 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 10C50E7BB046823827B9944D /* ForNowEditor */; };
+		23494DCE15F89633C3FB9E70 /* ForNowDesign in Frameworks */ = {isa = PBXBuildFile; productRef = 7848BA0A913AAA53447E41BA /* ForNowDesign */; };
 		26280CA93077F3084517CE18 /* WindowSpikeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FA72D4F7F50CA99AF2C040A /* WindowSpikeApp.swift */; };
 		2722837775B6F49954182DDB /* AutoPasteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2CA7680A70A1038AAFCF7DF /* AutoPasteModel.swift */; };
 		2916B42069F9EB0AAE07461B /* TimerCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DA7B4A656A5E3C1FF041C2 /* TimerCommandTests.swift */; };
@@ -53,7 +53,7 @@
 		83F5F831C0BD1BBC5D95ED36 /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = 2B346C0BEF96BDD33FE254EE /* ForNowModes */; };
 		8ECFECD7FF6D045A6C7C61E8 /* NoteSearchCommandField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D836B85142E1E57CF91C56C /* NoteSearchCommandField.swift */; };
 		8FDAA27E39F02D9B5BAAA45A /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = B2C57FEBCEDD2D3D97C98DF2 /* ForNowModes */; };
-		935F01A5C14AF23C1F07F860 /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = 5FC21902EC19F9368EBA03FC /* ForNowModes */; };
+		935F01A5C14AF23C1F07F860 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 513B5134E6E851F57B40AD1C /* ForNowEditor */; };
 		94ADAEAE254A7DAC8D9CEFB1 /* AppEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD684849F0B4AF4F2ED08A8 /* AppEnvironmentTests.swift */; };
 		9788CA52644FC3CB082195CD /* NoteSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F20FA6B77512A8CF47A443 /* NoteSearchTests.swift */; };
 		98BFE0DD0AD9A112980EAED2 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = E151023F9DD937DEEA29FCBD /* ForNowEditor */; };
@@ -61,24 +61,28 @@
 		9EA620282FBD88B39991686B /* ForNowCore in Frameworks */ = {isa = PBXBuildFile; productRef = 12AE0A4E77E164D781F72968 /* ForNowCore */; };
 		A26A485EF9DF57AEBDDB6A8C /* NoteLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C165CAC35383E2282C38E89 /* NoteLifecycleTests.swift */; };
 		A2A5C21DED243C3A94971DE1 /* LinkProjectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E994064F4A5A0F52432D6622 /* LinkProjectionTests.swift */; };
+		A45B014D50B60B416907A6E4 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 10C50E7BB046823827B9944D /* ForNowEditor */; };
 		AB1FE9BB36E7BCDC7BCC64BA /* OCRWorkflowModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B071FC5E43AD06C5674C31 /* OCRWorkflowModel.swift */; };
 		ADC48D945E9B40AC6130DD55 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C77F87198C8F21290CAA8B /* SettingsView.swift */; };
 		B323AA1A3147C095AE9871EC /* WindowSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E8EC15FD34128A7A307DA7 /* WindowSettingsStore.swift */; };
 		B4ED6B5A67A7096923F67A2F /* ModeSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36344F389ADCEA8E66038F5 /* ModeSettingsStore.swift */; };
 		B6F771A516FC86F6EA9B137E /* TimerClockScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B39ADAC3F8AA7B147B85E3 /* TimerClockScenarioTests.swift */; };
-		B7908F0DB4549F615F8AE3CE /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 513B5134E6E851F57B40AD1C /* ForNowEditor */; };
+		B7908F0DB4549F615F8AE3CE /* ForNowDesign in Frameworks */ = {isa = PBXBuildFile; productRef = 596A15118ED09F9A01C4B1EA /* ForNowDesign */; };
 		B8340A8895F4E97878C6589B /* AppLifecycleLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */; };
 		B9719521E5C29150130A9DA0 /* ForNowCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD8234C3E2C1F4067349038 /* ForNowCommands.swift */; };
 		BA10B5F89DB87BF7004EAC1E /* NoteSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DFA97D5B51159A3DAA43267 /* NoteSearchModel.swift */; };
 		BA646A1F1A1D9A6A81347F1E /* ForNowApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FFDCC10F66CF5E7B05BD7F /* ForNowApp.swift */; };
 		C21237AC76C0F976B416D3E1 /* FindReplacePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF67B0A112356A91322DB90 /* FindReplacePanel.swift */; };
 		C81BFD79062C0667B0A4694F /* FindReplaceCommandField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10087CB7D1E9BA18DDFCBC2D /* FindReplaceCommandField.swift */; };
+		C9772995299B1A2AF002CFA3 /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = 5FC21902EC19F9368EBA03FC /* ForNowModes */; };
 		CC271128DA24D4D4222A3700 /* SlashCommandModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F65299AE1A7F5AEC9297AFC /* SlashCommandModel.swift */; };
 		D1B112C42E9CBB92AFF6EDC9 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = CFD60A357D79C3E1E8F91A0D /* ForNowEditor */; };
 		D4D7D01E50E814B539731D10 /* WindowSpikeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A7FDA6468F9924D976AEAB /* WindowSpikeCoordinator.swift */; };
 		D6BC1BA62814D6CC11FA16BE /* OCRSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2A89A22A28BE5EE397A3A0 /* OCRSettingsStore.swift */; };
+		D7C9269A130769EC197C1512 /* QuickActionSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C0E67F22A7DBC6FA9692AF /* QuickActionSettingsSection.swift */; };
 		D97C5FCDB63E84658B42103A /* LaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62CB4F6D0A139B41E33B6E72 /* LaunchTests.swift */; };
 		DA53218D327E476E632F29C7 /* FindReplaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 815E92B8F3AA85DCB5AC5FF3 /* FindReplaceModel.swift */; };
+		DB9C4DA44507522D65E674FF /* AppearanceAndShortcutSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F1900907061BFE3D41CB47 /* AppearanceAndShortcutSettingsTests.swift */; };
 		DC8ADDFDAEB6E2EE7B8BA9DD /* ForNowPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = 6A4BD312DCBD0DC0A816D501 /* ForNowPersistence */; };
 		DD91BEBFEC37B0B6308BCB33 /* EditorProjectionSpikeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868DCA96283961231D520080 /* EditorProjectionSpikeTests.swift */; };
 		DF6AF7E2A723FD7DCAA7C7FF /* EditorProjectionSpikeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 081076A32DC69EB32C11040E /* EditorProjectionSpikeApp.swift */; };
@@ -87,7 +91,10 @@
 		E8C31C6E7922930DDED1639C /* AggregateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9537F98901A9E534B5D68C56 /* AggregateTests.swift */; };
 		E973CA2769C90B8F8DBF474A /* NoteSearchAccessibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E166CC2086118670A574904C /* NoteSearchAccessibilityView.swift */; };
 		F3EB6790ED931B38F9185E72 /* ConversionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4485A7278FD702CFC67FC31F /* ConversionTests.swift */; };
+		F6ACFA5738265ACF3449D83B /* AppearanceProjectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 272A41A5C6771C38F6086BF3 /* AppearanceProjectionTests.swift */; };
 		F7E822FEE20ADB680825A51E /* NoteSessionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F73A75AB935D728C601F8E5 /* NoteSessionModel.swift */; };
+		F8542A91AF8B37B7E04381D3 /* AppearanceSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5D2F10336AEA10FBBF040E /* AppearanceSettingsStore.swift */; };
+		F8A2C4EB111E754C8FFAB65F /* QuickActionSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432A1F2F5A0AA72B8B7D2A90 /* QuickActionSettings.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -129,11 +136,14 @@
 		1FF67B0A112356A91322DB90 /* FindReplacePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindReplacePanel.swift; sourceTree = "<group>"; };
 		23B39ADAC3F8AA7B147B85E3 /* TimerClockScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerClockScenarioTests.swift; sourceTree = "<group>"; };
 		23D7D150331EF87744AECF8A /* TimerSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerSettingsStore.swift; sourceTree = "<group>"; };
+		272A41A5C6771C38F6086BF3 /* AppearanceProjectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceProjectionTests.swift; sourceTree = "<group>"; };
 		29FFDCC10F66CF5E7B05BD7F /* ForNowApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForNowApp.swift; sourceTree = "<group>"; };
+		2B5D2F10336AEA10FBBF040E /* AppearanceSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsStore.swift; sourceTree = "<group>"; };
 		2DB7E618DAE770E36D79FA9F /* ModeCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeCommandTests.swift; sourceTree = "<group>"; };
 		2F73A75AB935D728C601F8E5 /* NoteSessionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSessionModel.swift; sourceTree = "<group>"; };
 		31B071FC5E43AD06C5674C31 /* OCRWorkflowModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRWorkflowModel.swift; sourceTree = "<group>"; };
 		413C87A0021605F48BF59C9A /* ModeSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSettingsSection.swift; sourceTree = "<group>"; };
+		432A1F2F5A0AA72B8B7D2A90 /* QuickActionSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionSettings.swift; sourceTree = "<group>"; };
 		4485A7278FD702CFC67FC31F /* ConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionTests.swift; sourceTree = "<group>"; };
 		4705D258DE240F0B75C642A6 /* OCRWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRWorkflowTests.swift; sourceTree = "<group>"; };
 		49569501A5AD196581CDF5BF /* CurrencyRateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyRateTests.swift; sourceTree = "<group>"; };
@@ -156,7 +166,9 @@
 		9537F98901A9E534B5D68C56 /* AggregateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AggregateTests.swift; sourceTree = "<group>"; };
 		9E8D248FDE3CAEA55E722819 /* ForNow.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ForNow.entitlements; sourceTree = "<group>"; };
 		9F65299AE1A7F5AEC9297AFC /* SlashCommandModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlashCommandModel.swift; sourceTree = "<group>"; };
+		A0C0E67F22A7DBC6FA9692AF /* QuickActionSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionSettingsSection.swift; sourceTree = "<group>"; };
 		A2CAED8E78B690DAE43F26B2 /* EditorProjectionSpikeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EditorProjectionSpikeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2F1900907061BFE3D41CB47 /* AppearanceAndShortcutSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceAndShortcutSettingsTests.swift; sourceTree = "<group>"; };
 		A3098242836B4AF144259EF9 /* NoteNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteNavigationTests.swift; sourceTree = "<group>"; };
 		B36344F389ADCEA8E66038F5 /* ModeSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSettingsStore.swift; sourceTree = "<group>"; };
 		B6B28C4F55C1A2AEAF26F94D /* LifecycleSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleSettingsStore.swift; sourceTree = "<group>"; };
@@ -197,7 +209,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				23494DCE15F89633C3FB9E70 /* ForNowEditor in Frameworks */,
+				23494DCE15F89633C3FB9E70 /* ForNowDesign in Frameworks */,
+				A45B014D50B60B416907A6E4 /* ForNowEditor in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,8 +249,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				085AA0DB893E86753A6CDBA0 /* ForNowCore in Frameworks */,
-				B7908F0DB4549F615F8AE3CE /* ForNowEditor in Frameworks */,
-				935F01A5C14AF23C1F07F860 /* ForNowModes in Frameworks */,
+				B7908F0DB4549F615F8AE3CE /* ForNowDesign in Frameworks */,
+				935F01A5C14AF23C1F07F860 /* ForNowEditor in Frameworks */,
+				C9772995299B1A2AF002CFA3 /* ForNowModes in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,6 +279,7 @@
 			isa = PBXGroup;
 			children = (
 				F73368461C219A7EAD4F1C20 /* AppDelegate.swift */,
+				2B5D2F10336AEA10FBBF040E /* AppearanceSettingsStore.swift */,
 				F005AE8720DC3420B449FBB7 /* AppEnvironment.swift */,
 				DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */,
 				E2CA7680A70A1038AAFCF7DF /* AutoPasteModel.swift */,
@@ -291,6 +306,8 @@
 				0F2A89A22A28BE5EE397A3A0 /* OCRSettingsStore.swift */,
 				31B071FC5E43AD06C5674C31 /* OCRWorkflowModel.swift */,
 				D4B5AB93D61A3D40ADC4367E /* PasteSettingsStore.swift */,
+				432A1F2F5A0AA72B8B7D2A90 /* QuickActionSettings.swift */,
+				A0C0E67F22A7DBC6FA9692AF /* QuickActionSettingsSection.swift */,
 				08C77F87198C8F21290CAA8B /* SettingsView.swift */,
 				9F65299AE1A7F5AEC9297AFC /* SlashCommandModel.swift */,
 				E6C6677A9539A4572EFC2EC0 /* SlashCommandPanel.swift */,
@@ -318,6 +335,7 @@
 		61A3193BE3648B758241E470 /* ForNowTests */ = {
 			isa = PBXGroup;
 			children = (
+				A2F1900907061BFE3D41CB47 /* AppearanceAndShortcutSettingsTests.swift */,
 				1BD684849F0B4AF4F2ED08A8 /* AppEnvironmentTests.swift */,
 				F28AE1D2F4298E44FC6EF3E0 /* AutoPasteModelTests.swift */,
 				49569501A5AD196581CDF5BF /* CurrencyRateTests.swift */,
@@ -346,6 +364,7 @@
 			isa = PBXGroup;
 			children = (
 				9537F98901A9E534B5D68C56 /* AggregateTests.swift */,
+				272A41A5C6771C38F6086BF3 /* AppearanceProjectionTests.swift */,
 				565D5B060C062D3D6DBAC5F9 /* AutoPasteTests.swift */,
 				E9A88BF1F120F5880F72A535 /* BasicMathTests.swift */,
 				1F2B741B69F54E829AE36311 /* ClipboardProjectionTests.swift */,
@@ -469,6 +488,7 @@
 			);
 			name = EditorProjectionSpike;
 			packageProductDependencies = (
+				7848BA0A913AAA53447E41BA /* ForNowDesign */,
 				10C50E7BB046823827B9944D /* ForNowEditor */,
 			);
 			productName = EditorProjectionSpike;
@@ -489,6 +509,7 @@
 			name = EditorProjectionSpikeTests;
 			packageProductDependencies = (
 				8E5283B315AF96BE2843B6C6 /* ForNowCore */,
+				596A15118ED09F9A01C4B1EA /* ForNowDesign */,
 				513B5134E6E851F57B40AD1C /* ForNowEditor */,
 				5FC21902EC19F9368EBA03FC /* ForNowModes */,
 			);
@@ -688,6 +709,7 @@
 				39B45AAACA5E853DB76BFE20 /* AppDelegate.swift in Sources */,
 				3A6DD02D8EF0F54EA95B7EA3 /* AppEnvironment.swift in Sources */,
 				B8340A8895F4E97878C6589B /* AppLifecycleLogging.swift in Sources */,
+				F8542A91AF8B37B7E04381D3 /* AppearanceSettingsStore.swift in Sources */,
 				2722837775B6F49954182DDB /* AutoPasteModel.swift in Sources */,
 				3AB6B6C7A931E5F2CC650261 /* AutoPasteSettingsStore.swift in Sources */,
 				2A5B110B400373DBB22DF147 /* ContentView.swift in Sources */,
@@ -711,6 +733,8 @@
 				D6BC1BA62814D6CC11FA16BE /* OCRSettingsStore.swift in Sources */,
 				AB1FE9BB36E7BCDC7BCC64BA /* OCRWorkflowModel.swift in Sources */,
 				22A02A581FD66F6688DDC161 /* PasteSettingsStore.swift in Sources */,
+				F8A2C4EB111E754C8FFAB65F /* QuickActionSettings.swift in Sources */,
+				D7C9269A130769EC197C1512 /* QuickActionSettingsSection.swift in Sources */,
 				ADC48D945E9B40AC6130DD55 /* SettingsView.swift in Sources */,
 				CC271128DA24D4D4222A3700 /* SlashCommandModel.swift in Sources */,
 				2BD4945493E7650A81534E1F /* SlashCommandPanel.swift in Sources */,
@@ -725,6 +749,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				94ADAEAE254A7DAC8D9CEFB1 /* AppEnvironmentTests.swift in Sources */,
+				DB9C4DA44507522D65E674FF /* AppearanceAndShortcutSettingsTests.swift in Sources */,
 				51E1F9E4CEAA0A9DD813C9A4 /* AutoPasteModelTests.swift in Sources */,
 				E203F4977C8DB2F4014F70E2 /* CurrencyRateTests.swift in Sources */,
 				00C449660D932AB0E4C7D168 /* FindReplaceModelTests.swift in Sources */,
@@ -770,6 +795,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E8C31C6E7922930DDED1639C /* AggregateTests.swift in Sources */,
+				F6ACFA5738265ACF3449D83B /* AppearanceProjectionTests.swift in Sources */,
 				4BD28BA61B50973A41652B3F /* AutoPasteTests.swift in Sources */,
 				2E9A386ED5ABB6FA3E544D00 /* BasicMathTests.swift in Sources */,
 				69DCD06192AC7A0A196EFDC1 /* ClipboardProjectionTests.swift in Sources */,
@@ -1372,6 +1398,10 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = ForNowEditor;
 		};
+		596A15118ED09F9A01C4B1EA /* ForNowDesign */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ForNowDesign;
+		};
 		5FC21902EC19F9368EBA03FC /* ForNowModes */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ForNowModes;
@@ -1381,6 +1411,10 @@
 			productName = ForNowPersistence;
 		};
 		6BA26A20526ADBC3AF9C7F5E /* ForNowDesign */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ForNowDesign;
+		};
+		7848BA0A913AAA53447E41BA /* ForNowDesign */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ForNowDesign;
 		};

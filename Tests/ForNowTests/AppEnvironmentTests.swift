@@ -311,7 +311,7 @@ final class AppEnvironmentTests: XCTestCase {
     )
     try await store.save(migrated)
     let saved = try XCTUnwrap(defaults.data(forKey: "app.fornow.editor.settings.v1"))
-    XCTAssertTrue(String(decoding: saved, as: UTF8.self).contains("\"version\":3"))
+    XCTAssertTrue(String(decoding: saved, as: UTF8.self).contains("\"version\":4"))
   }
 
   @MainActor

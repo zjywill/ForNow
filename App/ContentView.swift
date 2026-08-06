@@ -1,4 +1,5 @@
 import AppKit
+import ForNowDesign
 import ForNowEditor
 import ForNowWindowing
 import SwiftUI
@@ -45,6 +46,7 @@ struct ContentView: View {
           navigationEntryToken: noteSession.navigationEntryToken,
           pasteSettings: environmentModel.pasteSettings,
           editorSettings: environmentModel.editorSettings,
+          appearanceSettings: environmentModel.appearanceSettings,
           modeSettings: environmentModel.modeSettings,
           mathSettings: environmentModel.mathSettings,
           currencyContext: environmentModel.currencyConversionContext,
@@ -104,12 +106,15 @@ struct ContentView: View {
             environment.markCurrentClipboardChangeAsOwn()
           }
         )
-        .background(Color(nsColor: .textBackgroundColor))
         .overlay(alignment: .bottomTrailing) {
           if let noteCount = noteSession.visibleNoteCount {
             Text(noteCount, format: .number)
               .font(.caption.monospacedDigit())
-              .foregroundStyle(.secondary)
+              .foregroundStyle(
+                Color(
+                  nsColor: activeTheme.secondaryText.nsColor
+                )
+              )
               .padding(12)
               .accessibilityLabel("\(noteCount) notes")
           }
@@ -202,6 +207,13 @@ struct ContentView: View {
     } message: {
       Text(autoPasteModel.errorMessage ?? "The destination could not be updated.")
     }
+  }
+
+  private var activeTheme: SemanticTheme {
+    let appearance: InterfaceAppearance =
+      NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+      ? .dark : .light
+    return environmentModel.appearanceSettings.theme(for: appearance)
   }
 
   private var staleInsertionBinding: Binding<Bool> {

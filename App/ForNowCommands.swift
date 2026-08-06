@@ -2,7 +2,11 @@ import AppKit
 import SwiftUI
 
 struct ForNowCommands: Commands {
-  let environment: AppEnvironment
+  @ObservedObject private var environment: AppEnvironment
+
+  init(environment: AppEnvironment) {
+    _environment = ObservedObject(wrappedValue: environment)
+  }
 
   var body: some Commands {
     CommandGroup(after: .appSettings) {
@@ -14,7 +18,7 @@ struct ForNowCommands: Commands {
       Button("Toggle Pin") {
         Task { try? await environment.togglePin() }
       }
-      .keyboardShortcut("p", modifiers: .command)
+      .quickActionShortcut(.togglePin, settings: environment.quickActionSettings)
 
       Button("Close Window") {
         environment.closeWindow()
@@ -44,7 +48,7 @@ struct ForNowCommands: Commands {
       Button("Search Notes") {
         environment.openSearch()
       }
-      .keyboardShortcut("f", modifiers: .command)
+      .quickActionShortcut(.searchNotes, settings: environment.quickActionSettings)
 
       Button("Find and Replace") {
         environment.openFindReplace()
@@ -54,27 +58,56 @@ struct ForNowCommands: Commands {
       Button("Previous Note") {
         Task { try? await environment.noteSession.navigate(.previous) }
       }
-      .keyboardShortcut("[", modifiers: .command)
+      .quickActionShortcut(.previousNote, settings: environment.quickActionSettings)
 
       Button("Next Note") {
         Task { try? await environment.noteSession.navigate(.next) }
       }
-      .keyboardShortcut("]", modifiers: .command)
+      .quickActionShortcut(.nextNote, settings: environment.quickActionSettings)
 
       Button("Newest Note") {
         Task { try? await environment.noteSession.jumpToNewest() }
       }
-      .keyboardShortcut("1", modifiers: .command)
+      .quickActionShortcut(.newestNote, settings: environment.quickActionSettings)
+
+      Button("New Note") {
+        Task { try? await environment.noteSession.createNewNote() }
+      }
+      .quickActionShortcut(.newNote, settings: environment.quickActionSettings)
 
       Button("Promote Note") {
         Task { try? await environment.noteSession.promoteCurrent() }
       }
-      .keyboardShortcut("1", modifiers: [.command, .shift])
+      .quickActionShortcut(.promoteNote, settings: environment.quickActionSettings)
 
       Button("Delete Note") {
         Task { try? await environment.deleteCurrentNote() }
       }
-      .keyboardShortcut("d", modifiers: .command)
+      .quickActionShortcut(.deleteNote, settings: environment.quickActionSettings)
+
+      Divider()
+      Button("Increase Text Size") {
+        Task { try? await environment.stepTextSize(by: 1) }
+      }
+      .quickActionShortcut(.increaseTextSize, settings: environment.quickActionSettings)
+
+      Button("Decrease Text Size") {
+        Task { try? await environment.stepTextSize(by: -1) }
+      }
+      .quickActionShortcut(.decreaseTextSize, settings: environment.quickActionSettings)
     }
+  }
+}
+
+extension View {
+  fileprivate func quickActionShortcut(
+    _ action: QuickAction,
+    settings: QuickActionSettings
+  ) -> some View {
+    let shortcut = settings[action]
+    return keyboardShortcut(
+      shortcut.keyEquivalent,
+      modifiers: shortcut.modifiers.eventModifiers
+    )
   }
 }

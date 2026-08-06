@@ -13,7 +13,7 @@ protocol ExpandedLinkStateStoring: Sendable {
 
 actor UserDefaultsEditorSettingsStore: EditorSettingsStoring {
   private struct StoredSettings: Codable {
-    static let currentVersion = 3
+    static let currentVersion = 4
 
     let version: Int
     let settings: EditorSettings

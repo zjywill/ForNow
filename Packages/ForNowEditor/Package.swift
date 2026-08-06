@@ -8,10 +8,14 @@ let package = Package(
   products: [.library(name: "ForNowEditor", targets: ["ForNowEditor"])],
   dependencies: [
     .package(path: "../ForNowCore"),
+    .package(path: "../ForNowDesign"),
     .package(path: "../ForNowModes"),
   ],
   targets: [
-    .target(name: "ForNowEditor", dependencies: ["ForNowCore", "ForNowModes"])
+    .target(
+      name: "ForNowEditor",
+      dependencies: ["ForNowCore", "ForNowDesign", "ForNowModes"]
+    )
   ],
   swiftLanguageModes: [.v6]
 )

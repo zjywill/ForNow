@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import ForNowCore
+import ForNowDesign
 import ForNowEditor
 import ForNowIntegrations
 import ForNowModes
@@ -28,6 +29,8 @@ struct AppDependencies {
   let windowSettings: any WindowSettingsStoring
   let pasteSettings: any PasteSettingsStoring
   let editorSettings: any EditorSettingsStoring
+  let appearanceSettings: any AppearanceSettingsStoring
+  let quickActionSettings: any QuickActionSettingsStoring
   let modeSettings: any ModeSettingsStoring
   let mathSettings: any MathSettingsStoring
   let timerSettings: any TimerSettingsStoring
@@ -72,6 +75,8 @@ final class AppEnvironment: ObservableObject {
   let windowSettings: any WindowSettingsStoring
   let pasteSettingsStore: any PasteSettingsStoring
   let editorSettingsStore: any EditorSettingsStoring
+  let appearanceSettingsStore: any AppearanceSettingsStoring
+  let quickActionSettingsStore: any QuickActionSettingsStoring
   let modeSettingsStore: any ModeSettingsStoring
   let mathSettingsStore: any MathSettingsStoring
   let timerSettingsStore: any TimerSettingsStoring
@@ -91,6 +96,8 @@ final class AppEnvironment: ObservableObject {
   @Published private(set) var windowConfiguration = WindowConfiguration()
   @Published private(set) var pasteSettings = PasteSettings()
   @Published private(set) var editorSettings = EditorSettings()
+  @Published private(set) var appearanceSettings = AppearanceSettings()
+  @Published private(set) var quickActionSettings = QuickActionSettings()
   @Published private(set) var modeSettings = ModeSettings()
   @Published private(set) var mathSettings = MathSettings()
   @Published private(set) var rateSnapshot: RateSnapshot?
@@ -129,6 +136,8 @@ final class AppEnvironment: ObservableObject {
     windowSettings = dependencies.windowSettings
     pasteSettingsStore = dependencies.pasteSettings
     editorSettingsStore = dependencies.editorSettings
+    appearanceSettingsStore = dependencies.appearanceSettings
+    quickActionSettingsStore = dependencies.quickActionSettings
     modeSettingsStore = dependencies.modeSettings
     mathSettingsStore = dependencies.mathSettings
     timerSettingsStore = dependencies.timerSettings
@@ -242,6 +251,8 @@ final class AppEnvironment: ObservableObject {
         windowSettings: UserDefaultsWindowSettingsStore(),
         pasteSettings: UserDefaultsPasteSettingsStore(),
         editorSettings: UserDefaultsEditorSettingsStore(),
+        appearanceSettings: UserDefaultsAppearanceSettingsStore(),
+        quickActionSettings: UserDefaultsQuickActionSettingsStore(),
         modeSettings: UserDefaultsModeSettingsStore(),
         mathSettings: UserDefaultsMathSettingsStore(),
         timerSettings: UserDefaultsTimerSettingsStore(),
@@ -273,6 +284,8 @@ final class AppEnvironment: ObservableObject {
         windowSettings: InMemoryWindowSettingsStore(),
         pasteSettings: InMemoryPasteSettingsStore(),
         editorSettings: InMemoryEditorSettingsStore(),
+        appearanceSettings: InMemoryAppearanceSettingsStore(),
+        quickActionSettings: InMemoryQuickActionSettingsStore(),
         modeSettings: InMemoryModeSettingsStore(),
         mathSettings: InMemoryMathSettingsStore(),
         timerSettings: InMemoryTimerSettingsStore(),
@@ -311,6 +324,8 @@ final class AppEnvironment: ObservableObject {
     windowSettings: any WindowSettingsStoring = InMemoryWindowSettingsStore(),
     pasteSettings: any PasteSettingsStoring = InMemoryPasteSettingsStore(),
     editorSettings: any EditorSettingsStoring = InMemoryEditorSettingsStore(),
+    appearanceSettings: any AppearanceSettingsStoring = InMemoryAppearanceSettingsStore(),
+    quickActionSettings: any QuickActionSettingsStoring = InMemoryQuickActionSettingsStore(),
     modeSettings: any ModeSettingsStoring = InMemoryModeSettingsStore(),
     mathSettings: any MathSettingsStoring = InMemoryMathSettingsStore(),
     timerSettings: any TimerSettingsStoring = InMemoryTimerSettingsStore(),
@@ -338,6 +353,8 @@ final class AppEnvironment: ObservableObject {
         windowSettings: windowSettings,
         pasteSettings: pasteSettings,
         editorSettings: editorSettings,
+        appearanceSettings: appearanceSettings,
+        quickActionSettings: quickActionSettings,
         modeSettings: modeSettings,
         mathSettings: mathSettings,
         timerSettings: timerSettings,
@@ -360,6 +377,8 @@ final class AppEnvironment: ObservableObject {
       windowConfiguration = await windowSettings.load()
       pasteSettings = await pasteSettingsStore.load()
       editorSettings = await editorSettingsStore.load()
+      appearanceSettings = await appearanceSettingsStore.load()
+      quickActionSettings = await quickActionSettingsStore.load()
       modeSettings = await modeSettingsStore.load()
       mathSettings = await mathSettingsStore.load()
       await autoPasteModel.loadSettings()
@@ -625,6 +644,44 @@ final class AppEnvironment: ObservableObject {
     }
   }
 
+  func updateAppearanceSettings(_ settings: AppearanceSettings) async throws {
+    let previousSettings = appearanceSettings
+    var settings = settings
+    settings.normalize()
+    appearanceSettings = settings
+    do {
+      try await appearanceSettingsStore.save(settings)
+    } catch {
+      if appearanceSettings == settings {
+        appearanceSettings = previousSettings
+      }
+      throw error
+    }
+  }
+
+  func stepTextSize(by delta: Int) async throws {
+    var settings = appearanceSettings
+    settings.stepTextSize(by: delta)
+    try await updateAppearanceSettings(settings)
+  }
+
+  func updateQuickActionSettings(_ settings: QuickActionSettings) async throws {
+    try QuickActionSettingsValidator().validate(
+      settings,
+      globalInvocation: currentGlobalShortcut
+    )
+    let previousSettings = quickActionSettings
+    quickActionSettings = settings
+    do {
+      try await quickActionSettingsStore.save(settings)
+    } catch {
+      if quickActionSettings == settings {
+        quickActionSettings = previousSettings
+      }
+      throw error
+    }
+  }
+
   func updateModeSettings(_ settings: ModeSettings) async throws {
     releaseSlashCommand(restoresEditorFocus: false)
     let registry = try ModeAliasRegistry(settings: settings)
@@ -770,6 +827,15 @@ final class AppEnvironment: ObservableObject {
   func applyGlobalShortcut(
     _ candidate: GlobalShortcutCandidate
   ) -> ShortcutRegistrationResult {
+    guard
+      (try? QuickActionSettingsValidator().validate(
+        quickActionSettings,
+        globalInvocation: candidate
+      )) != nil
+    else {
+      shortcutRegistrationResult = .conflict
+      return .conflict
+    }
     let result = windowCoordinator.applyShortcut(candidate)
     currentGlobalShortcut = windowCoordinator.currentShortcut
     shortcutRegistrationResult = result

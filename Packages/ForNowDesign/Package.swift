@@ -6,6 +6,9 @@ let package = Package(
   name: "ForNowDesign",
   platforms: [.macOS(.v14)],
   products: [.library(name: "ForNowDesign", targets: ["ForNowDesign"])],
-  targets: [.target(name: "ForNowDesign")],
+  targets: [
+    .target(name: "ForNowDesign"),
+    .testTarget(name: "ForNowDesignTests", dependencies: ["ForNowDesign"]),
+  ],
   swiftLanguageModes: [.v6]
 )

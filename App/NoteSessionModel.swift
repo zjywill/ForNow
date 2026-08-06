@@ -285,6 +285,12 @@ final class NoteSessionModel: ObservableObject {
     }
   }
 
+  func createNewNote() async throws {
+    try await prepareForDeparture()
+    _ = try await repository.flush()
+    await createTransientNote(armsDirectionalEntry: true)
+  }
+
   func jumpToNewest() async throws {
     try await prepareForDeparture()
     _ = try await repository.flush()
