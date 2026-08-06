@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "category": "volume",
+  "units": [
+    {
+      "id": "liter",
+      "symbol": "L",
+      "aliases": ["l", "liter", "liters", "litre", "litres"]
+    },
+    {
+      "id": "milliliter",
+      "symbol": "mL",
+      "aliases": ["ml", "milliliter", "milliliters", "millilitre", "millilitres"]
+    },
+    {
+      "id": "cubicMeter",
+      "symbol": "m³",
+      "aliases": ["m3", "m^3", "m³", "cubic meter", "cubic meters", "cubic metre", "cubic metres"]
+    },
+    {
+      "id": "gallonUS",
+      "symbol": "gal",
+      "aliases": ["gal", "gallon", "gallons", "us gallon", "us gallons"]
+    },
+    {
+      "id": "quartUS",
+      "symbol": "qt",
+      "aliases": ["qt", "quart", "quarts", "us quart", "us quarts"]
+    },
+    {
+      "id": "pintUS",
+      "symbol": "pt",
+      "aliases": ["pt", "pint", "pints", "us pint", "us pints"]
+    },
+    {
+      "id": "cupUS",
+      "symbol": "cup",
+      "aliases": ["cup", "cups", "us cup", "us cups"]
+    },
+    {
+      "id": "fluidOunceUS",
+      "symbol": "fl oz",
+      "aliases": ["fl oz", "fluid ounce", "fluid ounces", "us fluid ounce", "us fluid ounces"]
+    }
+  ]
+}

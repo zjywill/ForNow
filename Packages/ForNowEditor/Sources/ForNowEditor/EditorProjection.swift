@@ -33,15 +33,18 @@ public struct CalculationPresentation: Sendable, Equatable {
   public let expressionText: String?
   public let canonicalValue: String
   public let displayText: String
+  public let copiedText: String
 
   public init(
     expressionText: String? = nil,
     canonicalValue: String,
-    displayText: String
+    displayText: String,
+    copiedText: String? = nil
   ) {
     self.expressionText = expressionText
     self.canonicalValue = canonicalValue
     self.displayText = displayText
+    self.copiedText = copiedText ?? canonicalValue
   }
 }
 
@@ -115,6 +118,8 @@ public struct SpikeProjectionParser: Sendable {
   private let modeSettings: ModeSettings
   private let mathSettings: MathSettings
   private let mathLocale: MathDecimalLocale
+  private let conversionCatalogs: ConversionCatalogs
+  private let currencyContext: CurrencyConversionContext
   private let syntaxHighlighter: any CodeSyntaxHighlighting
 
   public init(
@@ -122,12 +127,16 @@ public struct SpikeProjectionParser: Sendable {
     modeSettings: ModeSettings = ModeSettings(),
     mathSettings: MathSettings = MathSettings(),
     mathLocale: MathDecimalLocale = MathDecimalLocale(),
+    conversionCatalogs: ConversionCatalogs = .bundled,
+    currencyContext: CurrencyConversionContext = CurrencyConversionContext(),
     syntaxHighlighter: any CodeSyntaxHighlighting = BuiltInCodeSyntaxHighlighter()
   ) {
     self.editorSettings = editorSettings
     self.modeSettings = modeSettings
     self.mathSettings = mathSettings
     self.mathLocale = mathLocale
+    self.conversionCatalogs = conversionCatalogs
+    self.currencyContext = currencyContext
     self.syntaxHighlighter = syntaxHighlighter
   }
 
@@ -291,7 +300,9 @@ public struct SpikeProjectionParser: Sendable {
     let parser = BasicMathDocumentParser(
       mathSettings: mathSettings,
       modeSettings: modeSettings,
-      locale: mathLocale
+      locale: mathLocale,
+      conversionCatalogs: conversionCatalogs,
+      currencyContext: currencyContext
     )
     if checksCancellation {
       evaluations = try parser.parseCancellable(in: text)
@@ -312,7 +323,8 @@ public struct SpikeProjectionParser: Sendable {
             presentation: CalculationPresentation(
               expressionText: (text as NSString).substring(with: result.expressionRange),
               canonicalValue: result.canonicalValue,
-              displayText: result.displayText
+              displayText: result.displayText,
+              copiedText: result.copiedText
             )
           )
         )

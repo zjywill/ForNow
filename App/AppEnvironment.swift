@@ -20,6 +20,7 @@ struct AppDependencies {
   let ocr: any OCRService
   let notifications: any NotificationService
   let rateProvider: any CurrencyRateProvider
+  let rateCache: any CurrencyRateCaching
   let lifecycleSettings: any LifecycleSettingsStoring
   let windowSettings: any WindowSettingsStoring
   let pasteSettings: any PasteSettingsStoring
@@ -58,6 +59,7 @@ final class AppEnvironment: ObservableObject {
   let ocr: any OCRService
   let notifications: any NotificationService
   let rateProvider: any CurrencyRateProvider
+  let rateCache: any CurrencyRateCaching
   let lifecycleSettings: any LifecycleSettingsStoring
   let windowSettings: any WindowSettingsStoring
   let pasteSettingsStore: any PasteSettingsStoring
@@ -71,12 +73,15 @@ final class AppEnvironment: ObservableObject {
   let findReplace: FindReplaceModel
   let slashCommand: SlashCommandModel
   let deleteConfirmationCoordinator: DeleteConfirmationCoordinator
+  private let currencyRateCoordinator: CurrencyRateRefreshCoordinator
 
   @Published private(set) var windowConfiguration = WindowConfiguration()
   @Published private(set) var pasteSettings = PasteSettings()
   @Published private(set) var editorSettings = EditorSettings()
   @Published private(set) var modeSettings = ModeSettings()
   @Published private(set) var mathSettings = MathSettings()
+  @Published private(set) var rateSnapshot: RateSnapshot?
+  @Published private(set) var currencyRateRefreshState = CurrencyRateRefreshState.idle
   @Published private(set) var expandedLinkState: [UUID: Set<LinkIdentity>] = [:]
   @Published private(set) var currentGlobalShortcut = GlobalShortcutCandidate.optionA
   @Published private(set) var shortcutRegistrationResult: ShortcutRegistrationResult = .accepted
@@ -90,6 +95,7 @@ final class AppEnvironment: ObservableObject {
   private var searchSuspension: AutoHideSuspension?
   private var findReplaceSuspension: AutoHideSuspension?
   private var slashCommandSuspension: AutoHideSuspension?
+  private var automaticCurrencyRefreshTask: Task<Void, Never>?
 
   init(variant: AppEnvironmentVariant, dependencies: AppDependencies) {
     self.variant = variant
@@ -102,6 +108,7 @@ final class AppEnvironment: ObservableObject {
     ocr = dependencies.ocr
     notifications = dependencies.notifications
     rateProvider = dependencies.rateProvider
+    rateCache = dependencies.rateCache
     lifecycleSettings = dependencies.lifecycleSettings
     windowSettings = dependencies.windowSettings
     pasteSettingsStore = dependencies.pasteSettings
@@ -110,6 +117,11 @@ final class AppEnvironment: ObservableObject {
     mathSettingsStore = dependencies.mathSettings
     expandedLinkStateStore = dependencies.expandedLinkState
     logger = dependencies.logger
+    currencyRateCoordinator = CurrencyRateRefreshCoordinator(
+      provider: dependencies.rateProvider,
+      cache: dependencies.rateCache,
+      clock: dependencies.clock
+    )
     let noteSession = NoteSessionModel(
       repository: dependencies.repository,
       clock: dependencies.clock,
@@ -153,6 +165,7 @@ final class AppEnvironment: ObservableObject {
 
   static func production(fileManager: FileManager = .default) -> AppEnvironment {
     let paths = ProductionPaths.standard(fileManager: fileManager)
+    let rateCache = UserDefaultsCurrencyRateCache()
     return AppEnvironment(
       variant: .production,
       dependencies: AppDependencies(
@@ -167,7 +180,11 @@ final class AppEnvironment: ObservableObject {
         clipboard: DisabledClipboardService(),
         ocr: VisionOCRService(),
         notifications: UserNotificationService(),
-        rateProvider: DisabledCurrencyRateProvider(),
+        rateProvider: CachedCurrencyRateProvider(
+          upstream: ECBCurrencyRateProvider(),
+          cache: rateCache
+        ),
+        rateCache: rateCache,
         lifecycleSettings: UserDefaultsLifecycleSettingsStore(),
         windowSettings: UserDefaultsWindowSettingsStore(),
         pasteSettings: UserDefaultsPasteSettingsStore(),
@@ -193,6 +210,7 @@ final class AppEnvironment: ObservableObject {
         ocr: UnavailableOCRService(),
         notifications: DisabledNotificationService(),
         rateProvider: DisabledCurrencyRateProvider(),
+        rateCache: InMemoryCurrencyRateCache(),
         lifecycleSettings: InMemoryLifecycleSettingsStore(),
         windowSettings: InMemoryWindowSettingsStore(),
         pasteSettings: InMemoryPasteSettingsStore(),
@@ -215,6 +233,7 @@ final class AppEnvironment: ObservableObject {
     ocr: any OCRService = UnavailableOCRService(),
     notifications: any NotificationService = DisabledNotificationService(),
     rateProvider: any CurrencyRateProvider = DisabledCurrencyRateProvider(),
+    rateCache: any CurrencyRateCaching = InMemoryCurrencyRateCache(),
     lifecycleSettings: any LifecycleSettingsStoring = InMemoryLifecycleSettingsStore(),
     windowSettings: any WindowSettingsStoring = InMemoryWindowSettingsStore(),
     pasteSettings: any PasteSettingsStoring = InMemoryPasteSettingsStore(),
@@ -236,6 +255,7 @@ final class AppEnvironment: ObservableObject {
         ocr: ocr,
         notifications: notifications,
         rateProvider: rateProvider,
+        rateCache: rateCache,
         lifecycleSettings: lifecycleSettings,
         windowSettings: windowSettings,
         pasteSettings: pasteSettings,
@@ -262,6 +282,10 @@ final class AppEnvironment: ObservableObject {
       editorSettings = await editorSettingsStore.load()
       modeSettings = await modeSettingsStore.load()
       mathSettings = await mathSettingsStore.load()
+      rateSnapshot = await currencyRateCoordinator.cachedSnapshot(
+        base: mathSettings.primaryCurrency
+      )
+      currencyRateRefreshState = rateSnapshot == nil ? .idle : .current
       try await noteSession.updateMeaningfulContentPolicy(
         meaningfulContentPolicy(for: modeSettings)
       )
@@ -282,6 +306,7 @@ final class AppEnvironment: ObservableObject {
       await logger.record(.serviceStarted(.windowCoordinator))
       state = .running
       await logger.record(.startupCompleted)
+      scheduleAutomaticCurrencyRefreshIfNeeded()
     } catch {
       state = .failed
       await logger.record(.startupFailed)
@@ -293,6 +318,10 @@ final class AppEnvironment: ObservableObject {
     guard state != .stopping, state != .stopped else { return }
     state = .stopping
     await logger.record(.shutdownBegan)
+
+    automaticCurrencyRefreshTask?.cancel()
+    await automaticCurrencyRefreshTask?.value
+    automaticCurrencyRefreshTask = nil
 
     var firstError: (any Error)?
     releaseSearch(restoresEditorFocus: false)
@@ -486,14 +515,75 @@ final class AppEnvironment: ObservableObject {
 
   func updateMathSettings(_ settings: MathSettings) async throws {
     let previousSettings = mathSettings
+    let settings = try settings.validated()
     mathSettings = settings
     do {
       try await mathSettingsStore.save(settings)
+      if settings.primaryCurrency != previousSettings.primaryCurrency {
+        rateSnapshot = await currencyRateCoordinator.cachedSnapshot(
+          base: settings.primaryCurrency
+        )
+        currencyRateRefreshState = rateSnapshot == nil ? .idle : .current
+      }
+      if settings.automaticCurrencyRefreshEnabled,
+        !previousSettings.automaticCurrencyRefreshEnabled
+          || settings.primaryCurrency != previousSettings.primaryCurrency
+      {
+        await refreshCurrencyRates(automatic: true)
+      }
     } catch {
       if mathSettings == settings {
         mathSettings = previousSettings
       }
       throw error
+    }
+  }
+
+  var currencyConversionContext: CurrencyConversionContext {
+    CurrencyConversionContext(
+      rateSnapshot: rateSnapshot,
+      evaluationDate: clock.now()
+    )
+  }
+
+  func refreshCurrencyRatesManually() async {
+    await refreshCurrencyRates(automatic: false)
+  }
+
+  func waitForPendingCurrencyRefresh() async {
+    await automaticCurrencyRefreshTask?.value
+  }
+
+  private func scheduleAutomaticCurrencyRefreshIfNeeded() {
+    guard mathSettings.automaticCurrencyRefreshEnabled else { return }
+    automaticCurrencyRefreshTask?.cancel()
+    automaticCurrencyRefreshTask = Task { [weak self] in
+      await self?.refreshCurrencyRates(automatic: true)
+    }
+  }
+
+  private func refreshCurrencyRates(automatic: Bool) async {
+    let previousState = currencyRateRefreshState
+    currencyRateRefreshState = .refreshing
+    do {
+      switch try await currencyRateCoordinator.refresh(
+        base: mathSettings.primaryCurrency,
+        automatic: automatic
+      ) {
+      case .skipped(let cached):
+        rateSnapshot = cached ?? rateSnapshot
+        currencyRateRefreshState = rateSnapshot == nil ? previousState : .current
+      case .updated(let snapshot):
+        rateSnapshot = snapshot
+        currencyRateRefreshState = .current
+      case .failed(let cached):
+        rateSnapshot = cached ?? rateSnapshot
+        currencyRateRefreshState = .failed
+      }
+    } catch is CancellationError {
+      currencyRateRefreshState = previousState
+    } catch {
+      currencyRateRefreshState = .failed
     }
   }
 

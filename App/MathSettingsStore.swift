@@ -8,7 +8,7 @@ protocol MathSettingsStoring: Sendable {
 
 actor UserDefaultsMathSettingsStore: MathSettingsStoring {
   private struct StoredSettings: Codable {
-    static let currentVersion = 1
+    static let currentVersion = 2
 
     let version: Int
     let settings: MathSettings
@@ -34,16 +34,23 @@ actor UserDefaultsMathSettingsStore: MathSettingsStoring {
     guard
       let data = defaults.data(forKey: Key.settings),
       let stored = try? decoder.decode(StoredSettings.self, from: data),
-      stored.version == StoredSettings.currentVersion,
+      (1...StoredSettings.currentVersion).contains(stored.version),
       (try? stored.settings.validated()) != nil
     else {
       return MathSettings()
+    }
+    if stored.version < StoredSettings.currentVersion {
+      try? persist(stored.settings)
     }
     return stored.settings
   }
 
   func save(_ settings: MathSettings) throws {
     _ = try settings.validated()
+    try persist(settings)
+  }
+
+  private func persist(_ settings: MathSettings) throws {
     defaults.set(
       try encoder.encode(
         StoredSettings(version: StoredSettings.currentVersion, settings: settings)

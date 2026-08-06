@@ -9,6 +9,12 @@ let package = Package(
   dependencies: [
     .package(path: "../ForNowCore")
   ],
-  targets: [.target(name: "ForNowModes", dependencies: ["ForNowCore"])],
+  targets: [
+    .target(
+      name: "ForNowModes",
+      dependencies: ["ForNowCore"],
+      resources: [.process("Resources")]
+    )
+  ],
   swiftLanguageModes: [.v6]
 )

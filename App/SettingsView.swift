@@ -10,6 +10,9 @@ struct SettingsView: View {
 
   @ObservedObject private var noteSession: NoteSessionModel
   @ObservedObject private var environmentModel: AppEnvironment
+  @State private var newCustomRateSource = CurrencyCode(rawValue: "USD")
+  @State private var newCustomRateTarget = CurrencyCode(rawValue: "EUR")
+  @State private var newCustomRateValue = "1"
 
   init(environment: AppEnvironment) {
     self.environment = environment
@@ -133,6 +136,85 @@ struct SettingsView: View {
           "Separate thousands",
           isOn: mathBinding(\.separatesThousands)
         )
+        Picker("Primary currency", selection: mathBinding(\.primaryCurrency)) {
+          ForEach(currencyDefinitions) { currency in
+            Text("\(currency.code.rawValue) - \(currency.name)").tag(currency.code)
+          }
+        }
+        Picker("Secondary currency", selection: mathBinding(\.secondaryCurrency)) {
+          ForEach(currencyDefinitions) { currency in
+            Text("\(currency.code.rawValue) - \(currency.name)").tag(currency.code)
+          }
+        }
+        TextField(
+          "Primary symbol",
+          text: mathBinding(\.primaryCurrencySymbol)
+        )
+        Toggle(
+          "Refresh currency rates daily",
+          isOn: mathBinding(\.automaticCurrencyRefreshEnabled)
+        )
+        HStack {
+          Text(currencyRateStatusText)
+            .foregroundStyle(.secondary)
+          Spacer()
+          if environmentModel.currencyRateRefreshState == .refreshing {
+            ProgressView()
+              .controlSize(.small)
+          }
+          Button {
+            Task { await environment.refreshCurrencyRatesManually() }
+          } label: {
+            Image(systemName: "arrow.clockwise")
+          }
+          .disabled(environmentModel.currencyRateRefreshState == .refreshing)
+          .help("Refresh Currency Rates")
+          .accessibilityLabel("Refresh Currency Rates")
+        }
+
+        ForEach(environmentModel.mathSettings.customCurrencyRates) { rate in
+          HStack {
+            Text("\(rate.source.rawValue) to \(rate.target.rawValue)")
+              .frame(width: 96, alignment: .leading)
+            TextField("Rate", text: customRateBinding(rate))
+              .textFieldStyle(.roundedBorder)
+            Button {
+              deleteCustomRate(rate)
+            } label: {
+              Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+            .help("Delete Custom Rate")
+            .accessibilityLabel("Delete Custom Rate")
+          }
+        }
+
+        HStack {
+          Picker("From", selection: $newCustomRateSource) {
+            ForEach(currencyDefinitions) { currency in
+              Text(currency.code.rawValue).tag(currency.code)
+            }
+          }
+          .labelsHidden()
+          Text("to")
+          Picker("To", selection: $newCustomRateTarget) {
+            ForEach(currencyDefinitions) { currency in
+              Text(currency.code.rawValue).tag(currency.code)
+            }
+          }
+          .labelsHidden()
+          TextField("Rate", text: $newCustomRateValue)
+            .textFieldStyle(.roundedBorder)
+          Button {
+            addCustomRate()
+          } label: {
+            Image(systemName: "plus")
+          }
+          .buttonStyle(.borderless)
+          .disabled(parsedNewCustomRate == nil)
+          .help("Add Custom Rate")
+          .accessibilityLabel("Add Custom Rate")
+        }
       }
 
       Section("Deletion") {
@@ -143,7 +225,7 @@ struct SettingsView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(width: 640, height: 720)
+    .frame(width: 640, height: 820)
     .onAppear { environment.settingsDidAppear() }
     .onDisappear { environment.settingsDidDisappear() }
   }
@@ -259,6 +341,77 @@ struct SettingsView: View {
         Task { try? await environment.updateMathSettings(settings) }
       }
     )
+  }
+
+  private var currencyDefinitions: [CurrencyDefinition] {
+    ConversionCatalogs.bundled.currencies.currencies
+  }
+
+  private var currencyRateStatusText: String {
+    switch environmentModel.currencyRateRefreshState {
+    case .idle:
+      "No cached rates"
+    case .refreshing:
+      "Refreshing rates"
+    case .failed:
+      environmentModel.rateSnapshot == nil ? "Refresh failed" : "Using cached rates"
+    case .current:
+      environmentModel.rateSnapshot == nil ? "No cached rates" : "Rates available"
+    }
+  }
+
+  private var parsedNewCustomRate: Decimal? {
+    guard
+      newCustomRateSource != newCustomRateTarget,
+      let value = Decimal(
+        string: newCustomRateValue,
+        locale: Locale(identifier: "en_US_POSIX")
+      ),
+      NSDecimalNumber(decimal: value).compare(NSDecimalNumber.zero) == .orderedDescending
+    else { return nil }
+    return value
+  }
+
+  private func customRateBinding(_ rate: CustomCurrencyRate) -> Binding<String> {
+    Binding(
+      get: { NSDecimalNumber(decimal: rate.rate).stringValue },
+      set: { source in
+        guard
+          let value = Decimal(string: source, locale: Locale(identifier: "en_US_POSIX")),
+          NSDecimalNumber(decimal: value).compare(NSDecimalNumber.zero) == .orderedDescending,
+          let index = environmentModel.mathSettings.customCurrencyRates.firstIndex(where: {
+            $0.id == rate.id
+          })
+        else { return }
+        var settings = environmentModel.mathSettings
+        settings.customCurrencyRates[index].rate = value
+        settings.customCurrencyRates[index].updatedAt = environment.clock.now()
+        Task { try? await environment.updateMathSettings(settings) }
+      }
+    )
+  }
+
+  private func addCustomRate() {
+    guard let value = parsedNewCustomRate else { return }
+    let rate = CustomCurrencyRate(
+      source: newCustomRateSource,
+      target: newCustomRateTarget,
+      rate: value,
+      updatedAt: environment.clock.now()
+    )
+    var settings = environmentModel.mathSettings
+    if let index = settings.customCurrencyRates.firstIndex(where: { $0.id == rate.id }) {
+      settings.customCurrencyRates[index] = rate
+    } else {
+      settings.customCurrencyRates.append(rate)
+    }
+    Task { try? await environment.updateMathSettings(settings) }
+  }
+
+  private func deleteCustomRate(_ rate: CustomCurrencyRate) {
+    var settings = environmentModel.mathSettings
+    settings.customCurrencyRates.removeAll { $0.id == rate.id }
+    Task { try? await environment.updateMathSettings(settings) }
   }
 }
 

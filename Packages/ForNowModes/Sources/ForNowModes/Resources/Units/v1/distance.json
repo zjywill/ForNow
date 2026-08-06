@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "category": "distance",
+  "units": [
+    {
+      "id": "meter",
+      "symbol": "m",
+      "aliases": ["m", "meter", "meters", "metre", "metres"]
+    },
+    {
+      "id": "kilometer",
+      "symbol": "km",
+      "aliases": ["km", "kilometer", "kilometers", "kilometre", "kilometres"]
+    },
+    {
+      "id": "centimeter",
+      "symbol": "cm",
+      "aliases": ["cm", "centimeter", "centimeters", "centimetre", "centimetres"]
+    },
+    {
+      "id": "millimeter",
+      "symbol": "mm",
+      "aliases": ["mm", "millimeter", "millimeters", "millimetre", "millimetres"]
+    },
+    {
+      "id": "mile",
+      "symbol": "mi",
+      "aliases": ["mi", "mile", "miles"]
+    },
+    {
+      "id": "yard",
+      "symbol": "yd",
+      "aliases": ["yd", "yard", "yards"]
+    },
+    {
+      "id": "foot",
+      "symbol": "ft",
+      "aliases": ["ft", "foot", "feet"]
+    },
+    {
+      "id": "inch",
+      "symbol": "in",
+      "aliases": ["in", "inch", "inches"]
+    },
+    {
+      "id": "nauticalMile",
+      "symbol": "nmi",
+      "aliases": ["nmi", "nautical mile", "nautical miles"]
+    }
+  ]
+}

@@ -21,6 +21,9 @@ final class AppEnvironmentTests: XCTestCase {
     let generatedUUID = await environment.uuidGenerator.next()
     let parsedSource = await environment.parser.parse(source: "hello 你好", version: 4)
     let notificationState = await environment.notifications.authorizationState()
+    let cachedRates = await environment.rateCache.snapshot(
+      base: CurrencyCode(rawValue: "USD")
+    )
 
     XCTAssertEqual(environment.variant, .test)
     XCTAssertEqual(environment.clock.now(), Date(timeIntervalSince1970: 0))
@@ -33,6 +36,7 @@ final class AppEnvironmentTests: XCTestCase {
       ParsedSource(version: 4, utf16Length: 8, mode: .plain)
     )
     XCTAssertNil(environment.clipboard.currentText())
+    XCTAssertNil(cachedRates)
     XCTAssertEqual(notificationState, .denied)
 
     do {
@@ -58,6 +62,7 @@ final class AppEnvironmentTests: XCTestCase {
     XCTAssertTrue(environment.repository is InMemoryNoteRepository)
     XCTAssertTrue(environment.ocr is UnavailableOCRService)
     XCTAssertTrue(environment.rateProvider is DisabledCurrencyRateProvider)
+    XCTAssertTrue(environment.rateCache is InMemoryCurrencyRateCache)
 
     try await environment.start()
     XCTAssertEqual(environment.state, .running)
@@ -151,7 +156,8 @@ final class AppEnvironmentTests: XCTestCase {
     XCTAssertTrue(environment.repository is PersistenceNoteRepository)
     XCTAssertTrue(environment.clipboard is DisabledClipboardService)
     XCTAssertTrue(environment.ocr is VisionOCRService)
-    XCTAssertTrue(environment.rateProvider is DisabledCurrencyRateProvider)
+    XCTAssertTrue(environment.rateProvider is CachedCurrencyRateProvider)
+    XCTAssertTrue(environment.rateCache is UserDefaultsCurrencyRateCache)
   }
 
   @MainActor

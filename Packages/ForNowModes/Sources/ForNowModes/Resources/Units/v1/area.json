@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "category": "area",
+  "units": [
+    {
+      "id": "squareMeter",
+      "symbol": "m²",
+      "aliases": ["m2", "m^2", "m²", "sqm", "square meter", "square meters", "square metre", "square metres"]
+    },
+    {
+      "id": "squareKilometer",
+      "symbol": "km²",
+      "aliases": ["km2", "km^2", "km²", "sqkm", "square kilometer", "square kilometers", "square kilometre", "square kilometres"]
+    },
+    {
+      "id": "squareFoot",
+      "symbol": "ft²",
+      "aliases": ["ft2", "ft^2", "ft²", "sqft", "square foot", "square feet"]
+    },
+    {
+      "id": "squareMile",
+      "symbol": "mi²",
+      "aliases": ["mi2", "mi^2", "mi²", "sqmi", "square mile", "square miles"]
+    },
+    {
+      "id": "acre",
+      "symbol": "ac",
+      "aliases": ["ac", "acre", "acres"]
+    },
+    {
+      "id": "hectare",
+      "symbol": "ha",
+      "aliases": ["ha", "hectare", "hectares"]
+    }
+  ]
+}

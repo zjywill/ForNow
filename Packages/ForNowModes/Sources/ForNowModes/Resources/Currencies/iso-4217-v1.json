@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "currencies": [
+    {"code": "USD", "name": "US Dollar", "aliases": ["US$"]},
+    {"code": "EUR", "name": "Euro", "aliases": ["€"]},
+    {"code": "GBP", "name": "Pound Sterling", "aliases": ["£"]},
+    {"code": "JPY", "name": "Japanese Yen", "aliases": ["JP¥"]},
+    {"code": "CNY", "name": "Chinese Yuan", "aliases": ["CN¥"]},
+    {"code": "CHF", "name": "Swiss Franc", "aliases": []},
+    {"code": "CAD", "name": "Canadian Dollar", "aliases": ["CA$"]},
+    {"code": "AUD", "name": "Australian Dollar", "aliases": ["A$"]},
+    {"code": "NZD", "name": "New Zealand Dollar", "aliases": ["NZ$"]},
+    {"code": "HKD", "name": "Hong Kong Dollar", "aliases": ["HK$"]},
+    {"code": "SGD", "name": "Singapore Dollar", "aliases": ["S$"]},
+    {"code": "INR", "name": "Indian Rupee", "aliases": ["₹"]},
+    {"code": "KRW", "name": "South Korean Won", "aliases": ["₩"]},
+    {"code": "SEK", "name": "Swedish Krona", "aliases": []},
+    {"code": "NOK", "name": "Norwegian Krone", "aliases": []},
+    {"code": "DKK", "name": "Danish Krone", "aliases": []},
+    {"code": "PLN", "name": "Polish Zloty", "aliases": ["zł"]},
+    {"code": "CZK", "name": "Czech Koruna", "aliases": ["Kč"]},
+    {"code": "HUF", "name": "Hungarian Forint", "aliases": []},
+    {"code": "RON", "name": "Romanian Leu", "aliases": []},
+    {"code": "BGN", "name": "Bulgarian Lev", "aliases": []},
+    {"code": "TRY", "name": "Turkish Lira", "aliases": ["₺"]},
+    {"code": "BRL", "name": "Brazilian Real", "aliases": ["R$"]},
+    {"code": "MXN", "name": "Mexican Peso", "aliases": ["MX$"]},
+    {"code": "ZAR", "name": "South African Rand", "aliases": []}
+  ]
+}

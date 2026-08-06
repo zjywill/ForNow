@@ -127,6 +127,8 @@ targets:
     sources:
       - path: Tests/EditorProjectionSpikeTests
     dependencies:
+      - package: ForNowCore
+        product: ForNowCore
       - package: ForNowEditor
         product: ForNowEditor
       - package: ForNowModes

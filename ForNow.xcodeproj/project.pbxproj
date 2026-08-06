@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00C449660D932AB0E4C7D168 /* FindReplaceModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0556BAAF653E26B50F5F7B2D /* FindReplaceModelTests.swift */; };
-		085AA0DB893E86753A6CDBA0 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 513B5134E6E851F57B40AD1C /* ForNowEditor */; };
+		085AA0DB893E86753A6CDBA0 /* ForNowCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8E5283B315AF96BE2843B6C6 /* ForNowCore */; };
 		0A5096A015E25797BD480891 /* EditorStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91CC4B86ECB18B8FF9A7EB4 /* EditorStateStore.swift */; };
 		0A7DCA311471B3AF0E11FDCE /* ListModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC02F5CE9A748D269BC51A8A /* ListModeTests.swift */; };
 		12646040774587DA37C213FE /* SmokePerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041662CC7FAA13AE0E517B33 /* SmokePerformanceTests.swift */; };
@@ -33,6 +33,7 @@
 		48A8AFBA121ACED0A21C8835 /* FindReplaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F785A68154FECDDDF1ACFFB /* FindReplaceTests.swift */; };
 		50D8D230E6AB32BDB3496622 /* MathSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F43A4CF0D2DCAD2D414CD2F4 /* MathSettingsTests.swift */; };
 		53A911D79E707A2C6F274E72 /* ForNowWindowing in Frameworks */ = {isa = PBXBuildFile; productRef = 49D8667D12771F5CB2486B54 /* ForNowWindowing */; };
+		554524835CBE96DA69D6008E /* CurrencyRateRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */; };
 		696EC8A4DBBA9B4C2841DF86 /* MathSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83438E0397825990C9A3E35E /* MathSettingsStore.swift */; };
 		69DCD06192AC7A0A196EFDC1 /* ClipboardProjectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F2B741B69F54E829AE36311 /* ClipboardProjectionTests.swift */; };
 		6B77A4D2E6A2DF717F823436 /* ForNowIntegrations in Frameworks */ = {isa = PBXBuildFile; productRef = 3DA2355C193D966F4F0BB543 /* ForNowIntegrations */; };
@@ -42,6 +43,7 @@
 		83F5F831C0BD1BBC5D95ED36 /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = 2B346C0BEF96BDD33FE254EE /* ForNowModes */; };
 		8ECFECD7FF6D045A6C7C61E8 /* NoteSearchCommandField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D836B85142E1E57CF91C56C /* NoteSearchCommandField.swift */; };
 		8FDAA27E39F02D9B5BAAA45A /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = B2C57FEBCEDD2D3D97C98DF2 /* ForNowModes */; };
+		935F01A5C14AF23C1F07F860 /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = 5FC21902EC19F9368EBA03FC /* ForNowModes */; };
 		94ADAEAE254A7DAC8D9CEFB1 /* AppEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD684849F0B4AF4F2ED08A8 /* AppEnvironmentTests.swift */; };
 		9788CA52644FC3CB082195CD /* NoteSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F20FA6B77512A8CF47A443 /* NoteSearchTests.swift */; };
 		98BFE0DD0AD9A112980EAED2 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = E151023F9DD937DEEA29FCBD /* ForNowEditor */; };
@@ -51,7 +53,7 @@
 		ADC48D945E9B40AC6130DD55 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C77F87198C8F21290CAA8B /* SettingsView.swift */; };
 		B323AA1A3147C095AE9871EC /* WindowSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E8EC15FD34128A7A307DA7 /* WindowSettingsStore.swift */; };
 		B4ED6B5A67A7096923F67A2F /* ModeSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36344F389ADCEA8E66038F5 /* ModeSettingsStore.swift */; };
-		B7908F0DB4549F615F8AE3CE /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = 5FC21902EC19F9368EBA03FC /* ForNowModes */; };
+		B7908F0DB4549F615F8AE3CE /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 513B5134E6E851F57B40AD1C /* ForNowEditor */; };
 		B8340A8895F4E97878C6589B /* AppLifecycleLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */; };
 		B9719521E5C29150130A9DA0 /* ForNowCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD8234C3E2C1F4067349038 /* ForNowCommands.swift */; };
 		BA10B5F89DB87BF7004EAC1E /* NoteSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DFA97D5B51159A3DAA43267 /* NoteSearchModel.swift */; };
@@ -67,7 +69,9 @@
 		DD91BEBFEC37B0B6308BCB33 /* EditorProjectionSpikeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868DCA96283961231D520080 /* EditorProjectionSpikeTests.swift */; };
 		DF6AF7E2A723FD7DCAA7C7FF /* EditorProjectionSpikeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 081076A32DC69EB32C11040E /* EditorProjectionSpikeApp.swift */; };
 		E08A4FED503EB50A6177101D /* ModeCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DB7E618DAE770E36D79FA9F /* ModeCommandTests.swift */; };
+		E203F4977C8DB2F4014F70E2 /* CurrencyRateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49569501A5AD196581CDF5BF /* CurrencyRateTests.swift */; };
 		E973CA2769C90B8F8DBF474A /* NoteSearchAccessibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E166CC2086118670A574904C /* NoteSearchAccessibilityView.swift */; };
+		F3EB6790ED931B38F9185E72 /* ConversionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4485A7278FD702CFC67FC31F /* ConversionTests.swift */; };
 		F7E822FEE20ADB680825A51E /* NoteSessionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F73A75AB935D728C601F8E5 /* NoteSessionModel.swift */; };
 /* End PBXBuildFile section */
 
@@ -110,6 +114,8 @@
 		2DB7E618DAE770E36D79FA9F /* ModeCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeCommandTests.swift; sourceTree = "<group>"; };
 		2F73A75AB935D728C601F8E5 /* NoteSessionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSessionModel.swift; sourceTree = "<group>"; };
 		413C87A0021605F48BF59C9A /* ModeSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSettingsSection.swift; sourceTree = "<group>"; };
+		4485A7278FD702CFC67FC31F /* ConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionTests.swift; sourceTree = "<group>"; };
+		49569501A5AD196581CDF5BF /* CurrencyRateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyRateTests.swift; sourceTree = "<group>"; };
 		58E7AF34D3A7E00476881734 /* ForNowWindowing */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowWindowing; path = Packages/ForNowWindowing; sourceTree = SOURCE_ROOT; };
 		5AEAFEA065BE8EE706045421 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5E0E56B44D1A023F913AE146 /* ForNowDesign */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowDesign; path = Packages/ForNowDesign; sourceTree = SOURCE_ROOT; };
@@ -150,6 +156,7 @@
 		EFB01755BB5FB137D7B55B28 /* EditorProjectionSpike.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EditorProjectionSpike.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F005AE8720DC3420B449FBB7 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		F2E8EC15FD34128A7A307DA7 /* WindowSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSettingsStore.swift; sourceTree = "<group>"; };
+		F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyRateRefreshCoordinator.swift; sourceTree = "<group>"; };
 		F43A4CF0D2DCAD2D414CD2F4 /* MathSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathSettingsTests.swift; sourceTree = "<group>"; };
 		F73368461C219A7EAD4F1C20 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F91CC4B86ECB18B8FF9A7EB4 /* EditorStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorStateStore.swift; sourceTree = "<group>"; };
@@ -198,8 +205,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				085AA0DB893E86753A6CDBA0 /* ForNowEditor in Frameworks */,
-				B7908F0DB4549F615F8AE3CE /* ForNowModes in Frameworks */,
+				085AA0DB893E86753A6CDBA0 /* ForNowCore in Frameworks */,
+				B7908F0DB4549F615F8AE3CE /* ForNowEditor in Frameworks */,
+				935F01A5C14AF23C1F07F860 /* ForNowModes in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -230,6 +238,7 @@
 				F005AE8720DC3420B449FBB7 /* AppEnvironment.swift */,
 				DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */,
 				5AEAFEA065BE8EE706045421 /* ContentView.swift */,
+				F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */,
 				0E66ADFC63F4CE218733F734 /* DeleteConfirmationCoordinator.swift */,
 				F91CC4B86ECB18B8FF9A7EB4 /* EditorStateStore.swift */,
 				10087CB7D1E9BA18DDFCBC2D /* FindReplaceCommandField.swift */,
@@ -274,6 +283,7 @@
 			isa = PBXGroup;
 			children = (
 				1BD684849F0B4AF4F2ED08A8 /* AppEnvironmentTests.swift */,
+				49569501A5AD196581CDF5BF /* CurrencyRateTests.swift */,
 				0556BAAF653E26B50F5F7B2D /* FindReplaceModelTests.swift */,
 				F43A4CF0D2DCAD2D414CD2F4 /* MathSettingsTests.swift */,
 				CD4443BA5B95C21C5B724370 /* ModeSettingsAndSlashCommandTests.swift */,
@@ -298,6 +308,7 @@
 			children = (
 				E9A88BF1F120F5880F72A535 /* BasicMathTests.swift */,
 				1F2B741B69F54E829AE36311 /* ClipboardProjectionTests.swift */,
+				4485A7278FD702CFC67FC31F /* ConversionTests.swift */,
 				868DCA96283961231D520080 /* EditorProjectionSpikeTests.swift */,
 				8F785A68154FECDDDF1ACFFB /* FindReplaceTests.swift */,
 				E994064F4A5A0F52432D6622 /* LinkProjectionTests.swift */,
@@ -432,6 +443,7 @@
 			);
 			name = EditorProjectionSpikeTests;
 			packageProductDependencies = (
+				8E5283B315AF96BE2843B6C6 /* ForNowCore */,
 				513B5134E6E851F57B40AD1C /* ForNowEditor */,
 				5FC21902EC19F9368EBA03FC /* ForNowModes */,
 			);
@@ -632,6 +644,7 @@
 				3A6DD02D8EF0F54EA95B7EA3 /* AppEnvironment.swift in Sources */,
 				B8340A8895F4E97878C6589B /* AppLifecycleLogging.swift in Sources */,
 				2A5B110B400373DBB22DF147 /* ContentView.swift in Sources */,
+				554524835CBE96DA69D6008E /* CurrencyRateRefreshCoordinator.swift in Sources */,
 				1F742C1A2932ED30288F47E1 /* DeleteConfirmationCoordinator.swift in Sources */,
 				0A5096A015E25797BD480891 /* EditorStateStore.swift in Sources */,
 				C81BFD79062C0667B0A4694F /* FindReplaceCommandField.swift in Sources */,
@@ -661,6 +674,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				94ADAEAE254A7DAC8D9CEFB1 /* AppEnvironmentTests.swift in Sources */,
+				E203F4977C8DB2F4014F70E2 /* CurrencyRateTests.swift in Sources */,
 				00C449660D932AB0E4C7D168 /* FindReplaceModelTests.swift in Sources */,
 				50D8D230E6AB32BDB3496622 /* MathSettingsTests.swift in Sources */,
 				329ACC5A26912274B202D12D /* ModeSettingsAndSlashCommandTests.swift in Sources */,
@@ -703,6 +717,7 @@
 			files = (
 				2E9A386ED5ABB6FA3E544D00 /* BasicMathTests.swift in Sources */,
 				69DCD06192AC7A0A196EFDC1 /* ClipboardProjectionTests.swift in Sources */,
+				F3EB6790ED931B38F9185E72 /* ConversionTests.swift in Sources */,
 				DD91BEBFEC37B0B6308BCB33 /* EditorProjectionSpikeTests.swift in Sources */,
 				48A8AFBA121ACED0A21C8835 /* FindReplaceTests.swift in Sources */,
 				A2A5C21DED243C3A94971DE1 /* LinkProjectionTests.swift in Sources */,
@@ -1308,6 +1323,10 @@
 		6BA26A20526ADBC3AF9C7F5E /* ForNowDesign */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ForNowDesign;
+		};
+		8E5283B315AF96BE2843B6C6 /* ForNowCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ForNowCore;
 		};
 		B2C57FEBCEDD2D3D97C98DF2 /* ForNowModes */ = {
 			isa = XCSwiftPackageProductDependency;

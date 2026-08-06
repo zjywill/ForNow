@@ -30,13 +30,17 @@ public struct ProductionProjectionParser: ProjectionParsing, Sendable {
     editorSettings: EditorSettings,
     modeSettings: ModeSettings,
     mathSettings: MathSettings,
-    mathLocale: MathDecimalLocale = MathDecimalLocale()
+    mathLocale: MathDecimalLocale = MathDecimalLocale(),
+    conversionCatalogs: ConversionCatalogs = .bundled,
+    currencyContext: CurrencyConversionContext = CurrencyConversionContext()
   ) {
     parser = SpikeProjectionParser(
       editorSettings: editorSettings,
       modeSettings: modeSettings,
       mathSettings: mathSettings,
-      mathLocale: mathLocale
+      mathLocale: mathLocale,
+      conversionCatalogs: conversionCatalogs,
+      currencyContext: currencyContext
     )
   }
 

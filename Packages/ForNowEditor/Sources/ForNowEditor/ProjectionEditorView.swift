@@ -33,6 +33,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
   private let editorSettings: EditorSettings
   private let modeSettings: ModeSettings
   private let mathSettings: MathSettings
+  private let currencyContext: CurrencyConversionContext
   private let expandedLinkIdentities: Set<LinkIdentity>
   private let linkExpansionDidToggle: (@MainActor (LinkIdentity) -> Void)?
   private let findReplaceTarget: EditorFindReplaceTarget?
@@ -51,6 +52,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     editorSettings = EditorSettings()
     modeSettings = ModeSettings()
     mathSettings = MathSettings()
+    currencyContext = CurrencyConversionContext()
     expandedLinkIdentities = []
     linkExpansionDidToggle = nil
     findReplaceTarget = nil
@@ -67,6 +69,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     editorSettings: EditorSettings = EditorSettings(),
     modeSettings: ModeSettings = ModeSettings(),
     mathSettings: MathSettings = MathSettings(),
+    currencyContext: CurrencyConversionContext = CurrencyConversionContext(),
     expandedLinkIdentities: Set<LinkIdentity> = [],
     findReplaceTarget: EditorFindReplaceTarget? = nil,
     slashCommandTarget: EditorSlashCommandTarget? = nil,
@@ -84,6 +87,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     self.editorSettings = editorSettings
     self.modeSettings = modeSettings
     self.mathSettings = mathSettings
+    self.currencyContext = currencyContext
     self.expandedLinkIdentities = expandedLinkIdentities
     self.findReplaceTarget = findReplaceTarget
     self.slashCommandTarget = slashCommandTarget
@@ -98,7 +102,8 @@ public struct ProjectionEditorView: NSViewRepresentable {
       initialText: sourceText,
       editorSettings: editorSettings,
       modeSettings: modeSettings,
-      mathSettings: mathSettings
+      mathSettings: mathSettings,
+      currencyContext: currencyContext
     )
     container.sourceDidChange = { [sourceDidChange, weak findReplaceTarget] source, hasMarkedText in
       sourceDidChange?(source, hasMarkedText)
@@ -128,6 +133,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     nsView.editorSettings = editorSettings
     nsView.modeSettings = modeSettings
     nsView.mathSettings = mathSettings
+    nsView.currencyContext = currencyContext
     nsView.expandedLinkIdentities = expandedLinkIdentities
     nsView.linkExpansionDidToggle = linkExpansionDidToggle
     findReplaceTarget?.attach(to: nsView)
@@ -178,6 +184,16 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       }
     }
   }
+  public var currencyContext: CurrencyConversionContext {
+    didSet {
+      guard currencyContext != oldValue else { return }
+      if followsEditorSettingsInParser {
+        replaceDefaultParser()
+      } else {
+        scheduleAdornmentRefresh()
+      }
+    }
+  }
   public var expandedLinkIdentities: Set<LinkIdentity> = [] {
     didSet {
       guard expandedLinkIdentities != oldValue else { return }
@@ -219,6 +235,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     editorSettings: EditorSettings = EditorSettings(),
     modeSettings: ModeSettings = ModeSettings(),
     mathSettings: MathSettings = MathSettings(),
+    currencyContext: CurrencyConversionContext = CurrencyConversionContext(),
     parser: (any ProjectionParsing)? = nil,
     pasteboard: NSPasteboard = .general
   ) {
@@ -227,6 +244,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     self.editorSettings = editorSettings
     self.modeSettings = modeSettings
     self.mathSettings = mathSettings
+    self.currencyContext = currencyContext
     self.pasteboard = pasteboard
     followsEditorSettingsInParser = parser == nil
     parsePipeline = ProjectionParsePipeline(
@@ -234,7 +252,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
         ?? ProductionProjectionParser(
           editorSettings: editorSettings,
           modeSettings: modeSettings,
-          mathSettings: mathSettings
+          mathSettings: mathSettings,
+          currencyContext: currencyContext
         )
     )
     let snapshot = SourceSnapshot(version: 0, text: initialText)
@@ -583,7 +602,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       parser: ProductionProjectionParser(
         editorSettings: editorSettings,
         modeSettings: modeSettings,
-        mathSettings: mathSettings
+        mathSettings: mathSettings,
+        currencyContext: currencyContext
       )
     )
     projection = EditorProjection(sourceVersion: snapshot.version, decorations: [])
@@ -879,7 +899,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     button.contentTintColor = .controlAccentColor
     button.sizeToFit()
     button.frame.origin = NSPoint(x: anchorRect.maxX + 8, y: anchorRect.minY)
-    button.copiedText = presentation.canonicalValue
+    button.copiedText = presentation.copiedText
     button.kind = .copy
     button.target = self
     button.action = #selector(activateAdornment(_:))

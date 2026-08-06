@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "category": "mass",
+  "units": [
+    {
+      "id": "gram",
+      "symbol": "g",
+      "aliases": ["g", "gram", "grams"]
+    },
+    {
+      "id": "kilogram",
+      "symbol": "kg",
+      "aliases": ["kg", "kilogram", "kilograms", "kilo", "kilos"]
+    },
+    {
+      "id": "milligram",
+      "symbol": "mg",
+      "aliases": ["mg", "milligram", "milligrams"]
+    },
+    {
+      "id": "metricTon",
+      "symbol": "t",
+      "aliases": ["t", "tonne", "tonnes", "metric ton", "metric tons"]
+    },
+    {
+      "id": "pound",
+      "symbol": "lb",
+      "aliases": ["lb", "lbs", "pound", "pounds"]
+    },
+    {
+      "id": "ounce",
+      "symbol": "oz",
+      "aliases": ["oz", "ounce", "ounces"]
+    },
+    {
+      "id": "stone",
+      "symbol": "st",
+      "aliases": ["st", "stone", "stones"]
+    }
+  ]
+}

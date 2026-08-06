@@ -172,7 +172,7 @@ public struct ProjectionCopyPolicy: Sendable {
     case .link(_, let presentation):
       presentation.originalURL
     case .result(_, let presentation):
-      presentation.canonicalValue
+      presentation.copiedText
     case .checkbox:
       nil
     }

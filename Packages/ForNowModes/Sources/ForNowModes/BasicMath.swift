@@ -1,3 +1,4 @@
+import ForNowCore
 import Foundation
 
 public enum MathDecimalLocale: String, Codable, CaseIterable, Sendable {
@@ -20,15 +21,71 @@ public enum MathDecimalLocale: String, Codable, CaseIterable, Sendable {
 public struct MathSettings: Codable, Equatable, Sendable {
   public var significantDigits: Int
   public var separatesThousands: Bool
+  public var primaryCurrency: CurrencyCode
+  public var secondaryCurrency: CurrencyCode
+  public var primaryCurrencySymbol: String
+  public var automaticCurrencyRefreshEnabled: Bool
+  public var customCurrencyRates: [CustomCurrencyRate]
 
-  public init(significantDigits: Int = 2, separatesThousands: Bool = true) {
+  public init(
+    significantDigits: Int = 2,
+    separatesThousands: Bool = true,
+    primaryCurrency: CurrencyCode = CurrencyCode(rawValue: "USD"),
+    secondaryCurrency: CurrencyCode = CurrencyCode(rawValue: "EUR"),
+    primaryCurrencySymbol: String = "$",
+    automaticCurrencyRefreshEnabled: Bool = false,
+    customCurrencyRates: [CustomCurrencyRate] = []
+  ) {
     self.significantDigits = min(7, max(0, significantDigits))
     self.separatesThousands = separatesThousands
+    self.primaryCurrency = primaryCurrency
+    self.secondaryCurrency = secondaryCurrency
+    self.primaryCurrencySymbol = primaryCurrencySymbol
+    self.automaticCurrencyRefreshEnabled = automaticCurrencyRefreshEnabled
+    self.customCurrencyRates = customCurrencyRates
   }
 
   public func validated() throws -> MathSettings {
     guard (0...7).contains(significantDigits) else {
       throw MathSettingsValidationError.invalidSignificantDigits(significantDigits)
+    }
+    guard primaryCurrency.isISOFormatted else {
+      throw MathSettingsValidationError.invalidCurrency(primaryCurrency)
+    }
+    guard secondaryCurrency.isISOFormatted else {
+      throw MathSettingsValidationError.invalidCurrency(secondaryCurrency)
+    }
+    let currencyCatalog = ConversionCatalogs.bundled.currencies
+    guard currencyCatalog.contains(primaryCurrency) else {
+      throw MathSettingsValidationError.unsupportedCurrency(primaryCurrency)
+    }
+    guard currencyCatalog.contains(secondaryCurrency) else {
+      throw MathSettingsValidationError.unsupportedCurrency(secondaryCurrency)
+    }
+    guard
+      !primaryCurrencySymbol.isEmpty,
+      primaryCurrencySymbol.utf16.count <= 8,
+      !primaryCurrencySymbol.contains(where: { $0.isWhitespace })
+    else {
+      throw MathSettingsValidationError.invalidPrimaryCurrencySymbol
+    }
+    guard customCurrencyRates.count <= 128 else {
+      throw MathSettingsValidationError.tooManyCustomRates
+    }
+    var pairs = Set<CustomCurrencyRate.Pair>()
+    for rate in customCurrencyRates {
+      _ = try rate.validated()
+      guard
+        currencyCatalog.contains(rate.source),
+        currencyCatalog.contains(rate.target)
+      else {
+        throw MathSettingsValidationError.unsupportedCurrency(
+          currencyCatalog.contains(rate.source) ? rate.target : rate.source
+        )
+      }
+      guard pairs.insert(rate.pair).inserted else {
+        throw MathSettingsValidationError.duplicateCustomRate(rate.source, rate.target)
+      }
     }
     return self
   }
@@ -36,18 +93,41 @@ public struct MathSettings: Codable, Equatable, Sendable {
   private enum CodingKeys: String, CodingKey {
     case significantDigits
     case separatesThousands
+    case primaryCurrency
+    case secondaryCurrency
+    case primaryCurrencySymbol
+    case automaticCurrencyRefreshEnabled
+    case customCurrencyRates
   }
 
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     significantDigits = try values.decode(Int.self, forKey: .significantDigits)
     separatesThousands = try values.decode(Bool.self, forKey: .separatesThousands)
+    primaryCurrency =
+      try values.decodeIfPresent(CurrencyCode.self, forKey: .primaryCurrency)
+      ?? CurrencyCode(rawValue: "USD")
+    secondaryCurrency =
+      try values.decodeIfPresent(CurrencyCode.self, forKey: .secondaryCurrency)
+      ?? CurrencyCode(rawValue: "EUR")
+    primaryCurrencySymbol =
+      try values.decodeIfPresent(String.self, forKey: .primaryCurrencySymbol) ?? "$"
+    automaticCurrencyRefreshEnabled =
+      try values.decodeIfPresent(Bool.self, forKey: .automaticCurrencyRefreshEnabled) ?? false
+    customCurrencyRates =
+      try values.decodeIfPresent([CustomCurrencyRate].self, forKey: .customCurrencyRates) ?? []
     _ = try validated()
   }
 }
 
 public enum MathSettingsValidationError: Error, Equatable, Sendable {
   case invalidSignificantDigits(Int)
+  case invalidCurrency(CurrencyCode)
+  case unsupportedCurrency(CurrencyCode)
+  case invalidPrimaryCurrencySymbol
+  case invalidCustomRate(CurrencyCode, CurrencyCode)
+  case duplicateCustomRate(CurrencyCode, CurrencyCode)
+  case tooManyCustomRates
 }
 
 extension MathSettingsValidationError: LocalizedError {
@@ -55,7 +135,65 @@ extension MathSettingsValidationError: LocalizedError {
     switch self {
     case .invalidSignificantDigits:
       "Result digits must be between 0 and 7."
+    case .invalidCurrency:
+      "Currency codes must contain exactly three ASCII letters."
+    case .unsupportedCurrency:
+      "The currency code is not present in the bundled ISO fixture."
+    case .invalidPrimaryCurrencySymbol:
+      "The primary currency symbol must contain between one and eight characters."
+    case .invalidCustomRate:
+      "Custom currency rates must be positive finite decimals."
+    case .duplicateCustomRate:
+      "Each custom currency pair may be defined only once."
+    case .tooManyCustomRates:
+      "No more than 128 custom currency rates may be configured."
     }
+  }
+}
+
+public struct CustomCurrencyRate: Codable, Equatable, Sendable, Identifiable {
+  public struct Pair: Hashable, Sendable {
+    public let source: CurrencyCode
+    public let target: CurrencyCode
+
+    public init(source: CurrencyCode, target: CurrencyCode) {
+      self.source = source
+      self.target = target
+    }
+  }
+
+  public let source: CurrencyCode
+  public let target: CurrencyCode
+  public var rate: Decimal
+  public var updatedAt: Date
+
+  public init(
+    source: CurrencyCode,
+    target: CurrencyCode,
+    rate: Decimal,
+    updatedAt: Date
+  ) {
+    self.source = source
+    self.target = target
+    self.rate = rate
+    self.updatedAt = updatedAt
+  }
+
+  public var id: String { "\(source.rawValue)-\(target.rawValue)" }
+  public var pair: Pair { Pair(source: source, target: target) }
+
+  public func validated() throws -> CustomCurrencyRate {
+    let number = NSDecimalNumber(decimal: rate)
+    guard
+      source.isISOFormatted,
+      target.isISOFormatted,
+      source != target,
+      number != .notANumber,
+      number.compare(NSDecimalNumber.zero) == .orderedDescending
+    else {
+      throw MathSettingsValidationError.invalidCustomRate(source, target)
+    }
+    return self
   }
 }
 
@@ -109,6 +247,15 @@ public enum BasicMathDiagnosticCode: String, Sendable, Equatable {
   case overflow = "math-overflow"
   case underflow = "math-underflow"
   case resourceLimit = "math-resource-limit"
+  case conversionUnknownSourceUnit = "conversion-unknown-source-unit"
+  case conversionUnknownTargetUnit = "conversion-unknown-target-unit"
+  case conversionIncompatibleUnits = "conversion-incompatible-units"
+  case conversionCompositionUnsupported = "conversion-composition-unsupported"
+  case conversionOverflow = "conversion-overflow"
+  case currencyUnknownCode = "currency-unknown-code"
+  case currencyRatesUnavailable = "currency-rates-unavailable"
+  case currencyRateMissing = "currency-rate-missing"
+  case currencyInvalidRate = "currency-invalid-rate"
 }
 
 public struct BasicMathDiagnostic: Error, Sendable, Equatable {
@@ -161,15 +308,21 @@ public struct BasicMathDocumentParser: Sendable {
   private let mathSettings: MathSettings
   private let modeSettings: ModeSettings
   private let locale: MathDecimalLocale
+  private let conversionCatalogs: ConversionCatalogs
+  private let currencyContext: CurrencyConversionContext
 
   public init(
     mathSettings: MathSettings = MathSettings(),
     modeSettings: ModeSettings = ModeSettings(),
-    locale: MathDecimalLocale = MathDecimalLocale()
+    locale: MathDecimalLocale = MathDecimalLocale(),
+    conversionCatalogs: ConversionCatalogs = .bundled,
+    currencyContext: CurrencyConversionContext = CurrencyConversionContext()
   ) {
     self.mathSettings = mathSettings
     self.modeSettings = modeSettings
     self.locale = locale
+    self.conversionCatalogs = conversionCatalogs
+    self.currencyContext = currencyContext
   }
 
   public func parse(in source: String) -> [BasicMathLineEvaluation] {
@@ -273,24 +426,32 @@ public struct BasicMathDocumentParser: Sendable {
     }
 
     let expressionSource = source.substring(with: expressionRange)
+    if let conversion = ConversionLineParser(
+      settings: settings,
+      locale: locale,
+      catalogs: conversionCatalogs,
+      context: currencyContext
+    ).evaluate(
+      source: expressionSource,
+      sourceRange: expressionRange,
+      anchorUTF16Offset: NSMaxRange(equalsRange)
+    ) {
+      return conversion
+    }
     do {
-      let tokens = try MathLexer(
-        source: expressionSource,
-        baseUTF16Offset: expressionRange.location,
-        locale: locale
-      ).tokens()
-      var parser = MathExpressionParser(tokens: tokens)
-      let expression = try parser.parse()
-      let value = try MathDecimalEvaluator(sourceRange: expressionRange).evaluate(expression)
+      let evaluation = try BasicMathExpressionEngine(locale: locale).evaluate(
+        expressionSource,
+        sourceRange: expressionRange
+      )
       let formatter = BasicMathFormatter(settings: settings, locale: locale)
-      let canonicalValue = formatter.canonical(value)
+      let canonicalValue = formatter.canonical(evaluation.value)
       return .result(
         BasicMathResult(
           expressionRange: expressionRange,
           anchorUTF16Offset: NSMaxRange(equalsRange),
-          expression: expression,
+          expression: evaluation.expression,
           canonicalValue: canonicalValue,
-          displayText: formatter.display(value),
+          displayText: formatter.display(evaluation.value),
           copiedText: canonicalValue
         )
       )
@@ -336,6 +497,27 @@ private enum MathTokenKind: Sendable, Equatable {
 private struct MathToken: Sendable, Equatable {
   let kind: MathTokenKind
   let range: NSRange
+}
+
+struct BasicMathExpressionEvaluation: Sendable, Equatable {
+  let expression: ExpressionNode
+  let value: Decimal
+}
+
+struct BasicMathExpressionEngine: Sendable {
+  let locale: MathDecimalLocale
+
+  func evaluate(_ source: String, sourceRange: NSRange) throws -> BasicMathExpressionEvaluation {
+    let tokens = try MathLexer(
+      source: source,
+      baseUTF16Offset: sourceRange.location,
+      locale: locale
+    ).tokens()
+    var parser = MathExpressionParser(tokens: tokens)
+    let expression = try parser.parse()
+    let value = try MathDecimalEvaluator(sourceRange: sourceRange).evaluate(expression)
+    return BasicMathExpressionEvaluation(expression: expression, value: value)
+  }
 }
 
 private struct MathLexer {
@@ -982,7 +1164,7 @@ private struct MathDecimalEvaluator {
   }
 }
 
-private struct BasicMathFormatter {
+struct BasicMathFormatter {
   let settings: MathSettings
   let locale: MathDecimalLocale
 

@@ -40,6 +40,7 @@ struct ContentView: View {
           editorSettings: environmentModel.editorSettings,
           modeSettings: environmentModel.modeSettings,
           mathSettings: environmentModel.mathSettings,
+          currencyContext: environmentModel.currencyConversionContext,
           expandedLinkIdentities: environmentModel.expandedLinkIdentities(
             for: noteSession.currentNoteID
           ),

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "category": "temperature",
+  "units": [
+    {
+      "id": "celsius",
+      "symbol": "°C",
+      "aliases": ["c", "°c", "celsius", "centigrade"]
+    },
+    {
+      "id": "fahrenheit",
+      "symbol": "°F",
+      "aliases": ["f", "°f", "fahrenheit"]
+    },
+    {
+      "id": "kelvin",
+      "symbol": "K",
+      "aliases": ["k", "kelvin", "kelvins"]
+    }
+  ]
+}
