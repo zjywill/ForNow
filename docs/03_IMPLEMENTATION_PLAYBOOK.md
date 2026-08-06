@@ -323,6 +323,13 @@ Estimated effort: 3-4 days.
 
 Do not begin Phase 1 until Steps 0.3, 0.4, and 0.5 are `DONE`.
 
+Project exception recorded 2026-08-04: the product owner directed Phase 1 work
+to continue while `MT-WIN-004C` remains pending because a second simultaneous
+physical display is not currently application-visible. This exception does not
+convert the test to a pass, accept ADR-002, waive `FR-WIN-004`, or relax the 1.0
+release gate. Step 0.4 remains `VERIFYING` until the physical dual-display cell
+passes.
+
 If any spike fails:
 
 1. document the failure;

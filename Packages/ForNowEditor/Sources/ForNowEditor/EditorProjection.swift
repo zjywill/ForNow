@@ -1,0 +1,319 @@
+import ForNowModes
+import Foundation
+
+public struct LinkPresentation: Sendable, Equatable {
+  public let originalURL: String
+  public let displayText: String
+  public let duplicateIndex: Int
+  public let identity: LinkIdentity
+
+  public init(originalURL: String, displayText: String, duplicateIndex: Int) {
+    self.init(
+      originalURL: originalURL,
+      displayText: displayText,
+      duplicateIndex: duplicateIndex,
+      identity: LinkIdentity(originalURL: originalURL, occurrenceIndex: duplicateIndex)
+    )
+  }
+
+  public init(
+    originalURL: String,
+    displayText: String,
+    duplicateIndex: Int,
+    identity: LinkIdentity
+  ) {
+    self.originalURL = originalURL
+    self.displayText = displayText
+    self.duplicateIndex = duplicateIndex
+    self.identity = identity
+  }
+}
+
+public struct CalculationPresentation: Sendable, Equatable {
+  public let canonicalValue: String
+  public let displayText: String
+
+  public init(canonicalValue: String, displayText: String) {
+    self.canonicalValue = canonicalValue
+    self.displayText = displayText
+  }
+}
+
+public enum ProjectionDiagnosticSeverity: String, Sendable, Equatable {
+  case information
+  case warning
+  case error
+}
+
+public struct ProjectionDiagnostic: Sendable, Equatable {
+  public let code: String
+  public let severity: ProjectionDiagnosticSeverity
+  public let sourceRange: SourceRange?
+  public let message: String
+
+  public init(
+    code: String,
+    severity: ProjectionDiagnosticSeverity,
+    sourceRange: SourceRange? = nil,
+    message: String
+  ) {
+    self.code = code
+    self.severity = severity
+    self.sourceRange = sourceRange
+    self.message = message
+  }
+}
+
+public enum EditorDecoration: Sendable, Equatable {
+  case style(range: SourceRange, style: TextStyle)
+  case checkbox(range: SourceRange, markerRange: SourceRange?, isChecked: Bool)
+  case link(range: SourceRange, presentation: LinkPresentation)
+  case result(anchor: SourceOffset, presentation: CalculationPresentation)
+
+  public var sourceRange: SourceRange? {
+    switch self {
+    case .style(let range, _), .checkbox(let range, _, _), .link(let range, _):
+      range
+    case .result:
+      nil
+    }
+  }
+}
+
+public struct EditorProjection: Sendable, Equatable {
+  public let sourceVersion: UInt64
+  public let decorations: [EditorDecoration]
+  public let diagnostics: [ProjectionDiagnostic]
+
+  public init(
+    sourceVersion: UInt64,
+    decorations: [EditorDecoration],
+    diagnostics: [ProjectionDiagnostic] = []
+  ) {
+    self.sourceVersion = sourceVersion
+    self.decorations = decorations
+    self.diagnostics = diagnostics
+  }
+}
+
+public struct ProjectionGate: Sendable {
+  public init() {}
+
+  public func accepts(_ projection: EditorProjection, for snapshot: SourceSnapshot) -> Bool {
+    projection.sourceVersion == snapshot.version
+  }
+}
+
+public struct SpikeProjectionParser: Sendable {
+  private let editorSettings: EditorSettings
+  private let modeSettings: ModeSettings
+  private let syntaxHighlighter: any CodeSyntaxHighlighting
+
+  public init(
+    editorSettings: EditorSettings = EditorSettings(),
+    modeSettings: ModeSettings = ModeSettings(),
+    syntaxHighlighter: any CodeSyntaxHighlighting = BuiltInCodeSyntaxHighlighter()
+  ) {
+    self.editorSettings = editorSettings
+    self.modeSettings = modeSettings
+    self.syntaxHighlighter = syntaxHighlighter
+  }
+
+  public func parse(_ snapshot: SourceSnapshot) -> EditorProjection {
+    // The spike API remains synchronous for deterministic source-model tests.
+    // Production uses parseCancellable(_:) through ProjectionParsePipeline.
+    return (try? parse(snapshot, checksCancellation: false))
+      ?? EditorProjection(sourceVersion: snapshot.version, decorations: [])
+  }
+
+  public func parseCancellable(_ snapshot: SourceSnapshot) throws -> EditorProjection {
+    try parse(snapshot, checksCancellation: true)
+  }
+
+  private func parse(
+    _ snapshot: SourceSnapshot,
+    checksCancellation: Bool
+  ) throws -> EditorProjection {
+    try checkCancellation(if: checksCancellation)
+    var decorations = try styleDecorations(
+      in: snapshot.text,
+      checksCancellation: checksCancellation
+    )
+    try checkCancellation(if: checksCancellation)
+    decorations.append(
+      contentsOf: try checkboxDecorations(
+        in: snapshot.text,
+        checksCancellation: checksCancellation
+      ))
+    try checkCancellation(if: checksCancellation)
+    decorations.append(
+      contentsOf: try linkDecorations(
+        in: snapshot.text,
+        checksCancellation: checksCancellation
+      )
+    )
+    try checkCancellation(if: checksCancellation)
+    decorations.append(
+      contentsOf: try resultDecorations(
+        in: snapshot.text,
+        checksCancellation: checksCancellation
+      )
+    )
+    try checkCancellation(if: checksCancellation)
+    return EditorProjection(sourceVersion: snapshot.version, decorations: decorations)
+  }
+
+  private func styleDecorations(
+    in text: String,
+    checksCancellation: Bool
+  ) throws -> [EditorDecoration] {
+    let spans = LimitedMarkdownParser().parse(
+      text,
+      defaultCodeLanguage: editorSettings.defaultCodeLanguage,
+      modeSettings: modeSettings
+    )
+    var decorations = spans.map {
+      EditorDecoration.style(range: SourceRange($0.range), style: TextStyle($0.role))
+    }
+    for (index, span) in spans.enumerated() {
+      if index.isMultiple(of: 32) {
+        try checkCancellation(if: checksCancellation)
+      }
+      guard case .codeBlock(let language) = span.role, language != .plainText else { continue }
+      decorations.append(
+        contentsOf: syntaxHighlighter.highlights(
+          in: text,
+          range: SourceRange(span.range),
+          language: language
+        ).map { highlight in
+          .style(range: highlight.range, style: .syntax(highlight.kind))
+        }
+      )
+    }
+    return decorations
+  }
+
+  private func checkboxDecorations(
+    in text: String,
+    checksCancellation: Bool
+  ) throws -> [EditorDecoration] {
+    var decorations: [EditorDecoration] = []
+    for (index, item) in ListModeParser(settings: modeSettings).parse(in: text).enumerated() {
+      if index.isMultiple(of: 32) {
+        try checkCancellation(if: checksCancellation)
+      }
+      decorations.append(
+        .checkbox(
+          range: SourceRange(item.lineRange),
+          markerRange: item.markerRange.map(SourceRange.init),
+          isChecked: item.isChecked
+        )
+      )
+    }
+    return decorations
+  }
+
+  private func linkDecorations(
+    in text: String,
+    checksCancellation: Bool
+  ) throws -> [EditorDecoration] {
+    guard editorSettings.hyperlinkFeaturesEnabled else { return [] }
+    let codePolicy = LinkCodeContextPolicy()
+    guard !codePolicy.excludesAllLinks(in: text, modeSettings: modeSettings) else { return [] }
+    guard
+      let detector = try? NSDataDetector(
+        types: NSTextCheckingResult.CheckingType.link.rawValue
+      )
+    else { return [] }
+
+    let excludedRanges = codePolicy.fencedCodeRanges(in: text)
+    let validator = HTTPLinkValidator()
+    var duplicateCounts: [String: Int] = [:]
+    var decorations: [EditorDecoration] = []
+    var wasCancelled = false
+    detector.enumerateMatches(
+      in: text,
+      options: [],
+      range: NSRange(location: 0, length: text.utf16.count)
+    ) { match, _, stop in
+      if checksCancellation, Task.isCancelled {
+        wasCancelled = true
+        stop.pointee = true
+        return
+      }
+      guard let match,
+        !excludedRanges.contains(where: { NSIntersectionRange($0, match.range).length > 0 })
+      else { return }
+      let originalURL = (text as NSString).substring(with: match.range)
+      guard let url = validator.validatedURL(from: originalURL) else { return }
+      let duplicateIndex = (duplicateCounts[originalURL] ?? 0) + 1
+      duplicateCounts[originalURL] = duplicateIndex
+      let host = url.host(percentEncoded: false) ?? url.host ?? originalURL
+      let port = url.port.map { ":\($0)" } ?? ""
+      let hasTail =
+        !(url.path.isEmpty || url.path == "/") || url.query != nil || url.fragment != nil
+      let pathHint = hasTail ? "/..." : ""
+      let duplicateSuffix = duplicateIndex > 1 ? " · \(duplicateIndex)" : ""
+      let presentation = LinkPresentation(
+        originalURL: originalURL,
+        displayText: "\(host)\(port)\(pathHint)\(duplicateSuffix)",
+        duplicateIndex: duplicateIndex,
+        identity: LinkIdentity(originalURL: originalURL, occurrenceIndex: duplicateIndex)
+      )
+      decorations.append(.link(range: SourceRange(match.range), presentation: presentation))
+    }
+    if wasCancelled {
+      throw CancellationError()
+    }
+    return decorations
+  }
+
+  private func resultDecorations(
+    in text: String,
+    checksCancellation: Bool
+  ) throws -> [EditorDecoration] {
+    if ModeHeaderParser(settings: modeSettings).parse(in: text)?.modeID == .list {
+      return []
+    }
+    var decorations: [EditorDecoration] = []
+    let source = text as NSString
+    try enumerateLineRanges(in: source, checksCancellation: checksCancellation) { lineRange in
+      let line = source.substring(with: lineRange)
+      let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !trimmed.hasPrefix("//"), trimmed.hasSuffix("=") else { return }
+      decorations.append(
+        .result(
+          anchor: SourceOffset(utf16Offset: NSMaxRange(lineRange)),
+          presentation: CalculationPresentation(canonicalValue: "42", displayText: "42")
+        )
+      )
+    }
+    return decorations
+  }
+
+  private func enumerateLineRanges(
+    in source: NSString,
+    checksCancellation: Bool,
+    body: (NSRange) -> Void
+  ) throws {
+    var location = 0
+    var lineIndex = 0
+    while location < source.length {
+      if lineIndex.isMultiple(of: 32) {
+        try checkCancellation(if: checksCancellation)
+      }
+      let lineRange = source.lineRange(for: NSRange(location: location, length: 0))
+      body(lineRange)
+      let nextLocation = NSMaxRange(lineRange)
+      guard nextLocation > location else { break }
+      location = nextLocation
+      lineIndex += 1
+    }
+  }
+
+  private func checkCancellation(if enabled: Bool) throws {
+    if enabled {
+      try Task.checkCancellation()
+    }
+  }
+}

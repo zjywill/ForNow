@@ -1,0 +1,25 @@
+name: macOS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bootstrap project
+        run: scripts/bootstrap.sh
+      - name: Verify generated project
+        run: scripts/check-generated-project.sh
+      - name: Validate requirement traceability
+        run: scripts/test-traceability.sh
+      - name: Build Debug
+        run: scripts/build.sh
+      - name: Build Release
+        run: CONFIGURATION=Release scripts/build.sh
+      - name: Run tests
+        run: scripts/test.sh

@@ -1,0 +1,2522 @@
+{
+  "version": 1,
+  "scope": "fornow-macos",
+  "reviewed": "2026-08-03",
+  "undocumentedMarker": "UNVERIFIED",
+  "evidence": {
+    "AN-POS-001": {
+      "title": "Temporary scratchpad, not permanent archive",
+      "confidence": "A/B",
+      "sourceDescription": "Product page; manual introduction; press kit.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/presskit",
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+
+      ]
+    },
+    "AN-POS-002": {
+      "title": "Local-first storage",
+      "confidence": "A/B",
+      "sourceDescription": "Product FAQ; press kit; manual storage section.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/presskit",
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+
+      ]
+    },
+    "AN-POS-003": {
+      "title": "Native and lightweight",
+      "confidence": "B",
+      "sourceDescription": "Press kit.",
+      "sourceURLs": [
+        "https://antinote.io/presskit"
+      ],
+      "requirements": [
+
+      ]
+    },
+    "AN-NAV-001": {
+      "title": "Single-note primary surface",
+      "confidence": "A",
+      "sourceDescription": "User manual, navigation and notes sections.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#notes-storage"
+      ],
+      "requirements": [
+        "FR-NOTE-001"
+      ]
+    },
+    "AN-NAV-002": {
+      "title": "Previous and next note navigation",
+      "confidence": "A",
+      "sourceDescription": "User manual, navigation section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#navigation"
+      ],
+      "requirements": [
+        "FR-NOTE-003"
+      ]
+    },
+    "AN-NAV-003": {
+      "title": "Create at the newest edge",
+      "confidence": "A",
+      "sourceDescription": "User manual, creating notes section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#navigation"
+      ],
+      "requirements": [
+        "FR-NOTE-002"
+      ]
+    },
+    "AN-NAV-004": {
+      "title": "Empty notes are disposable",
+      "confidence": "A",
+      "sourceDescription": "User manual, deleting notes section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#navigation"
+      ],
+      "requirements": [
+        "FR-NOTE-002"
+      ]
+    },
+    "AN-NAV-005": {
+      "title": "Recency and promotion",
+      "confidence": "A",
+      "sourceDescription": "User manual, promote/jump-to-front section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+        "FR-NOTE-004"
+      ]
+    },
+    "AN-NAV-006": {
+      "title": "Search and find/replace",
+      "confidence": "A",
+      "sourceDescription": "User manual, search and find/replace sections.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#find-and-replace",
+        "https://antinote.io/user-manual#search"
+      ],
+      "requirements": [
+        "FR-NOTE-007",
+        "FR-NOTE-008"
+      ]
+    },
+    "AN-NAV-007": {
+      "title": "Cursor entry after navigation",
+      "confidence": "A",
+      "sourceDescription": "User manual, \"Entering a note after swiping\".",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#navigation"
+      ],
+      "requirements": [
+        "FR-NOTE-003"
+      ]
+    },
+    "AN-WIN-001": {
+      "title": "Global hotkey",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, global hotkey section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#global-hotkey"
+      ],
+      "requirements": [
+        "FR-WIN-001"
+      ]
+    },
+    "AN-WIN-002": {
+      "title": "Multiple presence modes",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, interface settings; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#dock",
+        "https://antinote.io/user-manual#traditionalMenuBar"
+      ],
+      "requirements": [
+        "FR-WIN-002"
+      ]
+    },
+    "AN-WIN-003": {
+      "title": "Pin and close on focus loss",
+      "confidence": "A",
+      "sourceDescription": "User manual, pin and auto-close settings.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#pin-antinote"
+      ],
+      "requirements": [
+        "FR-WIN-003"
+      ]
+    },
+    "AN-WIN-004": {
+      "title": "Full-screen application support",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, app management; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#dock",
+        "https://antinote.io/user-manual#pin-antinote",
+        "https://antinote.io/user-manual#traditionalMenuBar"
+      ],
+      "requirements": [
+        "FR-WIN-004"
+      ]
+    },
+    "AN-WIN-005": {
+      "title": "Show, hide, and close commands",
+      "confidence": "A",
+      "sourceDescription": "User manual, \"Close and open window\".",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#close-and-open"
+      ],
+      "requirements": [
+        "FR-WIN-005"
+      ]
+    },
+    "AN-TXT-001": {
+      "title": "Plain text is the underlying format",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, text formatting section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+        "FR-EDIT-001"
+      ]
+    },
+    "AN-TXT-002": {
+      "title": "Markdown-aware presentation",
+      "confidence": "A",
+      "sourceDescription": "User manual, text formatting section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#code",
+        "https://antinote.io/user-manual#link-shortening",
+        "https://antinote.io/user-manual#simple-markdown"
+      ],
+      "requirements": [
+        "FR-EDIT-002",
+        "FR-EDIT-003"
+      ]
+    },
+    "AN-TXT-003": {
+      "title": "Link shrinking",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, links section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#link-shortening"
+      ],
+      "requirements": [
+        "FR-EDIT-002",
+        "FR-EDIT-004"
+      ]
+    },
+    "AN-CLIP-001": {
+      "title": "Copy selection or whole note",
+      "confidence": "A",
+      "sourceDescription": "User manual, copy section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#code",
+        "https://antinote.io/user-manual#copy"
+      ],
+      "requirements": [
+        "FR-CLIP-001"
+      ]
+    },
+    "AN-CLIP-002": {
+      "title": "Clean exported clipboard text",
+      "confidence": "A",
+      "sourceDescription": "User manual, copy section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#copy",
+        "https://antinote.io/user-manual#quick-export"
+      ],
+      "requirements": [
+        "FR-CLIP-002",
+        "FR-EXP-001"
+      ]
+    },
+    "AN-CLIP-003": {
+      "title": "Normalized and raw paste paths",
+      "confidence": "A",
+      "sourceDescription": "User manual, paste section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#paste"
+      ],
+      "requirements": [
+        "FR-CLIP-003",
+        "FR-CLIP-004"
+      ]
+    },
+    "AN-CMD-001": {
+      "title": "First-line keyword selects note behavior",
+      "confidence": "A",
+      "sourceDescription": "User manual, keywords section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#keywords"
+      ],
+      "requirements": [
+        "FR-CMD-001",
+        "FR-CMD-002"
+      ]
+    },
+    "AN-CMD-002": {
+      "title": "Slash command picker",
+      "confidence": "A",
+      "sourceDescription": "User manual, slash command section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#keywords"
+      ],
+      "requirements": [
+        "FR-CMD-003"
+      ]
+    },
+    "AN-CMD-003": {
+      "title": "Customizable keywords and shortcuts",
+      "confidence": "A/B",
+      "sourceDescription": "User manual settings; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#keywords",
+        "https://antinote.io/user-manual#text-size"
+      ],
+      "requirements": [
+        "FR-CMD-001",
+        "FR-UI-003"
+      ]
+    },
+    "AN-CODE-001": {
+      "title": "Code mode",
+      "confidence": "A",
+      "sourceDescription": "User manual, code section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+        "FR-CMD-004"
+      ]
+    },
+    "AN-LIST-001": {
+      "title": "List conversion",
+      "confidence": "A",
+      "sourceDescription": "User manual, list section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#list"
+      ],
+      "requirements": [
+        "FR-LIST-001"
+      ]
+    },
+    "AN-LIST-002": {
+      "title": "Interactive checklist items",
+      "confidence": "A",
+      "sourceDescription": "User manual, list/checklist sections.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+        "FR-LIST-002"
+      ]
+    },
+    "AN-LIST-003": {
+      "title": "Checked-item operations",
+      "confidence": "A",
+      "sourceDescription": "User manual, list and copy sections.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#list"
+      ],
+      "requirements": [
+        "FR-LIST-003"
+      ]
+    },
+    "AN-MATH-001": {
+      "title": "Contextual inline calculations",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, calculations section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#link-shortening",
+        "https://antinote.io/user-manual#math"
+      ],
+      "requirements": [
+        "FR-EDIT-002",
+        "FR-MATH-001"
+      ]
+    },
+    "AN-MATH-002": {
+      "title": "Aggregate modes",
+      "confidence": "A",
+      "sourceDescription": "User manual, sum/average/count sections.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#average",
+        "https://antinote.io/user-manual#count",
+        "https://antinote.io/user-manual#sum"
+      ],
+      "requirements": [
+        "FR-MATH-002"
+      ]
+    },
+    "AN-MATH-003": {
+      "title": "Units and conversions",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, conversions section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#math"
+      ],
+      "requirements": [
+        "FR-MATH-003",
+        "FR-MATH-004"
+      ]
+    },
+    "AN-MATH-004": {
+      "title": "Reactive variables",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, reactive variables section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#math"
+      ],
+      "requirements": [
+        "FR-MATH-005"
+      ]
+    },
+    "AN-MATH-005": {
+      "title": "Result interaction",
+      "confidence": "A",
+      "sourceDescription": "User manual, calculations section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#copy"
+      ],
+      "requirements": [
+        "FR-MATH-006"
+      ]
+    },
+    "AN-TIME-001": {
+      "title": "Countdown and stopwatch workflows",
+      "confidence": "A",
+      "sourceDescription": "User manual, timer section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#timer"
+      ],
+      "requirements": [
+        "FR-TIME-001",
+        "FR-TIME-002"
+      ]
+    },
+    "AN-TIME-002": {
+      "title": "Timer visibility outside the editor",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, timer behavior; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#timer"
+      ],
+      "requirements": [
+        "FR-TIME-003"
+      ]
+    },
+    "AN-OCR-001": {
+      "title": "Screenshot or image to text",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, screenshot-to-text section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#screenshot-to-text"
+      ],
+      "requirements": [
+        "FR-OCR-001",
+        "FR-OCR-003"
+      ]
+    },
+    "AN-OCR-002": {
+      "title": "Local processing",
+      "confidence": "A",
+      "sourceDescription": "User manual, OCR privacy description.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+        "FR-OCR-002"
+      ]
+    },
+    "AN-AUTO-001": {
+      "title": "Explicit AutoPaste mode",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, AutoPaste section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#autopaste"
+      ],
+      "requirements": [
+        "FR-AUTO-001",
+        "FR-AUTO-002"
+      ]
+    },
+    "AN-AUTO-002": {
+      "title": "Configurable capture formatting",
+      "confidence": "A",
+      "sourceDescription": "User manual, AutoPaste settings.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#autopaste"
+      ],
+      "requirements": [
+        "FR-AUTO-003"
+      ]
+    },
+    "AN-EXP-001": {
+      "title": "Plain-text export",
+      "confidence": "A",
+      "sourceDescription": "User manual, export section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#export-all",
+        "https://antinote.io/user-manual#quick-export"
+      ],
+      "requirements": [
+        "FR-EXP-001",
+        "FR-EXP-002"
+      ]
+    },
+    "AN-EXP-002": {
+      "title": "Export to permanent note tools",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, export section; product FAQ.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#quick-export"
+      ],
+      "requirements": [
+        "FR-EXP-003"
+      ]
+    },
+    "AN-LIFE-001": {
+      "title": "Automatic expiration",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, auto-delete section; product page.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#expiring-notes"
+      ],
+      "requirements": [
+        "FR-NOTE-006"
+      ]
+    },
+    "AN-LIFE-002": {
+      "title": "Confirmed permanent deletion",
+      "confidence": "A",
+      "sourceDescription": "User manual, navigation delete section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#navigation"
+      ],
+      "requirements": [
+        "FR-NOTE-005"
+      ]
+    },
+    "AN-BACK-001": {
+      "title": "Periodic backup",
+      "confidence": "A",
+      "sourceDescription": "User manual, storage and backup sections.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#auto-backup"
+      ],
+      "requirements": [
+        "FR-BACK-001",
+        "FR-BACK-002"
+      ]
+    },
+    "AN-NOTE-SET-001": {
+      "title": "Launch and inactivity note settings",
+      "confidence": "A",
+      "sourceDescription": "User manual, notes storage settings.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#notes-storage"
+      ],
+      "requirements": [
+        "FR-NOTE-009",
+        "FR-NOTE-010"
+      ]
+    },
+    "AN-MD-001": {
+      "title": "Limited Markdown",
+      "confidence": "A",
+      "sourceDescription": "User manual, simple Markdown.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#code",
+        "https://antinote.io/user-manual#simple-markdown"
+      ],
+      "requirements": [
+        "FR-EDIT-003"
+      ]
+    },
+    "AN-URL-001": {
+      "title": "Automation URL schemes",
+      "confidence": "A",
+      "sourceDescription": "User manual, URL schemes.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#raycast-alfred",
+        "https://antinote.io/user-manual#url-schemes"
+      ],
+      "requirements": [
+        "FR-INT-001",
+        "FR-URL-001",
+        "FR-URL-002"
+      ]
+    },
+    "AN-EXPORT-003": {
+      "title": "Quick export behavior",
+      "confidence": "A",
+      "sourceDescription": "User manual, export.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#export-custom"
+      ],
+      "requirements": [
+        "FR-EXP-004"
+      ]
+    },
+    "AN-PRIV-001": {
+      "title": "Usage tracking disabled in v1.1.7",
+      "confidence": "A",
+      "sourceDescription": "User manual, usage activity.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#usage-activity"
+      ],
+      "requirements": [
+        "FR-PRIV-001"
+      ]
+    },
+    "AN-UPD-001": {
+      "title": "Update consent and controls",
+      "confidence": "A",
+      "sourceDescription": "User manual, updates section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#updates"
+      ],
+      "requirements": [
+        "FR-UPD-001"
+      ]
+    },
+    "AN-SUP-001": {
+      "title": "Preference reset and diagnostic launch",
+      "confidence": "A",
+      "sourceDescription": "User manual, terminal commands section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#terminal-commands"
+      ],
+      "requirements": [
+        "FR-SUP-001"
+      ]
+    },
+    "AN-DIST-001": {
+      "title": "Distribution and upgrade preservation",
+      "confidence": "A",
+      "sourceDescription": "User manual, download methods section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#downloadMethods"
+      ],
+      "requirements": [
+        "FR-DIST-001"
+      ]
+    },
+    "AN-UI-001": {
+      "title": "Themes and paper treatments",
+      "confidence": "A/B",
+      "sourceDescription": "Product page; user manual appearance settings.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#paper-types",
+        "https://antinote.io/user-manual#text-size",
+        "https://antinote.io/user-manual#themes",
+        "https://antinote.io/user-manual#translucent-mode"
+      ],
+      "requirements": [
+        "FR-UI-001",
+        "FR-UI-002",
+        "FR-UI-003"
+      ]
+    },
+    "AN-UI-002": {
+      "title": "Custom theme ecosystem",
+      "confidence": "A/B",
+      "sourceDescription": "User manual, product theme maker, and public extension repository.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/extensions",
+        "https://antinote.io/user-manual",
+        "https://antinote.io/user-manual#theme-maker",
+        "https://github.com/johnsonfung/antinote-extensions"
+      ],
+      "requirements": [
+        "FR-UI-004"
+      ]
+    },
+    "AN-ACC-001": {
+      "title": "Keyboard-centered workflow",
+      "confidence": "A/B",
+      "sourceDescription": "User manual shortcut references across features.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+
+      ]
+    },
+    "AN-BETA-001": {
+      "title": "Slotted notes",
+      "confidence": "B",
+      "sourceDescription": "Changelog, 2.0 beta entries.",
+      "sourceURLs": [
+        "https://antinote.io/changelog"
+      ],
+      "requirements": [
+
+      ]
+    },
+    "AN-BETA-002": {
+      "title": "iCloud and iOS work",
+      "confidence": "B",
+      "sourceDescription": "Changelog and product FAQ:",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/changelog",
+        "https://antinote.io/user-manual#notes-storage"
+      ],
+      "requirements": [
+        "FR-NOTE-001"
+      ]
+    },
+    "AN-EXT-001": {
+      "title": "Manifest-based JavaScript extensions",
+      "confidence": "B",
+      "sourceDescription": "Extensions page and public extension repository.",
+      "sourceURLs": [
+        "https://antinote.io/extensions",
+        "https://github.com/johnsonfung/antinote-extensions"
+      ],
+      "requirements": [
+        "FR-EXT-001"
+      ]
+    },
+    "AN-EXT-002": {
+      "title": "Restricted network and secret access",
+      "confidence": "B",
+      "sourceDescription": "Extensions page and public extension repository.",
+      "sourceURLs": [
+        "https://antinote.io/extensions",
+        "https://github.com/johnsonfung/antinote-extensions"
+      ],
+      "requirements": [
+        "FR-EXT-003"
+      ]
+    },
+    "AN-EXT-003": {
+      "title": "Extension command palette and command types",
+      "confidence": "B",
+      "sourceDescription": "Extensions page and public extension repository.",
+      "sourceURLs": [
+        "https://antinote.io/extensions",
+        "https://github.com/johnsonfung/antinote-extensions"
+      ],
+      "requirements": [
+        "FR-EXT-002"
+      ]
+    },
+    "AN-EXT-004": {
+      "title": "Host bridges and service extensions",
+      "confidence": "B",
+      "sourceDescription": "Extensions page and public extension repository.",
+      "sourceURLs": [
+        "https://antinote.io/extensions",
+        "https://github.com/johnsonfung/antinote-extensions"
+      ],
+      "requirements": [
+        "FR-EXT-004"
+      ]
+    },
+    "AN-AI-001": {
+      "title": "Generative AI is not a core note dependency",
+      "confidence": "A",
+      "sourceDescription": "User manual FAQ/search result for AI.",
+      "sourceURLs": [
+        "https://antinote.io/",
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+
+      ]
+    },
+    "AN-AI-002": {
+      "title": "OCR is local machine learning, not generative AI",
+      "confidence": "A",
+      "sourceDescription": "User manual, OCR section.",
+      "sourceURLs": [
+        "https://antinote.io/user-manual"
+      ],
+      "requirements": [
+
+      ]
+    },
+    "AN-REV-001": {
+      "title": "Commands are case-insensitive",
+      "confidence": "R",
+      "sourceDescription": "Digital Trends review:",
+      "sourceURLs": [
+        "https://www.digitaltrends.com/computing/this-mac-app-is-the-perfect-way-to-capture-your-ideas-and-stay-organized/"
+      ],
+      "requirements": [
+        "FR-CMD-002"
+      ]
+    },
+    "AN-REV-002": {
+      "title": "Forced right-to-left layout",
+      "confidence": "R",
+      "sourceDescription": "Digital Trends review:",
+      "sourceURLs": [
+        "https://www.digitaltrends.com/computing/this-mac-app-is-the-perfect-way-to-capture-your-ideas-and-stay-organized/"
+      ],
+      "requirements": [
+        "FR-EDIT-007"
+      ]
+    }
+  },
+  "requirements": {
+    "FR-WIN-001": {
+      "title": "Global toggle shortcut",
+      "classification": "parity",
+      "sourceDescription": "`AN-WIN-001`.",
+      "evidence": [
+        "AN-WIN-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-WIN-001",
+        "MT-WIN-001",
+        "UT-WIN-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#global-hotkey"
+      ]
+    },
+    "FR-WIN-002": {
+      "title": "Window modes",
+      "classification": "parity",
+      "sourceDescription": "`AN-WIN-002`.",
+      "evidence": [
+        "AN-WIN-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "MT-WIN-002",
+        "UIT-WIN-002",
+        "UT-WIN-002"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#dock",
+        "https://antinote.io/user-manual#traditionalMenuBar"
+      ]
+    },
+    "FR-WIN-003": {
+      "title": "Pin and auto-hide",
+      "classification": "parity",
+      "sourceDescription": "`AN-WIN-003`.",
+      "evidence": [
+        "AN-WIN-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "MT-WIN-003",
+        "UIT-WIN-003",
+        "UT-WIN-003"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#pin-antinote"
+      ]
+    },
+    "FR-WIN-004": {
+      "title": "Spaces and full screen",
+      "classification": "parity",
+      "sourceDescription": "`AN-WIN-004`.",
+      "evidence": [
+        "AN-WIN-004"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "MT-WIN-004A",
+        "MT-WIN-004B",
+        "MT-WIN-004C",
+        "MT-WIN-004D",
+        "MT-WIN-004E",
+        "MT-WIN-004F",
+        "MT-WIN-004G",
+        "MT-WIN-004H"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#dock",
+        "https://antinote.io/user-manual#pin-antinote",
+        "https://antinote.io/user-manual#traditionalMenuBar"
+      ]
+    },
+    "FR-WIN-005": {
+      "title": "Local show, global show, and close",
+      "classification": "parity",
+      "sourceDescription": "`AN-WIN-005`.",
+      "evidence": [
+        "AN-WIN-005"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-WIN-005",
+        "UIT-WIN-005A",
+        "UIT-WIN-005B"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#close-and-open"
+      ]
+    },
+    "FR-NOTE-001": {
+      "title": "Durable note identity",
+      "classification": "parity",
+      "sourceDescription": "`AN-NAV-001`, `AN-BETA-002`.",
+      "evidence": [
+        "AN-BETA-002",
+        "AN-NAV-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-NOTE-001",
+        "UT-NOTE-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#notes-storage"
+      ]
+    },
+    "FR-NOTE-002": {
+      "title": "Transient blank note",
+      "classification": "parity",
+      "sourceDescription": "`AN-NAV-003`, `AN-NAV-004`.",
+      "evidence": [
+        "AN-NAV-003",
+        "AN-NAV-004"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-NOTE-002",
+        "UT-NOTE-002A",
+        "UT-NOTE-002B",
+        "UT-NOTE-002C",
+        "UT-NOTE-002D",
+        "UT-NOTE-002E",
+        "UT-NOTE-002F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#navigation"
+      ]
+    },
+    "FR-NOTE-003": {
+      "title": "Navigation",
+      "classification": "parity",
+      "sourceDescription": "`AN-NAV-002`, `AN-NAV-007`.",
+      "evidence": [
+        "AN-NAV-002",
+        "AN-NAV-007"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-NOTE-003",
+        "UIT-NOTE-003",
+        "UT-NOTE-003"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#navigation"
+      ]
+    },
+    "FR-NOTE-004": {
+      "title": "Ordering and promotion",
+      "classification": "parity",
+      "sourceDescription": "`AN-NAV-005`.",
+      "evidence": [
+        "AN-NAV-005"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-NOTE-004A",
+        "IT-NOTE-004B",
+        "UT-NOTE-004"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-NOTE-005": {
+      "title": "Confirmed permanent deletion",
+      "classification": "parity",
+      "sourceDescription": "`AN-LIFE-002`.",
+      "evidence": [
+        "AN-LIFE-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-NOTE-005",
+        "UIT-NOTE-005A",
+        "UIT-NOTE-005B"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#navigation"
+      ]
+    },
+    "FR-NOTE-006": {
+      "title": "Expiration",
+      "classification": "parity",
+      "sourceDescription": "`AN-LIFE-001`.",
+      "evidence": [
+        "AN-LIFE-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-NOTE-006",
+        "UT-NOTE-006A",
+        "UT-NOTE-006B",
+        "UT-NOTE-006C",
+        "UT-NOTE-006D",
+        "UT-NOTE-006E"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#expiring-notes"
+      ]
+    },
+    "FR-NOTE-007": {
+      "title": "Search",
+      "classification": "parity",
+      "sourceDescription": "`AN-NAV-006`.",
+      "evidence": [
+        "AN-NAV-006"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-NOTE-007",
+        "UIT-NOTE-007",
+        "UT-NOTE-007"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#search"
+      ]
+    },
+    "FR-NOTE-008": {
+      "title": "Find and replace",
+      "classification": "parity",
+      "sourceDescription": "`AN-NAV-006`.",
+      "evidence": [
+        "AN-NAV-006"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-NOTE-008",
+        "UT-NOTE-008A",
+        "UT-NOTE-008B",
+        "UT-NOTE-008C",
+        "UT-NOTE-008D",
+        "UT-NOTE-008E",
+        "UT-NOTE-008F",
+        "UT-NOTE-008G"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#find-and-replace"
+      ]
+    },
+    "FR-NOTE-009": {
+      "title": "Resume note policy",
+      "classification": "parity",
+      "sourceDescription": "`AN-NOTE-SET-001`.",
+      "evidence": [
+        "AN-NOTE-SET-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-NOTE-009",
+        "UT-NOTE-009A",
+        "UT-NOTE-009B",
+        "UT-NOTE-009C",
+        "UT-NOTE-009D",
+        "UT-NOTE-009E",
+        "UT-NOTE-009F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#notes-storage"
+      ]
+    },
+    "FR-NOTE-010": {
+      "title": "Bulk deletion by modification date",
+      "classification": "parity",
+      "sourceDescription": "`AN-NOTE-SET-001`.",
+      "evidence": [
+        "AN-NOTE-SET-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-NOTE-010",
+        "UIT-NOTE-010",
+        "UT-NOTE-010A",
+        "UT-NOTE-010B",
+        "UT-NOTE-010C",
+        "UT-NOTE-010D",
+        "UT-NOTE-010E",
+        "UT-NOTE-010F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#notes-storage"
+      ]
+    },
+    "FR-EDIT-001": {
+      "title": "Plain-text source",
+      "classification": "parity",
+      "sourceDescription": "`AN-TXT-001`.",
+      "evidence": [
+        "AN-TXT-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-EDIT-001",
+        "IT-EDIT-001",
+        "UT-EDIT-001"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-EDIT-002": {
+      "title": "Source projection",
+      "classification": "parity",
+      "sourceDescription": "`AN-TXT-002`, `AN-TXT-003`, `AN-MATH-001`.",
+      "evidence": [
+        "AN-MATH-001",
+        "AN-TXT-002",
+        "AN-TXT-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-EDIT-002",
+        "UT-EDIT-002A",
+        "UT-EDIT-002B",
+        "UT-EDIT-002C",
+        "UT-EDIT-002D",
+        "UT-EDIT-002E",
+        "UT-EDIT-002F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#link-shortening"
+      ]
+    },
+    "FR-EDIT-003": {
+      "title": "Markdown presentation",
+      "classification": "parity",
+      "sourceDescription": "`AN-TXT-002`, `AN-MD-001`.",
+      "evidence": [
+        "AN-MD-001",
+        "AN-TXT-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-EDIT-003",
+        "UT-EDIT-003A",
+        "UT-EDIT-003B",
+        "UT-EDIT-003C",
+        "UT-EDIT-003D",
+        "UT-EDIT-003E",
+        "UT-EDIT-003F",
+        "UT-EDIT-003G",
+        "UT-EDIT-003H",
+        "UT-EDIT-003I",
+        "UT-EDIT-003J"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#code",
+        "https://antinote.io/user-manual#simple-markdown"
+      ]
+    },
+    "FR-EDIT-004": {
+      "title": "Link presentation",
+      "classification": "parity",
+      "sourceDescription": "`AN-TXT-003`.",
+      "evidence": [
+        "AN-TXT-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-EDIT-004",
+        "UT-EDIT-004A",
+        "UT-EDIT-004B",
+        "UT-EDIT-004C",
+        "UT-EDIT-004D",
+        "UT-EDIT-004E",
+        "UT-EDIT-004F",
+        "UT-EDIT-004G",
+        "UT-EDIT-004H",
+        "UT-EDIT-004I",
+        "UT-EDIT-004J",
+        "UT-EDIT-004K",
+        "UT-EDIT-004L"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#link-shortening"
+      ]
+    },
+    "FR-EDIT-005": {
+      "title": "Undo",
+      "classification": "quality",
+      "sourceDescription": "product-quality requirement derived from all editor functions.",
+      "evidence": [
+
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-EDIT-005A",
+        "ET-EDIT-005B",
+        "ET-EDIT-005C",
+        "ET-EDIT-005D",
+        "ET-EDIT-005E",
+        "ET-EDIT-005F",
+        "ET-EDIT-005G",
+        "ET-EDIT-005H"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-EDIT-006": {
+      "title": "International text",
+      "classification": "quality",
+      "sourceDescription": "product-quality requirement.",
+      "evidence": [
+
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-EDIT-006A",
+        "ET-EDIT-006B",
+        "ET-EDIT-006C",
+        "ET-EDIT-006D",
+        "ET-EDIT-006E",
+        "ET-EDIT-006F",
+        "ET-EDIT-006G"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-EDIT-007": {
+      "title": "Layout direction override",
+      "classification": "product-decision",
+      "sourceDescription": "`FORNOW-DECISION-006`; informed by `AN-REV-002`.",
+      "evidence": [
+        "AN-REV-002"
+      ],
+      "decisions": [
+        "FORNOW-DECISION-006"
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-EDIT-007",
+        "UT-EDIT-007"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-CLIP-001": {
+      "title": "Contextual copy",
+      "classification": "parity",
+      "sourceDescription": "`AN-CLIP-001`.",
+      "evidence": [
+        "AN-CLIP-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-CLIP-001",
+        "UT-CLIP-001A",
+        "UT-CLIP-001B",
+        "UT-CLIP-001C",
+        "UT-CLIP-001D",
+        "UT-CLIP-001E"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#code",
+        "https://antinote.io/user-manual#copy"
+      ]
+    },
+    "FR-CLIP-002": {
+      "title": "Clean projection",
+      "classification": "parity",
+      "sourceDescription": "`AN-CLIP-002`.",
+      "evidence": [
+        "AN-CLIP-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "UT-CLIP-002A",
+        "UT-CLIP-002B",
+        "UT-CLIP-002C",
+        "UT-CLIP-002D",
+        "UT-CLIP-002E",
+        "UT-CLIP-002F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#copy"
+      ]
+    },
+    "FR-CLIP-003": {
+      "title": "Normal paste",
+      "classification": "parity",
+      "sourceDescription": "`AN-CLIP-003`.",
+      "evidence": [
+        "AN-CLIP-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-CLIP-003",
+        "UT-CLIP-003A",
+        "UT-CLIP-003B",
+        "UT-CLIP-003C",
+        "UT-CLIP-003D",
+        "UT-CLIP-003E",
+        "UT-CLIP-003F",
+        "UT-CLIP-003G",
+        "UT-CLIP-003H",
+        "UT-CLIP-003I",
+        "UT-CLIP-003J"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#paste"
+      ]
+    },
+    "FR-CLIP-004": {
+      "title": "Raw paste",
+      "classification": "parity",
+      "sourceDescription": "`AN-CLIP-003`.",
+      "evidence": [
+        "AN-CLIP-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-CLIP-004",
+        "UT-CLIP-004"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#paste"
+      ]
+    },
+    "FR-CMD-001": {
+      "title": "Canonical mode IDs",
+      "classification": "parity",
+      "sourceDescription": "`AN-CMD-001`, `AN-CMD-003`.",
+      "evidence": [
+        "AN-CMD-001",
+        "AN-CMD-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "UT-CMD-001A",
+        "UT-CMD-001B",
+        "UT-CMD-001C",
+        "UT-CMD-001D",
+        "UT-CMD-001E",
+        "UT-CMD-001F",
+        "UT-CMD-001G"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#keywords"
+      ]
+    },
+    "FR-CMD-002": {
+      "title": "Mode header",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-CMD-001`, `FORNOW-DECISION-004`; informed by `AN-REV-001`.",
+      "evidence": [
+        "AN-CMD-001",
+        "AN-REV-001"
+      ],
+      "decisions": [
+        "FORNOW-DECISION-004"
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-CMD-002",
+        "UT-CMD-002A",
+        "UT-CMD-002B",
+        "UT-CMD-002C",
+        "UT-CMD-002D",
+        "UT-CMD-002E",
+        "UT-CMD-002F",
+        "UT-CMD-002G"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-CMD-003": {
+      "title": "Slash picker",
+      "classification": "parity",
+      "sourceDescription": "`AN-CMD-002`.",
+      "evidence": [
+        "AN-CMD-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "MT-CMD-003",
+        "UIT-CMD-003",
+        "UT-CMD-003"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#keywords"
+      ]
+    },
+    "FR-CMD-004": {
+      "title": "Code mode",
+      "classification": "parity",
+      "sourceDescription": "`AN-CODE-001`.",
+      "evidence": [
+        "AN-CODE-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-CMD-004",
+        "UT-CMD-004A",
+        "UT-CMD-004B",
+        "UT-CMD-004C",
+        "UT-CMD-004D"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-LIST-001": {
+      "title": "Line items",
+      "classification": "parity",
+      "sourceDescription": "`AN-LIST-001`.",
+      "evidence": [
+        "AN-LIST-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "UT-LIST-001A",
+        "UT-LIST-001B",
+        "UT-LIST-001C",
+        "UT-LIST-001D",
+        "UT-LIST-001E",
+        "UT-LIST-001F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#list"
+      ]
+    },
+    "FR-LIST-002": {
+      "title": "Checkbox toggle",
+      "classification": "parity",
+      "sourceDescription": "`AN-LIST-002`.",
+      "evidence": [
+        "AN-LIST-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-LIST-002A",
+        "ET-LIST-002B",
+        "UT-LIST-002"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-LIST-003": {
+      "title": "Checked marker and clean copy",
+      "classification": "parity",
+      "sourceDescription": "`AN-LIST-003`.",
+      "evidence": [
+        "AN-LIST-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "UT-LIST-003A",
+        "UT-LIST-003B",
+        "UT-LIST-003C",
+        "UT-LIST-003D",
+        "UT-LIST-003E"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#list"
+      ]
+    },
+    "FR-MATH-001": {
+      "title": "Expression parser",
+      "classification": "parity",
+      "sourceDescription": "`AN-MATH-001`.",
+      "evidence": [
+        "AN-MATH-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "PT-MATH-001",
+        "UT-MATH-001A",
+        "UT-MATH-001B",
+        "UT-MATH-001C",
+        "UT-MATH-001D",
+        "UT-MATH-001E",
+        "UT-MATH-001F",
+        "UT-MATH-001G",
+        "UT-MATH-001H",
+        "UT-MATH-001I",
+        "UT-MATH-001J",
+        "UT-MATH-001K",
+        "UT-MATH-001L",
+        "UT-MATH-001M",
+        "UT-MATH-001N",
+        "UT-MATH-001O",
+        "UT-MATH-001P",
+        "UT-MATH-001Q",
+        "UT-MATH-001R",
+        "UT-MATH-001S",
+        "UT-MATH-001T",
+        "UT-MATH-001U",
+        "UT-MATH-001V",
+        "UT-MATH-001W",
+        "UT-MATH-001X",
+        "UT-MATH-001Y",
+        "UT-MATH-001Z"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#math"
+      ]
+    },
+    "FR-MATH-002": {
+      "title": "Aggregate modes",
+      "classification": "parity",
+      "sourceDescription": "`AN-MATH-002`.",
+      "evidence": [
+        "AN-MATH-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "UT-MATH-002A",
+        "UT-MATH-002B",
+        "UT-MATH-002C",
+        "UT-MATH-002D",
+        "UT-MATH-002E",
+        "UT-MATH-002F",
+        "UT-MATH-002G",
+        "UT-MATH-002H",
+        "UT-MATH-002I",
+        "UT-MATH-002J"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#average",
+        "https://antinote.io/user-manual#count",
+        "https://antinote.io/user-manual#sum"
+      ]
+    },
+    "FR-MATH-003": {
+      "title": "Units",
+      "classification": "parity",
+      "sourceDescription": "`AN-MATH-003`.",
+      "evidence": [
+        "AN-MATH-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "UT-MATH-003A",
+        "UT-MATH-003B",
+        "UT-MATH-003C",
+        "UT-MATH-003D",
+        "UT-MATH-003E",
+        "UT-MATH-003F",
+        "UT-MATH-003G",
+        "UT-MATH-003H",
+        "UT-MATH-003I",
+        "UT-MATH-003J",
+        "UT-MATH-003K",
+        "UT-MATH-003L",
+        "UT-MATH-003M",
+        "UT-MATH-003N"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#math"
+      ]
+    },
+    "FR-MATH-004": {
+      "title": "Currency",
+      "classification": "parity",
+      "sourceDescription": "`AN-MATH-003`.",
+      "evidence": [
+        "AN-MATH-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-MATH-004",
+        "ST-MATH-004",
+        "UT-MATH-004A",
+        "UT-MATH-004B",
+        "UT-MATH-004C",
+        "UT-MATH-004D",
+        "UT-MATH-004E",
+        "UT-MATH-004F",
+        "UT-MATH-004G",
+        "UT-MATH-004H",
+        "UT-MATH-004I",
+        "UT-MATH-004J",
+        "UT-MATH-004K",
+        "UT-MATH-004L",
+        "UT-MATH-004M",
+        "UT-MATH-004N"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#math"
+      ]
+    },
+    "FR-MATH-005": {
+      "title": "Variables",
+      "classification": "parity",
+      "sourceDescription": "`AN-MATH-004`.",
+      "evidence": [
+        "AN-MATH-004"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-MATH-005",
+        "UT-MATH-005A",
+        "UT-MATH-005B",
+        "UT-MATH-005C",
+        "UT-MATH-005D",
+        "UT-MATH-005E",
+        "UT-MATH-005F",
+        "UT-MATH-005G",
+        "UT-MATH-005H",
+        "UT-MATH-005I",
+        "UT-MATH-005J",
+        "UT-MATH-005K",
+        "UT-MATH-005L",
+        "UT-MATH-005M"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#math"
+      ]
+    },
+    "FR-MATH-006": {
+      "title": "Result interaction",
+      "classification": "parity",
+      "sourceDescription": "`AN-MATH-005`.",
+      "evidence": [
+        "AN-MATH-005"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-MATH-006A",
+        "ET-MATH-006B",
+        "MT-MATH-006"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#copy"
+      ]
+    },
+    "FR-TIME-001": {
+      "title": "Persistent timer model",
+      "classification": "parity",
+      "sourceDescription": "`AN-TIME-001`.",
+      "evidence": [
+        "AN-TIME-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-TIME-001",
+        "UT-TIME-001A",
+        "UT-TIME-001B",
+        "UT-TIME-001C",
+        "UT-TIME-001D",
+        "UT-TIME-001E",
+        "UT-TIME-001F",
+        "UT-TIME-001G",
+        "UT-TIME-001H",
+        "UT-TIME-001I",
+        "UT-TIME-001J",
+        "UT-TIME-001K",
+        "UT-TIME-001L"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#timer"
+      ]
+    },
+    "FR-TIME-002": {
+      "title": "Pause, resume, reset, complete",
+      "classification": "parity",
+      "sourceDescription": "`AN-TIME-001`.",
+      "evidence": [
+        "AN-TIME-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-TIME-002",
+        "UT-TIME-002A",
+        "UT-TIME-002B",
+        "UT-TIME-002C",
+        "UT-TIME-002D",
+        "UT-TIME-002E",
+        "UT-TIME-002F",
+        "UT-TIME-002G",
+        "UT-TIME-002H",
+        "UT-TIME-002I",
+        "UT-TIME-002J",
+        "UT-TIME-002K",
+        "UT-TIME-002L",
+        "UT-TIME-002M",
+        "UT-TIME-002N"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-TIME-003": {
+      "title": "External visibility",
+      "classification": "parity",
+      "sourceDescription": "`AN-TIME-002`.",
+      "evidence": [
+        "AN-TIME-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-TIME-003A",
+        "IT-TIME-003B",
+        "IT-TIME-003C",
+        "IT-TIME-003D",
+        "IT-TIME-003E",
+        "IT-TIME-003F",
+        "IT-TIME-003G",
+        "IT-TIME-003H",
+        "IT-TIME-003I",
+        "IT-TIME-003J",
+        "MT-TIME-003",
+        "UIT-TIME-003"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#timer"
+      ]
+    },
+    "FR-OCR-001": {
+      "title": "Image input",
+      "classification": "parity",
+      "sourceDescription": "`AN-OCR-001`.",
+      "evidence": [
+        "AN-OCR-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-OCR-001A",
+        "IT-OCR-001B",
+        "IT-OCR-001C",
+        "IT-OCR-001D",
+        "IT-OCR-001E",
+        "IT-OCR-001F",
+        "UT-OCR-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#screenshot-to-text"
+      ]
+    },
+    "FR-OCR-002": {
+      "title": "Local recognition",
+      "classification": "parity",
+      "sourceDescription": "`AN-OCR-002`.",
+      "evidence": [
+        "AN-OCR-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-OCR-002",
+        "MT-OCR-002",
+        "ST-OCR-002"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-OCR-003": {
+      "title": "Atomic insertion",
+      "classification": "parity",
+      "sourceDescription": "`AN-OCR-001`.",
+      "evidence": [
+        "AN-OCR-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "ET-OCR-003A",
+        "ET-OCR-003B",
+        "ET-OCR-003C",
+        "ET-OCR-003D",
+        "ET-OCR-003E"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#screenshot-to-text"
+      ]
+    },
+    "FR-AUTO-001": {
+      "title": "Explicit session",
+      "classification": "parity",
+      "sourceDescription": "`AN-AUTO-001`.",
+      "evidence": [
+        "AN-AUTO-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-AUTO-001",
+        "UIT-AUTO-001",
+        "UT-AUTO-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#autopaste"
+      ]
+    },
+    "FR-AUTO-002": {
+      "title": "Deduplication",
+      "classification": "parity",
+      "sourceDescription": "`AN-AUTO-001`.",
+      "evidence": [
+        "AN-AUTO-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "SOAK-AUTO-002",
+        "UT-AUTO-002A",
+        "UT-AUTO-002B",
+        "UT-AUTO-002C",
+        "UT-AUTO-002D",
+        "UT-AUTO-002E",
+        "UT-AUTO-002F"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-AUTO-003": {
+      "title": "Capture policy",
+      "classification": "parity",
+      "sourceDescription": "`AN-AUTO-002`.",
+      "evidence": [
+        "AN-AUTO-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "UT-AUTO-003A",
+        "UT-AUTO-003B",
+        "UT-AUTO-003C",
+        "UT-AUTO-003D",
+        "UT-AUTO-003E",
+        "UT-AUTO-003F",
+        "UT-AUTO-003G",
+        "UT-AUTO-003H"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#autopaste"
+      ]
+    },
+    "FR-EXP-001": {
+      "title": "Canonical export document",
+      "classification": "parity",
+      "sourceDescription": "`AN-EXP-001`, `AN-CLIP-002`.",
+      "evidence": [
+        "AN-CLIP-002",
+        "AN-EXP-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "UT-EXP-001A",
+        "UT-EXP-001B",
+        "UT-EXP-001C",
+        "UT-EXP-001D",
+        "UT-EXP-001E",
+        "UT-EXP-001F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#quick-export"
+      ]
+    },
+    "FR-EXP-002": {
+      "title": "File export",
+      "classification": "parity",
+      "sourceDescription": "`AN-EXP-001`.",
+      "evidence": [
+        "AN-EXP-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-EXP-002A",
+        "IT-EXP-002B",
+        "IT-EXP-002C",
+        "IT-EXP-002D",
+        "IT-EXP-002E",
+        "IT-EXP-002F",
+        "IT-EXP-002G",
+        "IT-EXP-002H",
+        "ST-EXP-002"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#export-all",
+        "https://antinote.io/user-manual#quick-export"
+      ]
+    },
+    "FR-EXP-003": {
+      "title": "Application adapters",
+      "classification": "parity",
+      "sourceDescription": "`AN-EXP-002`.",
+      "evidence": [
+        "AN-EXP-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-EXP-003A",
+        "IT-EXP-003B",
+        "IT-EXP-003C",
+        "IT-EXP-003D",
+        "IT-EXP-003E",
+        "IT-EXP-003F",
+        "UT-EXP-003"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#quick-export"
+      ]
+    },
+    "FR-EXP-004": {
+      "title": "Custom URL export",
+      "classification": "parity",
+      "sourceDescription": "`AN-EXPORT-003`.",
+      "evidence": [
+        "AN-EXPORT-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-EXP-004",
+        "ST-EXP-004",
+        "UT-EXP-004A",
+        "UT-EXP-004B",
+        "UT-EXP-004C",
+        "UT-EXP-004D",
+        "UT-EXP-004E",
+        "UT-EXP-004F",
+        "UT-EXP-004G",
+        "UT-EXP-004H",
+        "UT-EXP-004I",
+        "UT-EXP-004J"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#export-custom"
+      ]
+    },
+    "FR-BACK-001": {
+      "title": "Backups",
+      "classification": "parity",
+      "sourceDescription": "`AN-BACK-001`.",
+      "evidence": [
+        "AN-BACK-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-BACK-001A",
+        "IT-BACK-001B",
+        "IT-BACK-001C",
+        "IT-BACK-001D",
+        "IT-BACK-001E",
+        "IT-BACK-001F",
+        "IT-BACK-001G",
+        "IT-BACK-001H",
+        "IT-BACK-001I",
+        "IT-BACK-001J",
+        "IT-BACK-001K",
+        "IT-BACK-001L",
+        "SOAK-BACK-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#auto-backup"
+      ]
+    },
+    "FR-BACK-002": {
+      "title": "Restore",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-BACK-001`, `FORNOW-DECISION-001`.",
+      "evidence": [
+        "AN-BACK-001"
+      ],
+      "decisions": [
+        "FORNOW-DECISION-001"
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-BACK-002A",
+        "IT-BACK-002B",
+        "IT-BACK-002C",
+        "IT-BACK-002D",
+        "IT-BACK-002E",
+        "IT-BACK-002F",
+        "IT-BACK-002G",
+        "IT-BACK-002H",
+        "MT-BACK-002"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#auto-backup"
+      ]
+    },
+    "FR-UI-001": {
+      "title": "Semantic theme",
+      "classification": "parity",
+      "sourceDescription": "`AN-UI-001`.",
+      "evidence": [
+        "AN-UI-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "MT-UI-001",
+        "UIT-UI-001",
+        "UT-UI-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#themes"
+      ]
+    },
+    "FR-UI-002": {
+      "title": "Paper style and translucency",
+      "classification": "parity",
+      "sourceDescription": "`AN-UI-001`.",
+      "evidence": [
+        "AN-UI-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "MT-UI-002",
+        "UIT-UI-002A",
+        "UIT-UI-002B",
+        "UIT-UI-002C",
+        "UIT-UI-002D",
+        "UIT-UI-002E",
+        "UIT-UI-002F",
+        "UIT-UI-002G",
+        "UIT-UI-002H",
+        "UIT-UI-002I",
+        "UIT-UI-002J"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#paper-types",
+        "https://antinote.io/user-manual#translucent-mode"
+      ]
+    },
+    "FR-UI-003": {
+      "title": "Text size and settings validation",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-CMD-003`, `AN-UI-001`, `FORNOW-DECISION-005`.",
+      "evidence": [
+        "AN-CMD-003",
+        "AN-UI-001"
+      ],
+      "decisions": [
+        "FORNOW-DECISION-005"
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "MT-UI-003",
+        "UIT-UI-003",
+        "UT-UI-003"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#text-size"
+      ]
+    },
+    "FR-UI-004": {
+      "title": "Custom theme import",
+      "classification": "parity",
+      "sourceDescription": "`AN-UI-002`.",
+      "evidence": [
+        "AN-UI-002"
+      ],
+      "decisions": [
+
+      ],
+      "release": "post-1.0",
+      "tests": [
+        "IT-UI-004",
+        "ST-UI-004",
+        "UT-UI-004A",
+        "UT-UI-004B",
+        "UT-UI-004C",
+        "UT-UI-004D",
+        "UT-UI-004E",
+        "UT-UI-004F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#theme-maker"
+      ]
+    },
+    "FR-URL-001": {
+      "title": "Automation routes",
+      "classification": "parity",
+      "sourceDescription": "`AN-URL-001`.",
+      "evidence": [
+        "AN-URL-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-URL-001",
+        "ST-URL-001",
+        "ST-URL-002",
+        "ST-URL-003",
+        "ST-URL-004",
+        "UT-URL-001A",
+        "UT-URL-001B",
+        "UT-URL-001C",
+        "UT-URL-001D",
+        "UT-URL-001E",
+        "UT-URL-001F",
+        "UT-URL-001G",
+        "UT-URL-001H"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#url-schemes"
+      ]
+    },
+    "FR-URL-002": {
+      "title": "Search callback and controlled reload",
+      "classification": "parity",
+      "sourceDescription": "`AN-URL-001`.",
+      "evidence": [
+        "AN-URL-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-URL-002",
+        "ST-URL-005",
+        "UT-URL-002A",
+        "UT-URL-002B",
+        "UT-URL-002C",
+        "UT-URL-002D",
+        "UT-URL-002E",
+        "UT-URL-002F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#url-schemes"
+      ]
+    },
+    "FR-INT-001": {
+      "title": "Raycast and Alfred equivalents",
+      "classification": "parity",
+      "sourceDescription": "`AN-URL-001`.",
+      "evidence": [
+        "AN-URL-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "post-1.0",
+      "tests": [
+        "IT-INT-001A",
+        "IT-INT-001B",
+        "IT-INT-001C",
+        "IT-INT-001D",
+        "IT-INT-001E",
+        "ST-INT-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#raycast-alfred"
+      ]
+    },
+    "FR-EXT-001": {
+      "title": "Extension manifest and runtime",
+      "classification": "parity",
+      "sourceDescription": "`AN-EXT-001`.",
+      "evidence": [
+        "AN-EXT-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "post-1.0",
+      "tests": [
+        "UT-EXT-001A",
+        "UT-EXT-001B",
+        "UT-EXT-001C",
+        "UT-EXT-001D",
+        "UT-EXT-001E"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-EXT-002": {
+      "title": "Extension palette and scopes",
+      "classification": "parity",
+      "sourceDescription": "`AN-EXT-003`.",
+      "evidence": [
+        "AN-EXT-003"
+      ],
+      "decisions": [
+
+      ],
+      "release": "post-1.0",
+      "tests": [
+        "ET-EXT-002",
+        "UT-EXT-002A",
+        "UT-EXT-002B",
+        "UT-EXT-002C",
+        "UT-EXT-002D",
+        "UT-EXT-002E"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-EXT-003": {
+      "title": "Extension network and secrets",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-EXT-002`, `FORNOW-DECISION-010`.",
+      "evidence": [
+        "AN-EXT-002"
+      ],
+      "decisions": [
+        "FORNOW-DECISION-010"
+      ],
+      "release": "post-1.0",
+      "tests": [
+        "ST-EXT-003",
+        "UT-EXT-003A",
+        "UT-EXT-003B",
+        "UT-EXT-003C",
+        "UT-EXT-003D",
+        "UT-EXT-003E",
+        "UT-EXT-003F"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-EXT-004": {
+      "title": "Extension bridges and services",
+      "classification": "parity",
+      "sourceDescription": "`AN-EXT-004`.",
+      "evidence": [
+        "AN-EXT-004"
+      ],
+      "decisions": [
+
+      ],
+      "release": "post-1.0",
+      "tests": [
+        "IT-EXT-004",
+        "UT-EXT-004A",
+        "UT-EXT-004B",
+        "UT-EXT-004C"
+      ],
+      "manualURLs": [
+
+      ]
+    },
+    "FR-UPD-001": {
+      "title": "Update consent and controls",
+      "classification": "parity",
+      "sourceDescription": "`AN-UPD-001`.",
+      "evidence": [
+        "AN-UPD-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-UPD-001",
+        "UIT-UPD-001",
+        "UT-UPD-001A",
+        "UT-UPD-001B",
+        "UT-UPD-001C",
+        "UT-UPD-001D",
+        "UT-UPD-001E",
+        "UT-UPD-001F"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#updates"
+      ]
+    },
+    "FR-SUP-001": {
+      "title": "Preference reset and diagnostic launch",
+      "classification": "parity",
+      "sourceDescription": "`AN-SUP-001`.",
+      "evidence": [
+        "AN-SUP-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-SUP-001A",
+        "IT-SUP-001B",
+        "IT-SUP-001C",
+        "IT-SUP-001D",
+        "ST-SUP-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#terminal-commands"
+      ]
+    },
+    "FR-DIST-001": {
+      "title": "Distribution and upgrade preservation",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-DIST-001`, `FORNOW-DECISION-003`.",
+      "evidence": [
+        "AN-DIST-001"
+      ],
+      "decisions": [
+        "FORNOW-DECISION-003"
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "IT-DIST-001A",
+        "IT-DIST-001B",
+        "IT-DIST-001C",
+        "IT-DIST-001D",
+        "IT-DIST-001E",
+        "IT-DIST-001F",
+        "MT-DIST-001"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#downloadMethods"
+      ]
+    },
+    "FR-PRIV-001": {
+      "title": "No usage analytics",
+      "classification": "parity",
+      "sourceDescription": "`AN-PRIV-001`.",
+      "evidence": [
+        "AN-PRIV-001"
+      ],
+      "decisions": [
+
+      ],
+      "release": "macos-1.0",
+      "tests": [
+        "MT-PRIV-001",
+        "ST-PRIV-001A",
+        "ST-PRIV-001B"
+      ],
+      "manualURLs": [
+        "https://antinote.io/user-manual#usage-activity"
+      ]
+    }
+  }
+}

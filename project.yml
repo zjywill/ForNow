@@ -1,0 +1,256 @@
+name: ForNow
+
+options:
+  bundleIdPrefix: app.fornow
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "14.0"
+  developmentLanguage: en
+  xcodeVersion: "26.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
+    DEAD_CODE_STRIPPING: YES
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+    Release:
+      SWIFT_COMPILATION_MODE: wholemodule
+
+packages:
+  ForNowCore:
+    path: Packages/ForNowCore
+  ForNowPersistence:
+    path: Packages/ForNowPersistence
+  ForNowEditor:
+    path: Packages/ForNowEditor
+  ForNowModes:
+    path: Packages/ForNowModes
+  ForNowWindowing:
+    path: Packages/ForNowWindowing
+  ForNowIntegrations:
+    path: Packages/ForNowIntegrations
+  ForNowDesign:
+    path: Packages/ForNowDesign
+
+targets:
+  ForNow:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: App
+        excludes:
+          - Resources
+    resources:
+      - path: App/Resources
+    dependencies:
+      - package: ForNowCore
+        product: ForNowCore
+      - package: ForNowPersistence
+        product: ForNowPersistence
+      - package: ForNowEditor
+        product: ForNowEditor
+      - package: ForNowModes
+        product: ForNowModes
+      - package: ForNowWindowing
+        product: ForNowWindowing
+      - package: ForNowIntegrations
+        product: ForNowIntegrations
+      - package: ForNowDesign
+        product: ForNowDesign
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.fornow.ForNow
+        PRODUCT_NAME: ForNow
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: ForNow
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        INFOPLIST_KEY_NSHumanReadableCopyright: Copyright 2026 ForNow
+        CODE_SIGN_ENTITLEMENTS: App/ForNow.entitlements
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+        SUPPORTS_MACCATALYST: NO
+
+  ForNowTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Tests/ForNowTests
+    dependencies:
+      - target: ForNow
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.fornow.ForNowTests
+        GENERATE_INFOPLIST_FILE: YES
+
+  ForNowUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: UITests/ForNowUITests
+    dependencies:
+      - target: ForNow
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.fornow.ForNowUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: ForNow
+
+  ForNowPerformanceTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: PerformanceTests/ForNowPerformanceTests
+    dependencies:
+      - package: ForNowEditor
+        product: ForNowEditor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.fornow.ForNowPerformanceTests
+        GENERATE_INFOPLIST_FILE: YES
+
+  EditorProjectionSpikeTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Tests/EditorProjectionSpikeTests
+    dependencies:
+      - package: ForNowEditor
+        product: ForNowEditor
+      - package: ForNowModes
+        product: ForNowModes
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.fornow.EditorProjectionSpikeTests
+        GENERATE_INFOPLIST_FILE: YES
+
+  EditorProjectionSpike:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Spikes/EditorProjectionSpike
+    dependencies:
+      - package: ForNowEditor
+        product: ForNowEditor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.fornow.EditorProjectionSpike
+        PRODUCT_NAME: EditorProjectionSpike
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Editor Projection Spike
+        ENABLE_HARDENED_RUNTIME: YES
+        SUPPORTS_MACCATALYST: NO
+
+  WindowSpikeTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Tests/WindowSpikeTests
+    dependencies:
+      - package: ForNowWindowing
+        product: ForNowWindowing
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.fornow.WindowSpikeTests
+        GENERATE_INFOPLIST_FILE: YES
+
+  WindowSpike:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Spikes/WindowSpike
+    dependencies:
+      - package: ForNowWindowing
+        product: ForNowWindowing
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.fornow.WindowSpike
+        PRODUCT_NAME: WindowSpike
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Window and Spaces Spike
+        ENABLE_HARDENED_RUNTIME: YES
+        SUPPORTS_MACCATALYST: NO
+
+schemes:
+  ForNow:
+    build:
+      targets:
+        ForNow: all
+        ForNowTests: [test]
+        ForNowUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - name: ForNowTests
+          parallelizable: true
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  ForNowPerformanceTests:
+    build:
+      targets:
+        ForNowPerformanceTests: [test]
+    test:
+      config: Release
+      targets:
+        - name: ForNowPerformanceTests
+          parallelizable: false
+
+  ForNowUITests:
+    build:
+      targets:
+        ForNow: all
+        ForNowUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - name: ForNowUITests
+          parallelizable: false
+
+  EditorProjectionSpike:
+    build:
+      targets:
+        EditorProjectionSpike: all
+        EditorProjectionSpikeTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - name: EditorProjectionSpikeTests
+          parallelizable: true
+
+  WindowSpike:
+    build:
+      targets:
+        WindowSpike: all
+        WindowSpikeTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - name: WindowSpikeTests
+          parallelizable: false

@@ -9,9 +9,53 @@ Product line: **Notes, for now.**
 
 ## Status
 
-This repository currently contains the implementation plan and product
-specification. Application code should not start until the three Phase 0
-technical spikes in `docs/03_IMPLEMENTATION_PLAYBOOK.md` pass.
+Implementation is following the ordered gates in
+`docs/03_IMPLEMENTATION_PLAYBOOK.md`. Steps 0.1, 0.2, 0.3, and 0.5 are complete.
+Step 0.4 is verifying with physical dual-display coverage still pending. A
+documented owner-approved exception permits Phase 1 implementation to continue,
+but it does not waive that manual test or the release gate. Step 1.1 application
+composition and dependency injection and Step 1.2 durable/transient note
+lifecycle are complete. Step 1.3 navigation, ordering, promotion, and confirmed
+deletion is also complete. Step 1.4 global invocation, presentation and presence
+modes, pin, auto-hide, focus restoration, and flush-first visibility transitions
+is complete. Step 1.5 cross-note search, cancellable FTS pagination, keyboard
+promotion, and VoiceOver result semantics is complete, satisfying the Alpha
+implementation gate. Step 2.1 production editor projection is complete with
+off-main cancellable parsing, diagnostics, per-note selection and scroll
+restoration, and an accessibility decoration group. `MT-WIN-004C` remains
+pending despite this progress and is still required before the 1.0 release
+gate. Step 2.2 contextual copy, clean export, normalized and raw paste, five
+independent paste settings, single-operation undo, and clipboard error handling
+are also complete. Step 2.3 HTTP/HTTPS link projection is complete with
+caret-exit shortening, stable duplicate identities and suffixes, source-free
+manual expansion state, safe opening and exact copying, code-context
+exclusions, and independent editor settings. Step 2.4 is complete with the
+documented Markdown subset, source-only TextKit presentation, Command-slash
+line comments, code-note and fenced-code language parsing, deterministic syntax
+highlighting, code-context clipboard/link policies, and persistent default
+language and theme settings. Step 2.5 is complete with a Command-Shift-F
+find/replace panel, five source-only matching modes, independent case matching,
+regex validation, field-specific keyboard commands, temporary link expansion,
+and single-operation Replace All undo. Step 3.1 is complete with stable mode
+IDs, versioned alias and main-alias settings, generic first-line header parsing,
+conflict validation, a global keyword switch, and a source-free in-window slash
+picker with filtering, numeric selection, VoiceOver state, and single-operation
+insertion or replacement.
+
+Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
+downloads that exact release, verifies its SHA-256, generates the project, and
+resolves Swift package dependencies:
+
+```bash
+scripts/bootstrap.sh
+scripts/build.sh
+scripts/test.sh
+scripts/test-performance.sh
+```
+
+XcodeGen 2.46.0 was the current stable release when implementation began on
+2026-08-03. The project intentionally remains pinned to the reviewed 2.45.4
+baseline until a separate toolchain update validates a regenerated project.
 
 ## Documents
 

@@ -1,0 +1,36 @@
+2026-08-03T09:01:57.551Z policy level=floating capabilities=canJoinAllSpaces,fullScreenAuxiliary,ignoresCycle,transient
+2026-08-03T09:01:57.551Z window-created count=2 mode=menuBarPanel
+2026-08-03T09:01:57.569Z mode=menuBarPanel draft-utf16=84
+2026-08-03T09:02:06.660Z policy level=statusBar capabilities=canJoinAllSpaces,fullScreenAuxiliary,ignoresCycle,transient
+2026-08-03T09:02:06.660Z window-created count=3 mode=dropdownPanel
+2026-08-03T09:02:06.682Z mode=dropdownPanel draft-utf16=84
+2026-08-03T09:18:28.252Z event=setPinned(true) visible=true active=true pinned=true suspensions=0 effects=[applyWindowPolicy]
+2026-08-03T09:18:28.252Z policy level=floating capabilities=managed,moveToActiveSpace
+2026-08-03T09:19:04.588Z event=toggle(localCommand) visible=false active=true pinned=true suspensions=0 effects=[flushPendingSource,orderOut]
+2026-08-03T09:19:04.588Z flush=utf16:85
+2026-08-03T09:19:51.410Z event=close visible=false active=true pinned=false suspensions=0 effects=[flushPendingSource,closeWindow]
+2026-08-03T09:19:51.410Z flush=utf16:109
+2026-08-03T09:19:52.636Z event=toggle(globalShortcut) visible=true active=true pinned=false suspensions=0 effects=[showWindow,focusEditor]
+2026-08-03T09:19:52.704Z focus-editor=true
+2026-08-03T09:21:22.824Z event=beginOwnedPanel(settings) visible=true active=true pinned=false suspensions=1 effects=[]
+2026-08-03T09:21:33.533Z event=applicationFocusChanged(false) visible=true active=false pinned=false suspensions=1 effects=[]
+2026-08-03T09:22:01.768Z event=endOwnedPanel(settings) visible=false active=false pinned=false suspensions=0 effects=[flushPendingSource,orderOut]
+2026-08-03T09:22:29.892Z event=beginOwnedPanel(save) visible=true active=true pinned=false suspensions=1 effects=[]
+2026-08-03T09:22:40.868Z event=applicationFocusChanged(false) visible=true active=false pinned=false suspensions=1 effects=[]
+2026-08-03T09:24:02.603Z event=applicationFocusChanged(false) visible=false active=false pinned=false suspensions=0 effects=[flushPendingSource,orderOut]
+2026-08-03T09:24:17.326Z event=beginOwnedPanel(permission) visible=true active=true pinned=false suspensions=1 effects=[]
+2026-08-03T09:24:28.075Z event=applicationFocusChanged(false) visible=true active=false pinned=false suspensions=1 effects=[]
+2026-08-03T09:24:38.869Z event=endOwnedPanel(permission) visible=false active=false pinned=false suspensions=0 effects=[flushPendingSource,orderOut]
+2026-08-03T09:26:09.265Z presence=dock
+2026-08-03T09:26:39.768Z presence=menuBar
+2026-08-03T09:27:02.548Z presence=both
+2026-08-03T09:27:29.901Z presence=neither
+2026-08-03T09:30:09.835Z event=toggle(statusItem) visible=false active=true pinned=false suspensions=0 effects=[flushPendingSource,orderOut]
+2026-08-03T09:30:21.949Z event=toggle(statusItem) visible=true active=true pinned=false suspensions=0 effects=[showWindow,focusEditor]
+2026-08-03T12:41:28.443Z event=toggle(globalShortcut) visible=true active=true pinned=false suspensions=0 effects=[showWindow,focusEditor]
+2026-08-03T12:41:28.450Z show-state visible=true key=false active-space=true
+2026-08-03T12:41:28.487Z focus-editor=true
+2026-08-03T12:43:33.625Z policy level=floating capabilities=canJoinAllSpaces,fullScreenAuxiliary,ignoresCycle,transient
+2026-08-03T12:43:33.641Z show-state visible=true key=true active-space=true
+2026-08-03T12:45:25.152Z policy level=normal capabilities=managed,moveToActiveSpace
+2026-08-03T12:45:25.174Z show-state visible=true key=true active-space=false

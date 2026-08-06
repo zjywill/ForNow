@@ -8,7 +8,7 @@
 - Architectures: arm64 and x86_64 release builds.
 - UI: SwiftUI application shell with AppKit for the editor and panels.
 - Storage: SQLite through GRDB 7.x.
-- Global shortcut: KeyboardShortcuts 2.x behind an internal adapter.
+- Global shortcut: KeyboardShortcuts 1.x behind an internal adapter.
 - OCR: Vision.
 - Notifications: UserNotifications.
 - Unit conversion: Foundation `Measurement`.
@@ -21,8 +21,10 @@
   ranges and `Package.resolved` committed.
 
 Dependency versions must be checked again when Step 0.1 starts. As of the
-research date, GRDB 7.10.0 and KeyboardShortcuts 2.4.0 are current public
-releases, but the repository must pin the versions actually validated by CI.
+research date, GRDB 7.10.0 was current. Implementation-time verification on
+2026-08-03 found GRDB 7.11.1 and KeyboardShortcuts 1.10.0 as the current public
+releases; the upstream KeyboardShortcuts project has no stable 2.x tag. The
+repository must pin the versions actually validated by CI.
 
 ## 2. Repository Structure
 
@@ -179,6 +181,31 @@ Contains:
 
 No product behavior belongs in this package.
 
+### Application Composition
+
+`AppEnvironment` is the `@MainActor` composition root. It owns protocol-typed
+references to the repository, wall clock, UUID generator, parser, window
+coordinator, clipboard, OCR, notification, currency-rate, and lifecycle-logging
+services. There are three explicit variants:
+
+- production uses the deferred-open GRDB repository, system clock and UUIDs,
+  Vision OCR, UserNotifications, and the SwiftUI window coordinator;
+- preview uses only deterministic in-memory or disabled dependencies;
+- test accepts an override for every dependency and defaults to deterministic
+  in-memory or disabled dependencies.
+
+Currency rates and clipboard reads remain disabled in the production default
+until the user explicitly enables their owning feature. Constructing an
+environment never opens a database, reads the clipboard, requests notification
+permission, or starts a network request.
+
+Startup prepares the repository before starting clipboard, notification, and
+window services. Shutdown first flushes all pending repository drafts, then
+stops the window, notification, and clipboard services, and finally closes the
+repository. A repository that failed before preparation is not flushed or
+closed, allowing a failed launch to terminate cleanly. Lifecycle logging accepts
+only a closed event enum; there is no API that accepts note source text.
+
 ## 4. Domain Models
 
 ### Note
@@ -215,6 +242,79 @@ struct TransientNote {
 
 It becomes a durable Note when source text passes `MeaningfulContentPolicy`.
 Whitespace-only content does not persist.
+
+`MeaningfulContentPolicy` classifies source as blank, provisional marked text,
+or meaningful. Empty source and source containing only spaces, tabs, or
+newlines are blank. A valid mode alias without a title or non-whitespace body is
+also control-only blank content; a titled header, a header with body text, or an
+invalid alias is meaningful. The standard alias set is explicit and later
+custom alias settings replace that set rather than adding parser conditionals.
+
+IME marked text updates the visible in-memory source but cannot make a note
+durable until the text system commits the composition. The AppKit editor sends
+both its exact `NSTextView.string` and `hasMarkedText()` state to the note
+session. A committed meaningful edit retains the transient UUID and schedules
+the exact source through the debounced repository. Returning to blank cancels
+the pending draft; navigation, hide, window close, and termination also remove
+any row that may already have been published for that now-empty note.
+
+### Navigation, Ordering, And Deletion
+
+Repositories return notes by descending `orderKey`. Previous moves toward an
+older note and next moves toward a newer note. Moving next beyond the newest
+durable note creates exactly one transient blank note; moving previous from
+that blank returns to the newest durable note. Oldest and repeated blank-edge
+operations are idempotent.
+
+Every navigation, jump, and promotion first cancels the pending application
+save task, classifies the latest committed editor source, schedules or discards
+that source, and flushes the repository before reading the destination order.
+The transient-to-durable transition keeps the same UUID. Command-1 loads the
+newest note. Command-Shift-1 promotes the current note by assigning a new
+transactional monotonic `orderKey`; timestamps never determine tie order.
+
+Command-left-bracket and Command-right-bracket use the same previous/next
+session operations as horizontal two-finger gestures. The editor accumulates
+horizontal-dominant deltas and emits one navigation at a 60-point threshold.
+After a switch, the editor enters a one-shot directional state: Down or Right
+places the caret at source start, while Up or Left places it at source end.
+Other key input cancels the state and ordinary caret movement resumes.
+
+Command-D discards a blank note immediately. A meaningful note uses a
+Cancel-first AppKit sheet unless the persisted suppression preference is set.
+Return activates Cancel, Delete is marked destructive, and checking "Do not ask
+again" takes effect only after a confirmed deletion. Settings exposes an
+in-app reset for the suppression preference. Confirmed deletion removes the
+active row and its FTS row; recovery remains a backup-restore operation.
+
+### Cross-Note Search
+
+`NoteSearchModel` is the single owner of the cross-note search presentation,
+query generation, loaded pages, selected result, loading state, and error state.
+Command-F presents it inside the existing main window and acquires an owned
+command-picker suspension token. Dismissal releases that token and explicitly
+restores the editor as first responder.
+
+Opening search first asks `WindowCoordinator` to commit marked text, read the
+live `NSTextView.string`, prepare the current note, and await its repository
+flush. The initial empty query therefore includes the edit that immediately
+preceded Command-F. Each query change cancels the prior task and advances a
+generation token; a late page can update visible results only if both generation
+and normalized query still match.
+
+Search reads `NoteSearchPage` values in 50-note pages. Empty input covers all
+active rows in working order. Nonempty input uses the persistence search policy
+below. Result presentation derives an 80-character first-line title, a bounded
+context excerpt, and modification date without changing note source. Identical
+titles remain distinguishable by context and date.
+
+The focused native `NSSearchField` intercepts Up, Down, Enter, and Escape through
+`NSControlTextEditingDelegate`, because the AppKit field editor receives these
+commands instead of the search field view itself. Each result has a native
+`NSAccessibility` button representation whose label includes title, context,
+and modification time and whose value reports selection. Enter calls the same
+`promoteAndOpen(noteID:)` session operation as Command-Shift-1, preserving UUID
+and using one transactional monotonic ordering update.
 
 ### Timer
 
@@ -277,6 +377,26 @@ Required setting contracts:
   and validated custom URL template;
 - `PrivacySettings`: update-check consent and automatic-install preference.
 
+`LifecycleSettings` is versioned and stores new-note-on-launch, the reopen
+policy (`always`, 3 minutes, 30 minutes, 1 hour, 1 day, or `never`), and note
+count visibility, plus delete-warning suppression. The last-window-close date
+uses a separate UserDefaults key and is recorded by the window-close path rather
+than inferred from process termination. Threshold comparisons are inclusive; a
+backward clock change does not create a new note.
+
+`PasteSettings` is stored in a separate versioned UserDefaults payload. The
+composition root loads it before the window coordinator creates the editor and
+publishes later changes to both the active editor and the store. Preview and
+test environments use an injected in-memory store. The five fields remain
+independent; no preset or aggregate switch mutates another field.
+
+Window presentation state is persisted independently from lifecycle state as a
+versioned `WindowConfiguration`. It stores presentation mode, application
+presence, pin, auto-hide, and dropdown dimensions under one UserDefaults key.
+The global shortcut is not duplicated in that payload: KeyboardShortcuts owns
+its versioned binding, while `ValidatedGlobalShortcut` preflights replacements
+and keeps the previous binding when registration fails.
+
 ## 5. SQLite Schema
 
 Initial migration:
@@ -330,9 +450,21 @@ Database rules:
 - set a bounded busy timeout;
 - all order changes use one write transaction;
 - update `note` and `note_fts` in the same transaction;
+- run integrity and note/FTS parity checks through the pool's writer connection
+  so the check observes the latest committed WAL state instead of a stale reader
+  snapshot;
+- use FTS5 `unicode61` token matching for ordinary queries and a deterministic
+  literal `instr(body, query)` fallback when the query contains CJK scalars;
+- execute search pages with a bounded `LIMIT` of at most 200 and one look-ahead
+  row for `hasMore`, so the UI never materializes the full result set before its
+  first frame;
 - migrations are forward-only and tested from every shipped schema;
 - no UI code constructs SQL;
 - database access occurs through one `DatabasePool`.
+
+The first forward migration adds a nonnegative `source_revision` column with a
+zero default. This version lets asynchronous projections reject stale results
+without changing note identity or working order.
 
 ## 6. Editor Architecture
 
@@ -431,6 +563,22 @@ On edit:
 7. Apply projection only if source version still matches.
 8. Debounce persistence separately from parsing.
 
+The production AppKit host performs no parsing in `textDidChange`. It captures
+the new source and UTF-16 version, immediately reports the source to the note
+session, then submits a snapshot to `ProjectionParsePipeline`. The pipeline is
+an actor that cancels the prior request, parses in a detached user-initiated
+task, and gates completion by both request identity and source version. A final
+validator discards out-of-bounds decorations and emits source-free diagnostics.
+Pipeline telemetry contains only counters, versions, durations, and decoration
+counts; it never contains note text.
+
+Selection and vertical scroll offset remain source-coordinate metadata on each
+note. Navigation flushes those values with the source, and a monotonically
+increasing restoration token reapplies them only when a different note is
+loaded. Visible adornments are overlay views above the text layout and children
+of one native accessibility group named `Editor decorations`; neither the views
+nor their accessible labels enter `Note.body` or the undo manager.
+
 Performance budgets:
 
 - synchronous edit processing: p95 below 4 ms;
@@ -438,7 +586,122 @@ Performance budgets:
 - full-note math projection for 10,000 lines: below 150 ms off-main;
 - no parser task may block text input.
 
-### 6.6 Copy Decision Table
+### 6.6 Link Presentation
+
+Link detection is a cancellable, source-versioned projection operation. The
+detector accepts only structurally valid HTTP and HTTPS URLs with a non-empty
+host. Opening repeats the same validation immediately before passing the URL to
+`NSWorkspace`; unsupported, malformed, whitespace-bearing, and control-bearing
+values produce no open action.
+
+A `code` mode header disables link detection for the complete note. Backtick
+and tilde fenced-code ranges, including unclosed fences through end of source,
+are excluded before link decorations are emitted. These exclusions are active
+before the later Markdown presentation step and never rewrite source.
+
+Each detected link separates four values:
+
+- the exact source URL used for copy and open;
+- a deterministic shortened label made from host, optional port, and a `/...`
+  tail hint;
+- a one-based occurrence index for the same exact source URL;
+- a stable identity made from the SHA-256 digest of the exact URL bytes and the
+  occurrence index.
+
+The occurrence index and its visible `· n` suffix remain stable across edits
+that do not add, remove, or reorder the same source URL. The suffix remains
+visible in shortened and expanded presentations. SHA-256 here is an identity
+and privacy boundary, not an authenticity claim: persisted display state does
+not duplicate a note's plaintext URL.
+
+The link overlay yields to source while a caret is at either URL boundary or
+inside the URL, or while a selection intersects it. It appears only after the
+selection leaves the source range. Automatic shortening off shows the full
+source URL through the same overlay; all-hyperlink features off rebuilds the
+projection without link decorations and disables every link action. The two
+settings are independent versioned `EditorSettings` values loaded before the
+window creates its editor.
+
+Click and Command-click open the validated exact URL. Command-Shift-click
+toggles the identity in a note-UUID-scoped set without changing `Note.body`,
+text storage, selection, or undo history. The expanded-state store is a
+separate versioned UserDefaults payload containing only note UUIDs, URL
+digests, and occurrence indexes. It survives navigation and relaunch; a link's
+context menu copies the exact source URL.
+
+### 6.7 Markdown And Code Presentation
+
+`LimitedMarkdownParser` recognizes only the documented source grammar: heading
+levels one through three, `**bold**`, `*italic*`, `~~strikethrough~~`,
+`__underline__`, single-backtick inline code, backtick or tilde fenced code, and
+lines whose first non-whitespace characters are `//`. Unsupported headings,
+quotes, triple emphasis, Markdown links, and every other syntax remain ordinary
+source. Code spans and fences exclude nested Markdown parsing; an unclosed fence
+owns source through end of note.
+
+The parser emits UTF-16 source ranges and semantic `TextStyle` decorations.
+`ProjectionEditorContainer` maps those styles to TextKit temporary attributes
+only. Fonts, colors, backgrounds, strike, underline, and syntax token colors
+never enter `NSTextStorage`, `Note.body`, copy output, or undo history. Comment
+lines are excluded before checkbox and calculation decorations are emitted.
+
+Command-slash sends `toggleComment:` through the first responder. The line
+command clamps the current source selection, expands it to complete CRLF-aware
+line ranges, inserts `// ` after indentation or removes the existing marker,
+and maps the source-coordinate selection across all changes. The editor applies
+the result as one `NSTextView` replacement, producing one Undo and one Redo
+action for a current line or multiline selection. Marked IME text blocks the
+command rather than forcing an early commit.
+
+`CodeContextParser` recognizes a case-insensitive first-line `code` header with
+an optional colon language. Missing language uses the configured default;
+unknown explicit language is plain text. Fences accept matching backtick or
+tilde runs of at least three characters and a supported language alias. Swift,
+Python, JavaScript, TypeScript, JSON, shell, and plain text are explicit; the
+built-in highlighter is behind `CodeSyntaxHighlighting`, returns source ranges
+only, and resolves strings and comments before numbers and keywords.
+
+Code notes suppress ordinary Markdown and every link decoration. A selection
+inside a fenced range also disables link handling and leading-whitespace
+stripping for normal paste; raw paste remains unchanged. Contextual copy from a
+code note returns its whole body before inline-backtick rules, while fenced-code
+copy returns only the fenced body. `EditorSettings` version 2 stores default
+language and highlight theme beside the existing independent link preferences;
+version-1 payloads decode with code defaults without losing link choices.
+
+### 6.8 Find And Replace
+
+`FindReplaceEngine` operates only on an immutable source snapshot and returns
+UTF-16 `SourceRange` values. Contains and whole-word matching use escaped
+regular expressions, line-prefix and line-suffix matching inspect line content
+without its terminator, and regular-expression mode compiles the user's pattern
+before any mutation is planned. Case sensitivity is an independent request
+field for every mode. Foundation's finite match enumeration handles zero-length
+regular-expression results without an application-managed cursor loop.
+
+`FindReplaceModel` owns panel state, validation errors, the selected source
+match, and forward/backward wrapping. Replace Current compares the live editor
+source with the snapshot before changing it and advances beyond the inserted
+replacement even when that replacement still matches the query. Replace All
+builds one complete replacement source by applying matched ranges in reverse,
+then asks `NSTextView` for one full-source replacement. The result is one editor
+undo action; an invalid expression produces no plan and cannot mutate source.
+
+`EditorFindReplaceTarget` is the only bridge to the production editor. It reads
+the live source and selection, applies bounded source-coordinate replacements,
+and temporarily asks the existing link projection to treat every link identity
+as expanded. Dismissal removes only that temporary policy, so automatic
+shortening and note-scoped manual expansion return to their prior states and no
+presentation value enters source or persistence.
+
+Command-Shift-F and Command-F own mutually exclusive panels and share the
+window coordinator's command-picker auto-hide suspension. Native AppKit fields
+route Enter and Shift-Enter to next/previous match in the find field and to
+Replace/Replace All in the replacement field. Tab reveals and focuses replace;
+Escape dismisses and restores editor focus. The panel stays inside the main
+window instead of creating a second window or persistence owner.
+
+### 6.9 Copy Decision Table
 
 Priority:
 
@@ -451,16 +714,24 @@ Priority:
 
 Each branch has unit and integration tests.
 
-### 6.7 Paste Pipeline
+`ProjectionTextView` intentionally enables Copy through responder-chain
+validation even when the selection is empty. Otherwise AppKit disables the
+menu item before the no-selection branches can run. A non-empty source
+selection still wins when a result or link adornment's copy button is used.
+Clean whole-note export removes only configured control syntax, retains an
+optional mode title, expands visual links back to their source URL, and leaves
+other user whitespace unchanged.
+
+### 6.10 Paste Pipeline
 
 ```text
 Pasteboard payload
   -> type selection
   -> string decoding
   -> line-ending normalization
-  -> optional leading/trailing trim
-  -> optional bullet stripping
   -> optional number stripping
+  -> optional bullet stripping
+  -> optional leading-whitespace stripping
   -> optional Markdown stripping
   -> optional blank-line stripping
   -> one editor replacement
@@ -468,6 +739,19 @@ Pasteboard payload
 ```
 
 Raw paste uses only payload decoding and line-ending normalization.
+
+Type selection prefers a plain string, then HTML, then RTF. HTML and RTF style
+is discarded during decoding, while an attributed hyperlink becomes either its
+full URL or `label (URL)`. The normal path also applies the same smart-link rule
+to Markdown links. Both normal and raw paths finish with one `NSTextView`
+replacement, so one Undo restores the complete pre-paste source and one Redo
+reapplies it.
+
+Command-Shift-V sends `pasteRaw:` through the first responder. Both paste
+actions remain enabled when a handler exists so unsupported or unreadable
+pasteboard content reaches the pipeline and produces a source-free `Paste
+Failed` alert instead of silently doing nothing. Clipboard text is never passed
+to lifecycle logging or diagnostics.
 
 ## 7. Mode And Parser Architecture
 
@@ -489,6 +773,46 @@ Alias matching:
 - aliases match case-insensitively by default (`AN-REV-001`);
 - longest-match wins only after collision validation;
 - an invalid or disabled alias yields plain mode.
+
+### Alias Registry And Slash Picker
+
+`ModeID` is the stored canonical identity and has eight stable values: `plain`,
+`list`, `math`, `sum`, `average`, `count`, `code`, and `timer`. Versioned
+`ModeSettings` owns every alias set, exactly one main slash alias per mode, and
+the global interpretation switch. `ModeAliasRegistry` normalizes aliases with
+POSIX case folding and canonical Unicode composition, then rejects unsupported
+versions, missing or repeated modes, empty or invalid aliases, duplicate aliases,
+cross-mode collisions, and a main alias outside its owning set. A custom alias
+therefore changes only lookup and presentation; it cannot create a new mode or
+silently change canonical behavior.
+
+`ModeHeaderParser` recognizes only the first source line. It returns the
+canonical ID, matched alias, optional title, and UTF-16 alias, header, and body
+ranges. The same parser feeds projection, code-context copy and paste, link
+suppression, clean export, and meaningful-content classification. Turning the
+master switch off makes apparent headers ordinary source everywhere without
+rewriting the note. Loading settings during application startup updates that
+classification policy without incrementing the editor revision, so a stored
+note cannot be mistaken for prelaunch input.
+
+`SlashCommandEngine` allows `/` at an empty line start or at the alias start of
+an existing first-line mode header. Filter state lives in `SlashCommandModel`,
+outside `NSTextView`, `Note.body`, SQLite, and the undo manager. Up, Down, Tab,
+Return, Escape, Backspace, printable text, and visible number keys route through
+the editor while the picker is active. Selection creates one source-coordinate
+edit plan: it replaces only an existing alias and preserves its title, inserts
+at source start when invoked from a later empty line, or inserts directly at an
+empty first line. The editor checks the expected source, performs one bounded
+replacement in one undo group, and restores focus after dismissal.
+
+The picker is a height-bounded, scrollable in-window overlay with SF Symbols,
+the source-free filter value, selected-row state, and native accessibility
+labels and values. It owns a reference-counted command-picker auto-hide
+suspension. Search, find/replace, Settings, window hide/close, app resignation,
+settings changes, and shutdown dismiss it and release that suspension. The
+versioned UserDefaults store validates before writing; Settings keeps invalid
+drafts visible with an explicit conflict error and leaves the last valid
+registry active.
 
 ### Math
 
@@ -582,11 +906,24 @@ The `TimerStateMachine` is the only owner of valid transitions.
 
 ### Components
 
-- `WindowCoordinator`: one authority for visibility and placement.
-- `WindowModeFactory`: standard window, floating panel, menu bar dropdown.
-- `GlobalShortcutService`: package adapter.
-- `AutoHideCoordinator`: focus-loss handling with suspension tokens.
-- `ScreenPlacementService`: active Space/display placement and clamping.
+- `SwiftUIWindowCoordinator`: the single AppKit owner of the main window,
+  visibility transitions, focus restoration, presentation rebuilds, placement,
+  presence, and the global shortcut callback.
+- `WindowPresentationPolicy`: resolves the standard `NSWindow`, pseudo-menu
+  `NSPanel`, and traditional dropdown `NSPanel` level and Space behavior.
+- `WindowVisibilityStateMachine`: pure visibility, pin, auto-hide, and owned
+  panel transition policy.
+- `ValidatedGlobalShortcut`: KeyboardShortcuts adapter with Carbon preflight and
+  diagnostics for conflicts and macOS 15.0/15.1 Option-only failures.
+- `WindowPlacement`: active-display placement and visible-frame clamping.
+
+`ForNowApp` does not declare a SwiftUI main `WindowGroup`. It declares Settings
+and commands while `SwiftUIWindowCoordinator` creates exactly one main AppKit
+window and installs an `NSHostingController` supplied by the composition root.
+This avoids competing SwiftUI/AppKit window ownership. The Dock and status-item
+surfaces are independently selected by `ApplicationPresenceMode`; Neither mode
+keeps navigation, note, visibility, pin, delete, and Settings commands inside
+the main window.
 
 ### Visibility State
 
@@ -611,6 +948,10 @@ enum VisibilityState {
 5. Focus editor.
 6. Restore note selection.
 
+Show after Command-W reuses the same retained `NSWindow` and reopens the current
+`NoteSessionModel`. A presentation-mode change builds a new AppKit projection
+but retains that same session model and exact source.
+
 `hide()`:
 
 1. Cancel transient menus.
@@ -619,11 +960,28 @@ enum VisibilityState {
 4. Order out or close according to mode.
 5. Preserve note and selection identity.
 
+Before hide, close, or presentation rebuild, the coordinator reads the live
+`NSTextView.string`, commits marked text, prepares the note session, and awaits
+the repository flush. Transitions are serialized so a later toggle cannot pass
+an earlier flush. A flush failure leaves or restores the window onscreen rather
+than discarding source.
+
 ### Auto-Hide Suspension
 
 System panels, settings, command picker, permission prompts, and export dialogs
 receive a reference-counted suspension token. Auto-hide resumes only after all
-tokens are released.
+tokens are released. Settings and destructive-delete confirmation use this
+contract now. Pin and auto-hide remain independent; a pinned window does not
+auto-hide on application focus loss.
+
+### Commands And Performance
+
+Command-O toggles the main window, Command-P toggles pin, and Command-W closes
+the key Settings window before it targets the main window. The global shortcut
+defaults to Option-A and can be replaced in Settings without losing the prior
+binding on validation failure. Hotkey-to-caret timing starts at the global
+callback and ends only after the editor becomes first responder. Logging emits
+the numeric duration only; note source is never included.
 
 ## 9. Persistence And Backup
 
@@ -644,8 +1002,14 @@ Default:
 - retained copies: 12;
 - trigger after a successful write and interval eligibility;
 - use SQLite online backup API through GRDB;
+- convert each backup copy to `journal_mode=DELETE` and remove its sidecars so
+  the published `.sqlite` file is self-contained;
 - write to temporary path, verify open/integrity, then atomically rename;
-- include schema version and checksum manifest.
+- publish the database before its manifest, treating the manifest as the commit
+  marker;
+- include schema version, database checksum, canonical note checksum, and note
+  count in the manifest;
+- remove interrupted hidden backup `.tmp` files when the store opens.
 
 Restore:
 
