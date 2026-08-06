@@ -25,7 +25,7 @@ final class EditorProjectionSpikeTests: XCTestCase {
   }
 
   func test_UT_EDIT_001_ProjectionNeverEntersSource() {
-    let source = "[ ] Buy milk\n20 + 22 =\nhttps://example.com/a/very/long/path"
+    let source = "math\n20 + 22 =\nhttps://example.com/a/very/long/path"
     let snapshot = SourceSnapshot(version: 7, text: source)
     let projection = SpikeProjectionParser().parse(snapshot)
 
@@ -92,12 +92,12 @@ final class EditorProjectionSpikeTests: XCTestCase {
   }
 
   func test_UT_EDIT_002C_EditsBeforeInsideAndAfterDecorationsRoundTrip() throws {
-    let original = "Task\n20 + 22 =\nhttps://example.com/path"
+    let original = "math\nTask\n20 + 22 =\nhttps://example.com/path"
     var session = ProjectionEditingSession(text: original)
 
     try session.replace(
       SourceEdit(
-        range: SourceRange(location: SourceOffset(utf16Offset: 0), length: 0),
+        range: SourceRange(location: SourceOffset(utf16Offset: 5), length: 0),
         replacement: "Before\n"
       )
     )
@@ -123,9 +123,9 @@ final class EditorProjectionSpikeTests: XCTestCase {
 
     XCTAssertEqual(
       session.snapshot.text,
-      "Before\nTask\n20 + 22 =\nhttps://example.com/inside-path\nAfter"
+      "math\nBefore\nTask\n20 + 22 =\nhttps://example.com/inside-path\nAfter"
     )
-    XCTAssertEqual(session.projection.decorations.count, 2)
+    XCTAssertEqual(session.projection.decorations.count, 3)
     XCTAssertTrue(
       session.projection.decorations.allSatisfy { decoration in
         guard let range = decoration.sourceRange else { return true }
@@ -141,7 +141,7 @@ final class EditorProjectionSpikeTests: XCTestCase {
     XCTAssertTrue(session.redo())
     XCTAssertEqual(
       session.snapshot.text,
-      "Before\nTask\n20 + 22 =\nhttps://example.com/inside-path\nAfter"
+      "math\nBefore\nTask\n20 + 22 =\nhttps://example.com/inside-path\nAfter"
     )
   }
 

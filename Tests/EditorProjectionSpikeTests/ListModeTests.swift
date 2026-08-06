@@ -40,11 +40,11 @@ final class ListModeTests: XCTestCase {
   func test_UT_LIST_001F_ListModeSuppressesCalculationResults() {
     let listSource = "list\n20 + 22 =\n100 USD in EUR ="
     let listProjection = projection(for: listSource)
-    let plainProjection = projection(for: "20 + 22 =")
+    let mathProjection = projection(for: "math\n20 + 22 =")
 
     XCTAssertEqual(checkboxes(in: listProjection).count, 2)
     XCTAssertTrue(results(in: listProjection).isEmpty)
-    XCTAssertEqual(results(in: plainProjection).map(\.canonicalValue), ["42"])
+    XCTAssertEqual(results(in: mathProjection).map(\.canonicalValue), ["42"])
   }
 
   func test_UT_LIST_002_PointerAndKeyboardUseTheSameTogglePlan() throws {

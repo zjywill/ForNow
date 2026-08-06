@@ -32,6 +32,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
   private let pasteSettings: PasteSettings
   private let editorSettings: EditorSettings
   private let modeSettings: ModeSettings
+  private let mathSettings: MathSettings
   private let expandedLinkIdentities: Set<LinkIdentity>
   private let linkExpansionDidToggle: (@MainActor (LinkIdentity) -> Void)?
   private let findReplaceTarget: EditorFindReplaceTarget?
@@ -49,6 +50,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     pasteSettings = PasteSettings()
     editorSettings = EditorSettings()
     modeSettings = ModeSettings()
+    mathSettings = MathSettings()
     expandedLinkIdentities = []
     linkExpansionDidToggle = nil
     findReplaceTarget = nil
@@ -64,6 +66,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     pasteSettings: PasteSettings,
     editorSettings: EditorSettings = EditorSettings(),
     modeSettings: ModeSettings = ModeSettings(),
+    mathSettings: MathSettings = MathSettings(),
     expandedLinkIdentities: Set<LinkIdentity> = [],
     findReplaceTarget: EditorFindReplaceTarget? = nil,
     slashCommandTarget: EditorSlashCommandTarget? = nil,
@@ -80,6 +83,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     self.pasteSettings = pasteSettings
     self.editorSettings = editorSettings
     self.modeSettings = modeSettings
+    self.mathSettings = mathSettings
     self.expandedLinkIdentities = expandedLinkIdentities
     self.findReplaceTarget = findReplaceTarget
     self.slashCommandTarget = slashCommandTarget
@@ -93,7 +97,8 @@ public struct ProjectionEditorView: NSViewRepresentable {
     let container = ProjectionEditorContainer(
       initialText: sourceText,
       editorSettings: editorSettings,
-      modeSettings: modeSettings
+      modeSettings: modeSettings,
+      mathSettings: mathSettings
     )
     container.sourceDidChange = { [sourceDidChange, weak findReplaceTarget] source, hasMarkedText in
       sourceDidChange?(source, hasMarkedText)
@@ -122,6 +127,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     nsView.pasteSettings = pasteSettings
     nsView.editorSettings = editorSettings
     nsView.modeSettings = modeSettings
+    nsView.mathSettings = mathSettings
     nsView.expandedLinkIdentities = expandedLinkIdentities
     nsView.linkExpansionDidToggle = linkExpansionDidToggle
     findReplaceTarget?.attach(to: nsView)
@@ -155,6 +161,16 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   public var modeSettings: ModeSettings {
     didSet {
       guard modeSettings != oldValue else { return }
+      if followsEditorSettingsInParser {
+        replaceDefaultParser()
+      } else {
+        scheduleAdornmentRefresh()
+      }
+    }
+  }
+  public var mathSettings: MathSettings {
+    didSet {
+      guard mathSettings != oldValue else { return }
       if followsEditorSettingsInParser {
         replaceDefaultParser()
       } else {
@@ -201,18 +217,21 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     initialText: String,
     editorSettings: EditorSettings = EditorSettings(),
     modeSettings: ModeSettings = ModeSettings(),
+    mathSettings: MathSettings = MathSettings(),
     parser: (any ProjectionParsing)? = nil
   ) {
     let textView = ProjectionTextView(usingTextLayoutManager: true)
     self.textView = textView
     self.editorSettings = editorSettings
     self.modeSettings = modeSettings
+    self.mathSettings = mathSettings
     followsEditorSettingsInParser = parser == nil
     parsePipeline = ProjectionParsePipeline(
       parser: parser
         ?? ProductionProjectionParser(
           editorSettings: editorSettings,
-          modeSettings: modeSettings
+          modeSettings: modeSettings,
+          mathSettings: mathSettings
         )
     )
     let snapshot = SourceSnapshot(version: 0, text: initialText)
@@ -560,7 +579,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     parsePipeline = ProjectionParsePipeline(
       parser: ProductionProjectionParser(
         editorSettings: editorSettings,
-        modeSettings: modeSettings
+        modeSettings: modeSettings,
+        mathSettings: mathSettings
       )
     )
     projection = EditorProjection(sourceVersion: snapshot.version, decorations: [])

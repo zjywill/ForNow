@@ -25,6 +25,7 @@ struct AppDependencies {
   let pasteSettings: any PasteSettingsStoring
   let editorSettings: any EditorSettingsStoring
   let modeSettings: any ModeSettingsStoring
+  let mathSettings: any MathSettingsStoring
   let expandedLinkState: any ExpandedLinkStateStoring
   let logger: any AppLifecycleLogging
 }
@@ -62,6 +63,7 @@ final class AppEnvironment: ObservableObject {
   let pasteSettingsStore: any PasteSettingsStoring
   let editorSettingsStore: any EditorSettingsStoring
   let modeSettingsStore: any ModeSettingsStoring
+  let mathSettingsStore: any MathSettingsStoring
   let expandedLinkStateStore: any ExpandedLinkStateStoring
   let logger: any AppLifecycleLogging
   let noteSession: NoteSessionModel
@@ -74,6 +76,7 @@ final class AppEnvironment: ObservableObject {
   @Published private(set) var pasteSettings = PasteSettings()
   @Published private(set) var editorSettings = EditorSettings()
   @Published private(set) var modeSettings = ModeSettings()
+  @Published private(set) var mathSettings = MathSettings()
   @Published private(set) var expandedLinkState: [UUID: Set<LinkIdentity>] = [:]
   @Published private(set) var currentGlobalShortcut = GlobalShortcutCandidate.optionA
   @Published private(set) var shortcutRegistrationResult: ShortcutRegistrationResult = .accepted
@@ -104,6 +107,7 @@ final class AppEnvironment: ObservableObject {
     pasteSettingsStore = dependencies.pasteSettings
     editorSettingsStore = dependencies.editorSettings
     modeSettingsStore = dependencies.modeSettings
+    mathSettingsStore = dependencies.mathSettings
     expandedLinkStateStore = dependencies.expandedLinkState
     logger = dependencies.logger
     let noteSession = NoteSessionModel(
@@ -169,6 +173,7 @@ final class AppEnvironment: ObservableObject {
         pasteSettings: UserDefaultsPasteSettingsStore(),
         editorSettings: UserDefaultsEditorSettingsStore(),
         modeSettings: UserDefaultsModeSettingsStore(),
+        mathSettings: UserDefaultsMathSettingsStore(),
         expandedLinkState: UserDefaultsExpandedLinkStateStore(),
         logger: OSLifecycleLogger()
       )
@@ -193,6 +198,7 @@ final class AppEnvironment: ObservableObject {
         pasteSettings: InMemoryPasteSettingsStore(),
         editorSettings: InMemoryEditorSettingsStore(),
         modeSettings: InMemoryModeSettingsStore(),
+        mathSettings: InMemoryMathSettingsStore(),
         expandedLinkState: InMemoryExpandedLinkStateStore(),
         logger: InMemoryLifecycleLogger()
       )
@@ -214,6 +220,7 @@ final class AppEnvironment: ObservableObject {
     pasteSettings: any PasteSettingsStoring = InMemoryPasteSettingsStore(),
     editorSettings: any EditorSettingsStoring = InMemoryEditorSettingsStore(),
     modeSettings: any ModeSettingsStoring = InMemoryModeSettingsStore(),
+    mathSettings: any MathSettingsStoring = InMemoryMathSettingsStore(),
     expandedLinkState: any ExpandedLinkStateStoring = InMemoryExpandedLinkStateStore(),
     logger: any AppLifecycleLogging = InMemoryLifecycleLogger()
   ) -> AppEnvironment {
@@ -234,6 +241,7 @@ final class AppEnvironment: ObservableObject {
         pasteSettings: pasteSettings,
         editorSettings: editorSettings,
         modeSettings: modeSettings,
+        mathSettings: mathSettings,
         expandedLinkState: expandedLinkState,
         logger: logger
       )
@@ -253,6 +261,7 @@ final class AppEnvironment: ObservableObject {
       pasteSettings = await pasteSettingsStore.load()
       editorSettings = await editorSettingsStore.load()
       modeSettings = await modeSettingsStore.load()
+      mathSettings = await mathSettingsStore.load()
       try await noteSession.updateMeaningfulContentPolicy(
         meaningfulContentPolicy(for: modeSettings)
       )
@@ -470,6 +479,19 @@ final class AppEnvironment: ObservableObject {
               ? previousRegistry.allAliases : []
           )
         )
+      }
+      throw error
+    }
+  }
+
+  func updateMathSettings(_ settings: MathSettings) async throws {
+    let previousSettings = mathSettings
+    mathSettings = settings
+    do {
+      try await mathSettingsStore.save(settings)
+    } catch {
+      if mathSettings == settings {
+        mathSettings = previousSettings
       }
       throw error
     }

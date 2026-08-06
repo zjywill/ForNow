@@ -107,15 +107,21 @@ public struct ProjectionGate: Sendable {
 public struct SpikeProjectionParser: Sendable {
   private let editorSettings: EditorSettings
   private let modeSettings: ModeSettings
+  private let mathSettings: MathSettings
+  private let mathLocale: MathDecimalLocale
   private let syntaxHighlighter: any CodeSyntaxHighlighting
 
   public init(
     editorSettings: EditorSettings = EditorSettings(),
     modeSettings: ModeSettings = ModeSettings(),
+    mathSettings: MathSettings = MathSettings(),
+    mathLocale: MathDecimalLocale = MathDecimalLocale(),
     syntaxHighlighter: any CodeSyntaxHighlighting = BuiltInCodeSyntaxHighlighter()
   ) {
     self.editorSettings = editorSettings
     self.modeSettings = modeSettings
+    self.mathSettings = mathSettings
+    self.mathLocale = mathLocale
     self.syntaxHighlighter = syntaxHighlighter
   }
 
@@ -153,14 +159,17 @@ public struct SpikeProjectionParser: Sendable {
       )
     )
     try checkCancellation(if: checksCancellation)
-    decorations.append(
-      contentsOf: try resultDecorations(
-        in: snapshot.text,
-        checksCancellation: checksCancellation
-      )
+    let mathProjection = try mathProjection(
+      in: snapshot.text,
+      checksCancellation: checksCancellation
     )
+    decorations.append(contentsOf: mathProjection.decorations)
     try checkCancellation(if: checksCancellation)
-    return EditorProjection(sourceVersion: snapshot.version, decorations: decorations)
+    return EditorProjection(
+      sourceVersion: snapshot.version,
+      decorations: decorations,
+      diagnostics: mathProjection.diagnostics
+    )
   }
 
   private func styleDecorations(
@@ -268,27 +277,50 @@ public struct SpikeProjectionParser: Sendable {
     return decorations
   }
 
-  private func resultDecorations(
+  private func mathProjection(
     in text: String,
     checksCancellation: Bool
-  ) throws -> [EditorDecoration] {
-    if ModeHeaderParser(settings: modeSettings).parse(in: text)?.modeID == .list {
-      return []
+  ) throws -> (decorations: [EditorDecoration], diagnostics: [ProjectionDiagnostic]) {
+    let evaluations: [BasicMathLineEvaluation]
+    let parser = BasicMathDocumentParser(
+      mathSettings: mathSettings,
+      modeSettings: modeSettings,
+      locale: mathLocale
+    )
+    if checksCancellation {
+      evaluations = try parser.parseCancellable(in: text)
+    } else {
+      evaluations = parser.parse(in: text)
     }
     var decorations: [EditorDecoration] = []
-    let source = text as NSString
-    try enumerateLineRanges(in: source, checksCancellation: checksCancellation) { lineRange in
-      let line = source.substring(with: lineRange)
-      let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-      guard !trimmed.hasPrefix("//"), trimmed.hasSuffix("=") else { return }
-      decorations.append(
-        .result(
-          anchor: SourceOffset(utf16Offset: NSMaxRange(lineRange)),
-          presentation: CalculationPresentation(canonicalValue: "42", displayText: "42")
+    var diagnostics: [ProjectionDiagnostic] = []
+    for (index, evaluation) in evaluations.enumerated() {
+      if index.isMultiple(of: 32) {
+        try checkCancellation(if: checksCancellation)
+      }
+      switch evaluation {
+      case .result(let result):
+        decorations.append(
+          .result(
+            anchor: SourceOffset(utf16Offset: result.anchorUTF16Offset),
+            presentation: CalculationPresentation(
+              canonicalValue: result.canonicalValue,
+              displayText: result.displayText
+            )
+          )
         )
-      )
+      case .diagnostic(let diagnostic):
+        diagnostics.append(
+          ProjectionDiagnostic(
+            code: diagnostic.code.rawValue,
+            severity: .error,
+            sourceRange: SourceRange(diagnostic.sourceRange),
+            message: diagnostic.message
+          )
+        )
+      }
     }
-    return decorations
+    return (decorations, diagnostics)
   }
 
   private func enumerateLineRanges(

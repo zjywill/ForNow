@@ -814,6 +814,43 @@ versioned UserDefaults store validates before writing; Settings keeps invalid
 drafts visible with an explicit conflict error and leaves the last valid
 registry active.
 
+### List Mode
+
+`ListModeParser` runs only when `ModeHeaderParser` resolves the first source
+line to canonical mode ID `list`. It scans the header's UTF-16 body range and
+emits a `ListModeItem` for every non-empty content line except a leading-
+whitespace `//` comment or a Markdown heading at levels one through three.
+Blank lines remain untouched separators, and four or more leading hashes are
+ordinary item content.
+
+The checked marker belongs to `ModeSettings.checklistTrigger`. Registry
+validation rejects an empty marker, leading or trailing whitespace, embedded
+whitespace, and control characters. A line is checked only when the exact
+configured marker is separated from item content by horizontal whitespace and
+ends the line, allowing trailing spaces or tabs. Marker recognition therefore
+never consumes a literal marker embedded in user text.
+
+Projection converts each item into a source-coordinate checkbox decoration.
+The item text and optional marker remain in `NSTextStorage`; a gutter control is
+laid out beside the first item glyph and exposes native `AXCheckBox`, `Checked`,
+and `Unchecked` semantics without contributing source characters, copy text, or
+selection offsets. A list header disables calculation and conversion result
+decorations for the complete note.
+
+Pointer activation and Space on a focused gutter checkbox both call
+`ListModeTogglePlanner`. The planner validates the expected source and exact
+item range, inserts ` <marker>` at the content-line end or removes only the
+recognized whitespace-plus-marker range, and maps the current UTF-16 selection
+across that single bounded edit. The editor applies the plan as one replacement
+and one undo group; Undo and Redo restore both exact source and selection.
+
+Clean export independently controls marker omission through
+`EditorSettings.omitsChecklistTriggersOnExport`. When enabled, it reparses the
+current List Mode body with the current marker and removes markers only from
+eligible list items. Disabling the setting preserves all markers. Changing the
+configured marker invalidates and reparses projection and export state, but
+never migrates, normalizes, or rewrites existing source or SQLite/FTS content.
+
 ### Math
 
 Pipeline:

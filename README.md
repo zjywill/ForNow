@@ -40,7 +40,11 @@ and single-operation Replace All undo. Step 3.1 is complete with stable mode
 IDs, versioned alias and main-alias settings, generic first-line header parsing,
 conflict validation, a global keyword switch, and a source-free in-window slash
 picker with filtering, numeric selection, VoiceOver state, and single-operation
-insertion or replacement.
+insertion or replacement. Step 3.2 List Mode is complete with source-backed
+gutter checkboxes, configurable trailing checked markers, pointer and keyboard
+toggle parity, source-only Undo/Redo, math suppression, and independently
+configured clean-copy marker omission. Changing the marker reparses
+presentation without rewriting existing note source.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and

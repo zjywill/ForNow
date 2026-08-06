@@ -82,7 +82,7 @@ final class LinkProjectionTests: XCTestCase {
   }
 
   func test_UT_EDIT_004D_AllHyperlinkFeaturesOffDisablesDetection() {
-    let source = "task\nhttps://example.com/path\n20 + 22 ="
+    let source = "math\nhttps://example.com/path\n20 + 22 ="
     let projection = SpikeProjectionParser(
       editorSettings: EditorSettings(hyperlinkFeaturesEnabled: false)
     ).parse(SourceSnapshot(version: 1, text: source))

@@ -12,9 +12,13 @@ public struct ProjectionEditingSession: Sendable {
 
   public init(
     text: String,
-    modeSettings: ModeSettings = ModeSettings()
+    modeSettings: ModeSettings = ModeSettings(),
+    mathSettings: MathSettings = MathSettings()
   ) {
-    let parser = SpikeProjectionParser(modeSettings: modeSettings)
+    let parser = SpikeProjectionParser(
+      modeSettings: modeSettings,
+      mathSettings: mathSettings
+    )
     let snapshot = SourceSnapshot(version: 0, text: text)
     self.snapshot = snapshot
     projection = parser.parse(snapshot)

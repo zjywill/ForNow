@@ -1,6 +1,7 @@
 import AppKit
 import ForNowCore
 import ForNowEditor
+import ForNowModes
 import ForNowWindowing
 import SwiftUI
 
@@ -122,6 +123,18 @@ struct SettingsView: View {
 
       ModeSettingsSection(environment: environment)
 
+      Section("Math") {
+        Stepper(
+          "Result digits: \(environmentModel.mathSettings.significantDigits)",
+          value: mathBinding(\.significantDigits),
+          in: 0...7
+        )
+        Toggle(
+          "Separate thousands",
+          isOn: mathBinding(\.separatesThousands)
+        )
+      }
+
       Section("Deletion") {
         Button("Reset Delete Warning") {
           Task { try? await noteSession.resetDeleteWarning() }
@@ -231,6 +244,19 @@ struct SettingsView: View {
         var settings = environmentModel.editorSettings
         settings[keyPath: keyPath] = value
         Task { try? await environment.updateEditorSettings(settings) }
+      }
+    )
+  }
+
+  private func mathBinding<Value>(_ keyPath: WritableKeyPath<MathSettings, Value>)
+    -> Binding<Value>
+  {
+    Binding(
+      get: { environmentModel.mathSettings[keyPath: keyPath] },
+      set: { value in
+        var settings = environmentModel.mathSettings
+        settings[keyPath: keyPath] = value
+        Task { try? await environment.updateMathSettings(settings) }
       }
     )
   }

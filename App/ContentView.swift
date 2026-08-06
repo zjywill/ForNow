@@ -39,6 +39,7 @@ struct ContentView: View {
           pasteSettings: environmentModel.pasteSettings,
           editorSettings: environmentModel.editorSettings,
           modeSettings: environmentModel.modeSettings,
+          mathSettings: environmentModel.mathSettings,
           expandedLinkIdentities: environmentModel.expandedLinkIdentities(
             for: noteSession.currentNoteID
           ),

@@ -19,9 +19,24 @@ public struct ProductionProjectionParser: ProjectionParsing, Sendable {
   }
 
   public init(editorSettings: EditorSettings, modeSettings: ModeSettings) {
+    self.init(
+      editorSettings: editorSettings,
+      modeSettings: modeSettings,
+      mathSettings: MathSettings()
+    )
+  }
+
+  public init(
+    editorSettings: EditorSettings,
+    modeSettings: ModeSettings,
+    mathSettings: MathSettings,
+    mathLocale: MathDecimalLocale = MathDecimalLocale()
+  ) {
     parser = SpikeProjectionParser(
       editorSettings: editorSettings,
-      modeSettings: modeSettings
+      modeSettings: modeSettings,
+      mathSettings: mathSettings,
+      mathLocale: mathLocale
     )
   }
 

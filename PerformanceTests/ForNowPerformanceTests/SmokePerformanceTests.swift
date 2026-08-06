@@ -1,5 +1,6 @@
 import AppKit
 import ForNowEditor
+import ForNowModes
 import XCTest
 
 final class SmokePerformanceTests: XCTestCase {
@@ -47,6 +48,46 @@ final class SmokePerformanceTests: XCTestCase {
     let diagnostics = await container.projectionPipelineDiagnostics()
     XCTAssertEqual(diagnostics.latestAppliedVersion, diagnostics.latestRequestedVersion)
     XCTAssertGreaterThanOrEqual(diagnostics.submittedCount, 31)
+  }
+
+  func test_PT_MATH_001_OneThousandDocumentedExpressionsStayWithinParseBudget() throws {
+    let lines = (0..<1_000).map { index in
+      switch index % 5 {
+      case 0: "\(index + 1) + 15% ="
+      case 1: "sqrt(81) + 2 ^ 3 ="
+      case 2: "50% of 200 ="
+      case 3: "floor(12.256) + ceil(2.1) ="
+      default: "1,000.25 / 2 ="
+      }
+    }
+    let source = "math: Performance\n" + lines.joined(separator: "\n")
+    let parser = BasicMathDocumentParser(locale: .periodDecimal)
+    let clock = ContinuousClock()
+    var durations: [Double] = []
+
+    for _ in 0..<10 {
+      let startedAt = clock.now
+      let evaluations = parser.parse(in: source)
+      durations.append(milliseconds(startedAt.duration(to: clock.now)))
+      XCTAssertEqual(evaluations.count, 1_000)
+      XCTAssertTrue(
+        evaluations.allSatisfy { evaluation in
+          if case .result = evaluation { return true }
+          return false
+        }
+      )
+    }
+
+    let ordered = durations.sorted()
+    let percentileIndex = min(ordered.count - 1, Int(ceil(Double(ordered.count) * 0.95)) - 1)
+    let p95 = ordered[percentileIndex]
+    let worst = ordered.last ?? 0
+    print("PT-MATH-001 samples=\(ordered.count) p95=\(p95)ms worst=\(worst)ms")
+    XCTAssertLessThan(
+      p95,
+      250,
+      "1,000-line Basic Math parse p95 was \(p95) ms; budget is below 250 ms"
+    )
   }
 
   private func milliseconds(_ duration: Duration) -> Double {

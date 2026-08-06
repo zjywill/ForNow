@@ -46,7 +46,7 @@ final class MarkdownProjectionTests: XCTestCase {
   }
 
   func test_UT_EDIT_003E_CommentsAreStyledAndExcludedFromCalculationsAndItems() {
-    let source = "// 1 + 1 =\n  // [ ] hidden item\n2 + 2 ="
+    let source = "math\n// 1 + 1 =\n  // [ ] hidden item\n2 + 2 ="
     let projection = SpikeProjectionParser().parse(SourceSnapshot(version: 1, text: source))
 
     XCTAssertEqual(styledSource(.comment, in: source, projection: projection).count, 2)

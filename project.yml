@@ -113,6 +113,8 @@ targets:
     dependencies:
       - package: ForNowEditor
         product: ForNowEditor
+      - package: ForNowModes
+        product: ForNowModes
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.fornow.ForNowPerformanceTests
