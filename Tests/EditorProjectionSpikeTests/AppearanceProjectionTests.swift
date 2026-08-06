@@ -74,6 +74,26 @@ final class AppearanceProjectionTests: XCTestCase {
   }
 
   @MainActor
+  func test_UIT_UI_002C_SourceModeChangeRefreshesListSpacing() {
+    let container = ProjectionEditorContainer(
+      initialText: "plain\nfirst",
+      appearanceSettings: AppearanceSettings(
+        paperStyle: .lined,
+        linedPaperListSpacing: .compact
+      )
+    )
+    XCTAssertEqual(container.textView.defaultParagraphStyle?.lineSpacing, 0)
+
+    container.textView.string = "list\nfirst"
+    container.textDidChange(Notification(name: NSText.didChangeNotification))
+    XCTAssertEqual(container.textView.defaultParagraphStyle?.lineSpacing, 2)
+
+    container.textView.string = "plain\nfirst"
+    container.textDidChange(Notification(name: NSText.didChangeNotification))
+    XCTAssertEqual(container.textView.defaultParagraphStyle?.lineSpacing, 0)
+  }
+
+  @MainActor
   func test_UIT_UI_002A_Through_UIT_UI_002E_PaperStylesProduceDistinctPixels() throws {
     let blank = renderedEditor(
       settings: AppearanceSettings(paperStyle: .blank)

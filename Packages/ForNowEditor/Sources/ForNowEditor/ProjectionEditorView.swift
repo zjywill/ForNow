@@ -329,6 +329,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   private var suppressedVariableAutocompleteSelection: NSRange?
   private var pendingTimerSingleClickTask: Task<Void, Never>?
   private var shownTimerTutorialVersion: UInt64?
+  private var appearanceUsesListSpacing = false
   public private(set) var currentAppearancePresentation = AppearancePresentation.resolve(
     settings: AppearanceSettings(),
     environment: AppearanceEnvironment(
@@ -539,7 +540,9 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
 
   public func textDidChange(_ notification: Notification) {
     snapshot = SourceSnapshot(version: snapshot.version + 1, text: textView.string)
-    applyAppearance()
+    if appearanceUsesListSpacing != sourceUsesListSpacing {
+      applyAppearance()
+    }
     scheduleProjectionParse()
     sourceDidChange?(textView.string, textView.hasMarkedText())
     reportViewportChange()
@@ -917,8 +920,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       ofSize: CGFloat(appearanceSettings.effectiveTextSize),
       weight: .regular
     )
-    let isListMode =
-      ModeHeaderParser(settings: modeSettings).parse(in: snapshot.text)?.modeID == .list
+    let isListMode = sourceUsesListSpacing
+    appearanceUsesListSpacing = isListMode
     let paragraph = NSMutableParagraphStyle()
     paragraph.lineSpacing =
       isListMode ? CGFloat(appearanceSettings.effectiveListSpacing.points) : 0
@@ -969,6 +972,10 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
         presentation.usesTranslucentMaterial ? .clear : presentation.theme.canvas.nsColor
     }
     scheduleAdornmentRefresh()
+  }
+
+  private var sourceUsesListSpacing: Bool {
+    ModeHeaderParser(settings: modeSettings).parse(in: snapshot.text)?.modeID == .list
   }
 
   private func handleVariableAutocompleteKey(_ key: EditorVariableAutocompleteKey) -> Bool {
