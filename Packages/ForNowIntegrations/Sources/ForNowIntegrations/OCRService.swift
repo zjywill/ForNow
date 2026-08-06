@@ -298,11 +298,17 @@ public actor VisionOCRService: OCRService {
     case .automatic:
       request.automaticallyDetectsLanguage = true
     case .systemPreferred:
-      let preferred = Locale.preferredLanguages.filter { language in
-        supported.contains { supportedLanguage in
-          Locale(identifier: supportedLanguage).language.languageCode
-            == Locale(identifier: language).language.languageCode
+      let preferred = Locale.preferredLanguages.reduce(into: [String]()) { matches, language in
+        guard
+          let supportedLanguage = supported.first(where: {
+            Locale(identifier: $0).language.languageCode
+              == Locale(identifier: language).language.languageCode
+          }),
+          !matches.contains(supportedLanguage)
+        else {
+          return
         }
+        matches.append(supportedLanguage)
       }
       request.recognitionLanguages = preferred.isEmpty ? supported : preferred
       request.automaticallyDetectsLanguage = true

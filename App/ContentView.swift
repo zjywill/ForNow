@@ -154,8 +154,6 @@ struct ContentView: View {
           .frame(height: 40)
           .background(Color(nsColor: .windowBackgroundColor))
           .overlay(alignment: .top) { Divider() }
-          .accessibilityElement(children: .combine)
-          .accessibilityLabel("Recognizing text")
         }
       }
     }

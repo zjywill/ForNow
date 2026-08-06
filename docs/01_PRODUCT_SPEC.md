@@ -547,25 +547,36 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-OCR-001 - Image input
 
-- Source: `AN-OCR-001`.
+- Source: `AN-OCR-001`, `FORNOW-DECISION-014`.
 - Accept supported clipboard and drag/drop image types.
 - Parity formats are JPG, JPEG, PNG, and static GIF.
-- Reject unsupported or excessively large inputs with a recoverable error.
+- Clipboard TIFF representations may be normalized to PNG as transport, but a
+  TIFF file remains unsupported.
+- Reject animated GIFs, malformed data, images above 20 MiB, and images above
+  40 megapixels with a recoverable error.
 
 #### FR-OCR-002 - Local recognition
 
-- Source: `AN-OCR-002`.
+- Source: `AN-OCR-002`, `FORNOW-DECISION-014`.
 - Recognition uses on-device Vision APIs.
 - No image or recognized text is transmitted.
 - Language selection follows user settings and detected content.
+- The default is automatic detection. System-preferred and explicit English,
+  Simplified Chinese, Traditional Chinese, Japanese, Korean, French, German,
+  and Spanish choices are persistent.
+- System-preferred selection maps language families to identifiers explicitly
+  supported by the active Vision revision.
+- Starting a new request cancels and invalidates the prior request.
 
 #### FR-OCR-003 - Atomic insertion
 
-- Source: `AN-OCR-001`.
+- Source: `AN-OCR-001`, `FORNOW-DECISION-014`.
 - Recognition displays cancellable progress.
 - Successful text inserts at the captured source position when still valid,
   otherwise at the current insertion point after user confirmation.
 - The final insertion is one undo group.
+- Cancellation, an empty result, an invalid UTF-16 range, or active IME marked
+  text never creates a partial source edit.
 
 ### AutoPaste
 

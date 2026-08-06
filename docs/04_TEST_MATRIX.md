@@ -199,7 +199,7 @@ Clock scenarios:
 | Requirement | Test IDs | Minimum verification |
 |---|---|---|
 | `FR-OCR-001` | `UT-OCR-001`, `IT-OCR-001A` through `IT-OCR-001F` | Formats, size limit, unsupported, drag/drop, paste |
-| `FR-OCR-002` | `IT-OCR-002`, `ST-OCR-002`, `MT-OCR-002` | Local Vision, language, no network |
+| `FR-OCR-002` | `IT-OCR-002`, `ST-OCR-001`, `ST-OCR-002`, `MT-OCR-002` | Local Vision, language, empty image, no network |
 | `FR-OCR-003` | `ET-OCR-003A` through `ET-OCR-003E` | Captured position, stale position, cancel, one undo |
 
 Fixtures:
@@ -212,8 +212,8 @@ Fixtures:
 - empty image;
 - static GIF;
 - animated GIF rejection or first-frame policy;
-- very large image;
-- malformed image data.
+- malformed and unsupported input;
+- 20 MiB encoded-size and 40 megapixel limits;
 
 ## 10. AutoPaste
 

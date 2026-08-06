@@ -1871,13 +1871,13 @@
     },
     "FR-OCR-001": {
       "title": "Image input",
-      "classification": "parity",
-      "sourceDescription": "`AN-OCR-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-OCR-001`, `FORNOW-DECISION-014`.",
       "evidence": [
         "AN-OCR-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-014"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -1895,18 +1895,19 @@
     },
     "FR-OCR-002": {
       "title": "Local recognition",
-      "classification": "parity",
-      "sourceDescription": "`AN-OCR-002`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-OCR-002`, `FORNOW-DECISION-014`.",
       "evidence": [
         "AN-OCR-002"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-014"
       ],
       "release": "macos-1.0",
       "tests": [
         "IT-OCR-002",
         "MT-OCR-002",
+        "ST-OCR-001",
         "ST-OCR-002"
       ],
       "manualURLs": [
@@ -1915,13 +1916,13 @@
     },
     "FR-OCR-003": {
       "title": "Atomic insertion",
-      "classification": "parity",
-      "sourceDescription": "`AN-OCR-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-OCR-001`, `FORNOW-DECISION-014`.",
       "evidence": [
         "AN-OCR-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-014"
       ],
       "release": "macos-1.0",
       "tests": [

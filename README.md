@@ -73,6 +73,12 @@ sound and takeover settings, pause-on-quit, volume, and a source-free accessible
 editor projection. Relaunch, sleep/wake, wall-clock changes, terminal controls,
 denied notification permission, SQLite/FTS isolation, and real Escape-to-stop
 behavior are verified.
+Step 4.2 OCR is complete with bounded PNG, JPEG, and static GIF validation,
+on-device cancellable Vision recognition, persistent automatic/system/explicit
+language choices, image-first paste and Finder drag/drop capture, source-versioned
+stale-position confirmation, one-operation Undo, recoverable errors, and
+source-only SQLite/FTS persistence. Real-process socket monitoring observed no
+OCR network traffic.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and

@@ -455,8 +455,8 @@ copy and press reviews may explain intent but do not override the manual.
 - Confirmed behavior: Pasted or dropped images can be converted to text.
 - Confirmed detail: v1.1.7 documents JPG, JPEG, PNG, and static GIF input.
 - ForNow consequence: Use local Vision recognition, validate the documented
-  formats, and insert a single undoable text edit at the current insertion
-  point.
+  formats, and insert a single undoable text edit at the captured source
+  position or a user-confirmed current position.
 
 ### AN-OCR-002 - Local processing
 
@@ -464,7 +464,8 @@ copy and press reviews may explain intent but do not override the manual.
 - Source: User manual, OCR privacy description.
 - Confirmed behavior: OCR is described as local and does not require sending
   note content to a server.
-- ForNow consequence: OCR must remain on-device in 1.0.
+- ForNow consequence: OCR must remain on-device in 1.0, and image input must
+  remain transient rather than becoming note or attachment data.
 
 ### AN-AUTO-001 - Explicit AutoPaste mode
 
@@ -788,6 +789,19 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
   canonical source and avoids live jumps when the wall clock changes.
 - Constraint: Projection parsing never executes commands, no per-second counter
   is persisted, and denied notification permission cannot affect timer state.
+
+### FORNOW-DECISION-014 - Bounded transient OCR with versioned insertion
+
+- Decision: ForNow V1 validates transient PNG, JPEG, and one-frame GIF inputs
+  before local Vision recognition, permits at most 20 MiB and 40 megapixels,
+  and freezes cancellation, language, and insertion behavior in
+  `docs/ocr/OCR_V1.md`.
+- Reason: Public evidence defines formats and local processing but does not
+  define resource bounds, clipboard TIFF transport, concurrent requests,
+  language choices, or how an asynchronous result interacts with source edits.
+- Constraint: Images never enter note persistence, only the newest request may
+  insert, stale anchors require confirmation at the current cursor, and the
+  final recognized text is one canonical undoable source edit.
 
 ## Sync, Slots, And Extensions
 

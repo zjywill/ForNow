@@ -82,6 +82,7 @@ final class OCRWorkflowTests: XCTestCase {
       ("FORNOW ENGLISH", OCRSettings(languagePreference: .english)),
       ("你好世界", OCRSettings(languagePreference: .simplifiedChinese)),
       ("FORNOW 你好", OCRSettings(languagePreference: .automatic)),
+      ("SYSTEM PREFERRED", OCRSettings(languagePreference: .systemPreferred)),
       ("LOW CONTRAST", OCRSettings(languagePreference: .english)),
     ]
 
@@ -91,7 +92,7 @@ final class OCRWorkflowTests: XCTestCase {
         format: .png,
         width: 1_200,
         height: 300,
-        foreground: index == 3 ? NSColor(calibratedWhite: 0.55, alpha: 1) : .black
+        foreground: index == 4 ? NSColor(calibratedWhite: 0.55, alpha: 1) : .black
       )
       let result = try await service.recognizeText(in: data, settings: fixture.1)
       XCTAssertTrue(result.plainText.contains(where: { !$0.isWhitespace }))

@@ -1199,17 +1199,34 @@ Restore:
 
 ### OCR
 
-`OCRService` accepts immutable image data and returns recognized text plus
-confidence metadata. The editor owns only progress and final insertion.
+`OCRService` accepts immutable image data and versioned `OCRSettings`, validates
+the encoded payload, and returns recognized text plus confidence metadata. The
+production actor uses `VNRecognizeTextRequest` at accurate recognition level
+with language correction. Cancellation is routed to `VNRequest.cancel()` and a
+main-actor generation token prevents an obsolete request from inserting.
+
+The AppKit editor recognizes image representations before ordinary paste. It
+captures an `EditorOCRInsertionAnchor` containing the current source snapshot
+version and UTF-16 replacement range. A Finder drop captures its drop position;
+clipboard paste captures the current selection. If source changed before the
+result returns, the app asks before inserting at the current selection. An
+unchanged result inserts at the captured position as one isolated undo edit.
+
+Clipboard TIFF is decoded and re-encoded to PNG before validation because
+AppKit commonly exposes copied images as TIFF. File URL inputs retain their
+security-scoped access only while bytes are read. The actual ImageIO type,
+dimensions, and GIF frame count remain authoritative; filename extensions and
+pasteboard declarations cannot bypass validation.
 
 Limits:
 
-- maximum pixel area;
-- maximum encoded byte size;
-- explicit supported UTTypes;
-- cancellation;
-- no disk persistence unless required by Vision, and temporary files are
-  deleted.
+- maximum pixel area: 40,000,000;
+- maximum encoded byte size: 20 MiB, checked before and after file reads;
+- supported decoded types: PNG, JPEG, and one-frame GIF;
+- at most one active request, with replacement and user cancellation;
+- automatic, system-preferred, and versioned explicit language choices;
+- no image or progress-state persistence and no application-created OCR
+  temporary files.
 
 ### AutoPaste
 
