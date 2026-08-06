@@ -22,6 +22,7 @@
 		22A02A581FD66F6688DDC161 /* PasteSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B5AB93D61A3D40ADC4367E /* PasteSettingsStore.swift */; };
 		23494DCE15F89633C3FB9E70 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 10C50E7BB046823827B9944D /* ForNowEditor */; };
 		26280CA93077F3084517CE18 /* WindowSpikeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FA72D4F7F50CA99AF2C040A /* WindowSpikeApp.swift */; };
+		2722837775B6F49954182DDB /* AutoPasteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2CA7680A70A1038AAFCF7DF /* AutoPasteModel.swift */; };
 		2916B42069F9EB0AAE07461B /* TimerCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DA7B4A656A5E3C1FF041C2 /* TimerCommandTests.swift */; };
 		2A5B110B400373DBB22DF147 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEAFEA065BE8EE706045421 /* ContentView.swift */; };
 		2BD4945493E7650A81534E1F /* SlashCommandPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6C6677A9539A4572EFC2EC0 /* SlashCommandPanel.swift */; };
@@ -31,11 +32,14 @@
 		34978BB90E17B26A7BB249C0 /* WindowSpikeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1AFC98797C367039C58244A /* WindowSpikeTests.swift */; };
 		39B45AAACA5E853DB76BFE20 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73368461C219A7EAD4F1C20 /* AppDelegate.swift */; };
 		3A6DD02D8EF0F54EA95B7EA3 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = F005AE8720DC3420B449FBB7 /* AppEnvironment.swift */; };
+		3AB6B6C7A931E5F2CC650261 /* AutoPasteSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B91BAB26AC57ECEE497A94 /* AutoPasteSettingsStore.swift */; };
 		448C3CC371A6F30D8D0F5368 /* ForNowWindowing in Frameworks */ = {isa = PBXBuildFile; productRef = B8F8F56E0B8AC08145917B90 /* ForNowWindowing */; };
 		4507424D8CFC95853F8CA79F /* ForNowWindowing in Frameworks */ = {isa = PBXBuildFile; productRef = EFDF695A0B8C3D41F5837E19 /* ForNowWindowing */; };
 		48A8AFBA121ACED0A21C8835 /* FindReplaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F785A68154FECDDDF1ACFFB /* FindReplaceTests.swift */; };
 		4A8605670AC6BADDE69B5E4B /* OCRWorkflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4705D258DE240F0B75C642A6 /* OCRWorkflowTests.swift */; };
+		4BD28BA61B50973A41652B3F /* AutoPasteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 565D5B060C062D3D6DBAC5F9 /* AutoPasteTests.swift */; };
 		50D8D230E6AB32BDB3496622 /* MathSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F43A4CF0D2DCAD2D414CD2F4 /* MathSettingsTests.swift */; };
+		51E1F9E4CEAA0A9DD813C9A4 /* AutoPasteModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F28AE1D2F4298E44FC6EF3E0 /* AutoPasteModelTests.swift */; };
 		53A911D79E707A2C6F274E72 /* ForNowWindowing in Frameworks */ = {isa = PBXBuildFile; productRef = 49D8667D12771F5CB2486B54 /* ForNowWindowing */; };
 		5403CD1B6739405F6167788D /* VariableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794607665EA05A63B5B699A9 /* VariableTests.swift */; };
 		554524835CBE96DA69D6008E /* CurrencyRateRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */; };
@@ -135,6 +139,7 @@
 		49569501A5AD196581CDF5BF /* CurrencyRateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyRateTests.swift; sourceTree = "<group>"; };
 		4A7E3E06ED34B276D160B433 /* TimerModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerModelTests.swift; sourceTree = "<group>"; };
 		555C2806CF16AF7507C738CA /* OCRInsertionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRInsertionTests.swift; sourceTree = "<group>"; };
+		565D5B060C062D3D6DBAC5F9 /* AutoPasteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPasteTests.swift; sourceTree = "<group>"; };
 		58E7AF34D3A7E00476881734 /* ForNowWindowing */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowWindowing; path = Packages/ForNowWindowing; sourceTree = SOURCE_ROOT; };
 		5AEAFEA065BE8EE706045421 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5E0E56B44D1A023F913AE146 /* ForNowDesign */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowDesign; path = Packages/ForNowDesign; sourceTree = SOURCE_ROOT; };
@@ -156,6 +161,7 @@
 		B36344F389ADCEA8E66038F5 /* ModeSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSettingsStore.swift; sourceTree = "<group>"; };
 		B6B28C4F55C1A2AEAF26F94D /* LifecycleSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleSettingsStore.swift; sourceTree = "<group>"; };
 		BBD8234C3E2C1F4067349038 /* ForNowCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForNowCommands.swift; sourceTree = "<group>"; };
+		C3B91BAB26AC57ECEE497A94 /* AutoPasteSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPasteSettingsStore.swift; sourceTree = "<group>"; };
 		C81C53F71A7CE9DFA866908F /* ForNowIntegrations */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowIntegrations; path = Packages/ForNowIntegrations; sourceTree = SOURCE_ROOT; };
 		C9A7FDA6468F9924D976AEAB /* WindowSpikeCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSpikeCoordinator.swift; sourceTree = "<group>"; };
 		CC48BB4A25BC266F0F366AFB /* ForNowModes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowModes; path = Packages/ForNowModes; sourceTree = SOURCE_ROOT; };
@@ -167,6 +173,7 @@
 		DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLifecycleLogging.swift; sourceTree = "<group>"; };
 		E166CC2086118670A574904C /* NoteSearchAccessibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSearchAccessibilityView.swift; sourceTree = "<group>"; };
 		E1AFC98797C367039C58244A /* WindowSpikeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSpikeTests.swift; sourceTree = "<group>"; };
+		E2CA7680A70A1038AAFCF7DF /* AutoPasteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPasteModel.swift; sourceTree = "<group>"; };
 		E3BF3B14BDA74BC0364DA8F5 /* WindowSpikeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSpikeModel.swift; sourceTree = "<group>"; };
 		E6C6677A9539A4572EFC2EC0 /* SlashCommandPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlashCommandPanel.swift; sourceTree = "<group>"; };
 		E7B203094DF32A6E063024D0 /* WindowSpikeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WindowSpikeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -177,6 +184,7 @@
 		EC02F5CE9A748D269BC51A8A /* ListModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListModeTests.swift; sourceTree = "<group>"; };
 		EFB01755BB5FB137D7B55B28 /* EditorProjectionSpike.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EditorProjectionSpike.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F005AE8720DC3420B449FBB7 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		F28AE1D2F4298E44FC6EF3E0 /* AutoPasteModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPasteModelTests.swift; sourceTree = "<group>"; };
 		F2E8EC15FD34128A7A307DA7 /* WindowSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSettingsStore.swift; sourceTree = "<group>"; };
 		F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyRateRefreshCoordinator.swift; sourceTree = "<group>"; };
 		F43A4CF0D2DCAD2D414CD2F4 /* MathSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathSettingsTests.swift; sourceTree = "<group>"; };
@@ -259,6 +267,8 @@
 				F73368461C219A7EAD4F1C20 /* AppDelegate.swift */,
 				F005AE8720DC3420B449FBB7 /* AppEnvironment.swift */,
 				DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */,
+				E2CA7680A70A1038AAFCF7DF /* AutoPasteModel.swift */,
+				C3B91BAB26AC57ECEE497A94 /* AutoPasteSettingsStore.swift */,
 				5AEAFEA065BE8EE706045421 /* ContentView.swift */,
 				F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */,
 				0E66ADFC63F4CE218733F734 /* DeleteConfirmationCoordinator.swift */,
@@ -309,6 +319,7 @@
 			isa = PBXGroup;
 			children = (
 				1BD684849F0B4AF4F2ED08A8 /* AppEnvironmentTests.swift */,
+				F28AE1D2F4298E44FC6EF3E0 /* AutoPasteModelTests.swift */,
 				49569501A5AD196581CDF5BF /* CurrencyRateTests.swift */,
 				0556BAAF653E26B50F5F7B2D /* FindReplaceModelTests.swift */,
 				F43A4CF0D2DCAD2D414CD2F4 /* MathSettingsTests.swift */,
@@ -335,6 +346,7 @@
 			isa = PBXGroup;
 			children = (
 				9537F98901A9E534B5D68C56 /* AggregateTests.swift */,
+				565D5B060C062D3D6DBAC5F9 /* AutoPasteTests.swift */,
 				E9A88BF1F120F5880F72A535 /* BasicMathTests.swift */,
 				1F2B741B69F54E829AE36311 /* ClipboardProjectionTests.swift */,
 				4485A7278FD702CFC67FC31F /* ConversionTests.swift */,
@@ -676,6 +688,8 @@
 				39B45AAACA5E853DB76BFE20 /* AppDelegate.swift in Sources */,
 				3A6DD02D8EF0F54EA95B7EA3 /* AppEnvironment.swift in Sources */,
 				B8340A8895F4E97878C6589B /* AppLifecycleLogging.swift in Sources */,
+				2722837775B6F49954182DDB /* AutoPasteModel.swift in Sources */,
+				3AB6B6C7A931E5F2CC650261 /* AutoPasteSettingsStore.swift in Sources */,
 				2A5B110B400373DBB22DF147 /* ContentView.swift in Sources */,
 				554524835CBE96DA69D6008E /* CurrencyRateRefreshCoordinator.swift in Sources */,
 				1F742C1A2932ED30288F47E1 /* DeleteConfirmationCoordinator.swift in Sources */,
@@ -711,6 +725,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				94ADAEAE254A7DAC8D9CEFB1 /* AppEnvironmentTests.swift in Sources */,
+				51E1F9E4CEAA0A9DD813C9A4 /* AutoPasteModelTests.swift in Sources */,
 				E203F4977C8DB2F4014F70E2 /* CurrencyRateTests.swift in Sources */,
 				00C449660D932AB0E4C7D168 /* FindReplaceModelTests.swift in Sources */,
 				50D8D230E6AB32BDB3496622 /* MathSettingsTests.swift in Sources */,
@@ -755,6 +770,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E8C31C6E7922930DDED1639C /* AggregateTests.swift in Sources */,
+				4BD28BA61B50973A41652B3F /* AutoPasteTests.swift in Sources */,
 				2E9A386ED5ABB6FA3E544D00 /* BasicMathTests.swift in Sources */,
 				69DCD06192AC7A0A196EFDC1 /* ClipboardProjectionTests.swift in Sources */,
 				F3EB6790ED931B38F9185E72 /* ConversionTests.swift in Sources */,

@@ -12,6 +12,7 @@ struct ContentView: View {
   @ObservedObject private var environmentModel: AppEnvironment
   @ObservedObject private var timerModel: TimerModel
   @ObservedObject private var ocrModel: OCRWorkflowModel
+  @ObservedObject private var autoPasteModel: AutoPasteModel
 
   init(environment: AppEnvironment) {
     self.environment = environment
@@ -22,6 +23,7 @@ struct ContentView: View {
     _environmentModel = ObservedObject(wrappedValue: environment)
     _timerModel = ObservedObject(wrappedValue: environment.timerModel)
     _ocrModel = ObservedObject(wrappedValue: environment.ocrModel)
+    _autoPasteModel = ObservedObject(wrappedValue: environment.autoPasteModel)
   }
 
   var body: some View {
@@ -47,6 +49,7 @@ struct ContentView: View {
           currencyContext: environmentModel.currencyConversionContext,
           timerSnapshot: timerModel.snapshot(linkedTo: noteSession.currentNoteID),
           stopsTimerOnEscape: timerModel.snapshot?.isRunning == true,
+          autoPasteIsActive: autoPasteModel.isActive,
           expandedLinkIdentities: environmentModel.expandedLinkIdentities(
             for: noteSession.currentNoteID
           ),
@@ -87,6 +90,17 @@ struct ContentView: View {
                 try? await timerModel.handleStop()
               }
             }
+          },
+          autoPasteCommandDidCommit: { command, source in
+            Task {
+              try? await environment.executeAutoPasteCommand(command, source: source)
+            }
+          },
+          autoPasteStopHandler: {
+            environment.stopAutoPaste(.escape)
+          },
+          pasteboardDidWrite: {
+            environment.markCurrentClipboardChangeAsOwn()
           }
         )
         .background(Color(nsColor: .textBackgroundColor))
@@ -97,6 +111,12 @@ struct ContentView: View {
               .foregroundStyle(.secondary)
               .padding(12)
               .accessibilityLabel("\(noteCount) notes")
+          }
+        }
+
+        if let session = autoPasteModel.session, autoPasteModel.isActive {
+          AutoPasteIndicator(session: session) {
+            environment.stopAutoPaste(.indicator)
           }
         }
       }
@@ -174,6 +194,13 @@ struct ContentView: View {
     } message: {
       Text(ocrModel.errorMessage ?? "Text recognition failed.")
     }
+    .alert("AutoPaste Stopped", isPresented: autoPasteErrorBinding) {
+      Button("OK") {
+        autoPasteModel.dismissError()
+      }
+    } message: {
+      Text(autoPasteModel.errorMessage ?? "The destination could not be updated.")
+    }
   }
 
   private var staleInsertionBinding: Binding<Bool> {
@@ -196,6 +223,80 @@ struct ContentView: View {
         }
       }
     )
+  }
+
+  private var autoPasteErrorBinding: Binding<Bool> {
+    Binding(
+      get: { autoPasteModel.errorMessage != nil },
+      set: { isPresented in
+        if !isPresented {
+          autoPasteModel.dismissError()
+        }
+      }
+    )
+  }
+}
+
+struct AutoPasteIndicator: View {
+  let session: AutoPasteSession
+  let stop: () -> Void
+
+  @Environment(\.accessibilityReduceMotion) private var reducesMotion
+  @State private var dimsIcon = false
+
+  var body: some View {
+    HStack(spacing: 8) {
+      Button(action: stop) {
+        Image(systemName: "clipboard.fill")
+          .foregroundStyle(.tint)
+          .opacity(reducesMotion || !dimsIcon ? 1 : 0.35)
+      }
+      .buttonStyle(.borderless)
+      .frame(width: 28, height: 28)
+      .help("Stop AutoPaste")
+      .accessibilityLabel("Stop AutoPaste")
+
+      Text("AutoPaste to \(session.destinationName)")
+        .font(.callout)
+        .lineLimit(1)
+        .truncationMode(.tail)
+
+      Spacer(minLength: 8)
+
+      if session.captureCount > 0 {
+        Text(session.captureCount, format: .number)
+          .font(.caption.monospacedDigit())
+          .foregroundStyle(.secondary)
+          .accessibilityLabel("\(session.captureCount) captured items")
+      }
+
+      Button(action: stop) {
+        Image(systemName: "xmark")
+      }
+      .buttonStyle(.borderless)
+      .frame(width: 28, height: 28)
+      .help("Stop AutoPaste")
+      .accessibilityLabel("Stop AutoPaste")
+    }
+    .padding(.horizontal, 10)
+    .frame(height: 40)
+    .background(Color(nsColor: .windowBackgroundColor))
+    .overlay(alignment: .top) { Divider() }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("AutoPaste status")
+    .accessibilityLabel("AutoPaste active for \(session.destinationName)")
+    .onAppear { updateAnimation() }
+    .onChange(of: reducesMotion) { _, _ in updateAnimation() }
+  }
+
+  private func updateAnimation() {
+    if reducesMotion {
+      dimsIcon = false
+    } else {
+      withAnimation(.easeInOut(duration: 0.65).repeatForever(autoreverses: true)) {
+        dimsIcon = true
+      }
+    }
   }
 }
 

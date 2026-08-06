@@ -1,5 +1,6 @@
 import Combine
 import ForNowCore
+import ForNowModes
 import Foundation
 
 enum NoteSessionPhase: Equatable, Sendable {
@@ -128,6 +129,62 @@ final class NoteSessionModel: ObservableObject {
     persistenceTask = nil
     updateInMemory(newText, hasMarkedText: hasMarkedText)
     try await persistIfCurrent(revision: editRevision)
+  }
+
+  func appendAutoPasteCapture(
+    to destinationNoteID: NoteID,
+    capturedText: String,
+    policy: AutoPasteCapturePolicy,
+    capturedAt: Date,
+    isFirstCapture: Bool
+  ) async throws -> AutoPasteAppendOutcome {
+    if destinationNoteID == currentNoteID {
+      guard !hasMarkedText else { return .destinationBusy }
+      persistenceTask?.cancel()
+      persistenceTask = nil
+      let updatedText = policy.appending(
+        capturedText,
+        to: committedText,
+        capturedAt: capturedAt,
+        isFirstCapture: isFirstCapture
+      )
+      updateInMemory(updatedText, hasMarkedText: false)
+      try await persistIfCurrent(revision: editRevision)
+      _ = try await repository.flush()
+      return .appended
+    }
+
+    guard let note = try await repository.note(id: destinationNoteID) else {
+      return .destinationUnavailable
+    }
+    if destinationNoteID == currentNoteID {
+      return try await appendAutoPasteCapture(
+        to: destinationNoteID,
+        capturedText: capturedText,
+        policy: policy,
+        capturedAt: capturedAt,
+        isFirstCapture: isFirstCapture
+      )
+    }
+    try await repository.schedule(
+      NoteDraft(
+        id: note.id,
+        body: policy.appending(
+          capturedText,
+          to: note.body,
+          capturedAt: capturedAt,
+          isFirstCapture: isFirstCapture
+        ),
+        createdAt: note.createdAt,
+        modifiedAt: capturedAt,
+        expiresAt: note.expiresAt,
+        slotIndex: note.slotIndex,
+        selection: note.selection,
+        scrollOffset: note.scrollOffset
+      )
+    )
+    _ = try await repository.flush()
+    return .appended
   }
 
   func prepareForDeparture() async throws {

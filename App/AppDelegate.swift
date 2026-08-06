@@ -8,7 +8,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private var terminationTask: Task<Void, Never>?
 
   override convenience init() {
-    self.init(environment: .production())
+    let environment =
+      ProcessInfo.processInfo.environment["FORNOW_UI_TESTING"] == "1"
+      ? AppEnvironment.uiTest() : .production()
+    self.init(environment: environment)
   }
 
   init(environment: AppEnvironment) {

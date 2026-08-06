@@ -23,6 +23,12 @@ struct ForNowCommands: Commands {
     }
 
     CommandGroup(after: .textEditing) {
+      Button("Stop AutoPaste") {
+        environment.stopAutoPaste(.escape)
+      }
+      .keyboardShortcut(.cancelAction)
+      .disabled(!environment.autoPasteModel.isActive)
+
       Divider()
       Button("Paste Without Transformations") {
         NSApp.sendAction(Selector(("pasteRaw:")), to: nil, from: nil)

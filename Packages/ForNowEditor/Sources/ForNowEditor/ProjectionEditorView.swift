@@ -41,6 +41,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
   private let currencyContext: CurrencyConversionContext
   private let timerSnapshot: TimerSnapshot?
   private let stopsTimerOnEscape: Bool
+  private let autoPasteIsActive: Bool
   private let expandedLinkIdentities: Set<LinkIdentity>
   private let linkExpansionDidToggle: (@MainActor (LinkIdentity) -> Void)?
   private let findReplaceTarget: EditorFindReplaceTarget?
@@ -48,6 +49,9 @@ public struct ProjectionEditorView: NSViewRepresentable {
   private let ocrTarget: EditorOCRTarget?
   private let timerCommandDidCommit: (@MainActor (TimerCommand, String) -> Void)?
   private let timerInteractionHandler: (@MainActor (EditorTimerInteraction) -> Void)?
+  private let autoPasteCommandDidCommit: (@MainActor (AutoPasteCommand, String) -> Void)?
+  private let autoPasteStopHandler: (@MainActor () -> Void)?
+  private let pasteboardDidWrite: (@MainActor () -> Void)?
 
   public init(initialText: String) {
     sourceText = initialText
@@ -65,6 +69,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     currencyContext = CurrencyConversionContext()
     timerSnapshot = nil
     stopsTimerOnEscape = false
+    autoPasteIsActive = false
     expandedLinkIdentities = []
     linkExpansionDidToggle = nil
     findReplaceTarget = nil
@@ -72,6 +77,9 @@ public struct ProjectionEditorView: NSViewRepresentable {
     ocrTarget = nil
     timerCommandDidCommit = nil
     timerInteractionHandler = nil
+    autoPasteCommandDidCommit = nil
+    autoPasteStopHandler = nil
+    pasteboardDidWrite = nil
   }
 
   public init(
@@ -87,6 +95,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     currencyContext: CurrencyConversionContext = CurrencyConversionContext(),
     timerSnapshot: TimerSnapshot? = nil,
     stopsTimerOnEscape: Bool = false,
+    autoPasteIsActive: Bool = false,
     expandedLinkIdentities: Set<LinkIdentity> = [],
     findReplaceTarget: EditorFindReplaceTarget? = nil,
     slashCommandTarget: EditorSlashCommandTarget? = nil,
@@ -96,7 +105,10 @@ public struct ProjectionEditorView: NSViewRepresentable {
     navigationHandler: @escaping @MainActor (NoteNavigationDirection) -> Void,
     linkExpansionDidToggle: @escaping @MainActor (LinkIdentity) -> Void = { _ in },
     timerCommandDidCommit: @escaping @MainActor (TimerCommand, String) -> Void = { _, _ in },
-    timerInteractionHandler: @escaping @MainActor (EditorTimerInteraction) -> Void = { _ in }
+    timerInteractionHandler: @escaping @MainActor (EditorTimerInteraction) -> Void = { _ in },
+    autoPasteCommandDidCommit: @escaping @MainActor (AutoPasteCommand, String) -> Void = { _, _ in },
+    autoPasteStopHandler: @escaping @MainActor () -> Void = {},
+    pasteboardDidWrite: @escaping @MainActor () -> Void = {}
   ) {
     self.sourceText = sourceText
     self.accessibilityLabel = accessibilityLabel
@@ -110,6 +122,7 @@ public struct ProjectionEditorView: NSViewRepresentable {
     self.currencyContext = currencyContext
     self.timerSnapshot = timerSnapshot
     self.stopsTimerOnEscape = stopsTimerOnEscape
+    self.autoPasteIsActive = autoPasteIsActive
     self.expandedLinkIdentities = expandedLinkIdentities
     self.findReplaceTarget = findReplaceTarget
     self.slashCommandTarget = slashCommandTarget
@@ -120,6 +133,9 @@ public struct ProjectionEditorView: NSViewRepresentable {
     self.linkExpansionDidToggle = linkExpansionDidToggle
     self.timerCommandDidCommit = timerCommandDidCommit
     self.timerInteractionHandler = timerInteractionHandler
+    self.autoPasteCommandDidCommit = autoPasteCommandDidCommit
+    self.autoPasteStopHandler = autoPasteStopHandler
+    self.pasteboardDidWrite = pasteboardDidWrite
   }
 
   public func makeNSView(context: Context) -> ProjectionEditorContainer {
@@ -140,9 +156,13 @@ public struct ProjectionEditorView: NSViewRepresentable {
     container.expandedLinkIdentities = expandedLinkIdentities
     container.timerSnapshot = timerSnapshot
     container.stopsTimerOnEscape = stopsTimerOnEscape
+    container.autoPasteIsActive = autoPasteIsActive
     container.linkExpansionDidToggle = linkExpansionDidToggle
     container.timerCommandDidCommit = timerCommandDidCommit
     container.timerInteractionHandler = timerInteractionHandler
+    container.autoPasteCommandDidCommit = autoPasteCommandDidCommit
+    container.autoPasteStopHandler = autoPasteStopHandler
+    container.pasteboardDidWrite = pasteboardDidWrite
     findReplaceTarget?.attach(to: container)
     slashCommandTarget?.attach(to: container)
     ocrTarget?.attach(to: container)
@@ -167,9 +187,13 @@ public struct ProjectionEditorView: NSViewRepresentable {
     nsView.expandedLinkIdentities = expandedLinkIdentities
     nsView.timerSnapshot = timerSnapshot
     nsView.stopsTimerOnEscape = stopsTimerOnEscape
+    nsView.autoPasteIsActive = autoPasteIsActive
     nsView.linkExpansionDidToggle = linkExpansionDidToggle
     nsView.timerCommandDidCommit = timerCommandDidCommit
     nsView.timerInteractionHandler = timerInteractionHandler
+    nsView.autoPasteCommandDidCommit = autoPasteCommandDidCommit
+    nsView.autoPasteStopHandler = autoPasteStopHandler
+    nsView.pasteboardDidWrite = pasteboardDidWrite
     findReplaceTarget?.attach(to: nsView)
     slashCommandTarget?.attach(to: nsView)
     ocrTarget?.attach(to: nsView)
@@ -253,6 +277,10 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   public var stopsTimerOnEscape = false
   public var timerCommandDidCommit: (@MainActor (TimerCommand, String) -> Void)?
   public var timerInteractionHandler: (@MainActor (EditorTimerInteraction) -> Void)?
+  public var autoPasteIsActive = false
+  public var autoPasteCommandDidCommit: (@MainActor (AutoPasteCommand, String) -> Void)?
+  public var autoPasteStopHandler: (@MainActor () -> Void)?
+  public var pasteboardDidWrite: (@MainActor () -> Void)?
 
   private let scrollView = NSScrollView()
   private var parsePipeline: ProjectionParsePipeline
@@ -364,6 +392,9 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
         exportPolicy: self.exportProjectionPolicy
       )
     }
+    textView.pasteboardWriteHandler = { [weak self] in
+      self?.pasteboardDidWrite?()
+    }
     textView.layoutHandler = { [weak self] in
       self?.scheduleAdornmentRefresh()
     }
@@ -402,10 +433,10 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
       self?.handleVariableAutocompleteKey(key) ?? false
     }
     textView.timerCommandCommitHandler = { [weak self] in
-      self?.commitTimerCommandBeforeCaret()
+      self?.commitCommandBeforeCaret()
     }
     textView.timerEscapeHandler = { [weak self] in
-      self?.handleTimerEscape() ?? false
+      self?.handleEscape() ?? false
     }
 
     scrollView.contentView.postsBoundsChangedNotifications = true
@@ -1430,7 +1461,15 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     return true
   }
 
-  private func commitTimerCommandBeforeCaret() {
+  private func handleEscape() -> Bool {
+    if autoPasteIsActive {
+      autoPasteStopHandler?()
+      return true
+    }
+    return handleTimerEscape()
+  }
+
+  private func commitCommandBeforeCaret() {
     let source = snapshot.text as NSString
     let caret = textView.selectedRange().location
     guard caret >= 2, source.length > 0 else { return }
@@ -1446,6 +1485,10 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     )
     let range = NSRange(location: lineStart, length: contentsEnd - lineStart)
     let line = source.substring(with: range)
+    if let command = AutoPasteCommandParser().parse(line) {
+      autoPasteCommandDidCommit?(command, snapshot.text)
+      return
+    }
     guard
       case .command(let match) = TimerCommandParser(settings: modeSettings).evaluateLine(
         line,
@@ -1554,13 +1597,16 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
 
   private func writeToPasteboard(_ text: String) {
     pasteboard.clearContents()
-    pasteboard.setString(text, forType: .string)
+    if pasteboard.setString(text, forType: .string) {
+      pasteboardDidWrite?()
+    }
   }
 }
 
 @MainActor
 private final class ProjectionTextView: NSTextView {
   var copyHandler: ((NSRange) -> String?)?
+  var pasteboardWriteHandler: (() -> Void)?
   var layoutHandler: (() -> Void)?
   var directionalEntryHandler: ((EditorDirectionalEntry) -> Bool)?
   var cancelDirectionalEntryHandler: (() -> Void)?
@@ -1588,7 +1634,9 @@ private final class ProjectionTextView: NSTextView {
       return
     }
     NSPasteboard.general.clearContents()
-    NSPasteboard.general.setString(copiedText, forType: .string)
+    if NSPasteboard.general.setString(copiedText, forType: .string) {
+      pasteboardWriteHandler?()
+    }
   }
 
   override func paste(_ sender: Any?) {

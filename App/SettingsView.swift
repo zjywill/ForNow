@@ -13,6 +13,7 @@ struct SettingsView: View {
   @ObservedObject private var environmentModel: AppEnvironment
   @ObservedObject private var timerModel: TimerModel
   @ObservedObject private var ocrModel: OCRWorkflowModel
+  @ObservedObject private var autoPasteModel: AutoPasteModel
   @State private var newCustomRateSource = CurrencyCode(rawValue: "USD")
   @State private var newCustomRateTarget = CurrencyCode(rawValue: "EUR")
   @State private var newCustomRateValue = "1"
@@ -23,6 +24,7 @@ struct SettingsView: View {
     _environmentModel = ObservedObject(wrappedValue: environment)
     _timerModel = ObservedObject(wrappedValue: environment.timerModel)
     _ocrModel = ObservedObject(wrappedValue: environment.ocrModel)
+    _autoPasteModel = ObservedObject(wrappedValue: environment.autoPasteModel)
   }
 
   var body: some View {
@@ -96,6 +98,31 @@ struct SettingsView: View {
         Toggle("Remove bullets", isOn: pasteBinding(\.stripsBullets))
         Toggle("Remove Markdown formatting", isOn: pasteBinding(\.stripsMarkdown))
         Toggle("Remove empty lines", isOn: pasteBinding(\.stripsEmptyLines))
+      }
+
+      Section("AutoPaste") {
+        TextField("Prefix", text: autoPasteBinding(\.prefix))
+        TextField("Suffix", text: autoPasteBinding(\.suffix))
+        Picker("Default separator", selection: autoPasteBinding(\.separatorPreset)) {
+          ForEach(AutoPasteSeparatorPreset.allCases, id: \.self) { preset in
+            Text(preset.displayName).tag(preset)
+          }
+        }
+        Picker("Links", selection: autoPasteBinding(\.linkTreatment)) {
+          ForEach(AutoPasteLinkTreatment.allCases, id: \.self) { treatment in
+            Text(treatment.displayName).tag(treatment)
+          }
+        }
+        Picker("Timestamp", selection: autoPasteBinding(\.timestampPolicy)) {
+          ForEach(AutoPasteTimestampPolicy.allCases, id: \.self) { policy in
+            Text(policy.displayName).tag(policy)
+          }
+        }
+        if autoPasteModel.hasSettingsPersistenceFailure {
+          Text("AutoPaste settings could not be saved.")
+            .font(.caption)
+            .foregroundStyle(.red)
+        }
       }
 
       Section("Text Recognition") {
@@ -381,6 +408,19 @@ struct SettingsView: View {
         var settings = environmentModel.editorSettings
         settings[keyPath: keyPath] = value
         Task { try? await environment.updateEditorSettings(settings) }
+      }
+    )
+  }
+
+  private func autoPasteBinding<Value>(
+    _ keyPath: WritableKeyPath<AutoPasteSettings, Value>
+  ) -> Binding<Value> {
+    Binding(
+      get: { autoPasteModel.settings[keyPath: keyPath] },
+      set: { value in
+        var settings = autoPasteModel.settings
+        settings[keyPath: keyPath] = value
+        Task { try? await environment.updateAutoPasteSettings(settings) }
       }
     )
   }

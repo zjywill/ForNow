@@ -35,7 +35,8 @@ final class AppEnvironmentTests: XCTestCase {
       parsedSource,
       ParsedSource(version: 4, utf16Length: 8, mode: .plain)
     )
-    XCTAssertNil(environment.clipboard.currentText())
+    XCTAssertFalse(environment.clipboard.isMonitoring)
+    XCTAssertEqual(environment.clipboard.pollingActivityCount, 0)
     XCTAssertNil(cachedRates)
     XCTAssertEqual(notificationState, .denied)
 
@@ -86,7 +87,6 @@ final class AppEnvironmentTests: XCTestCase {
         .startupBegan,
         .serviceStarted(.repository),
         .noteSessionLoaded,
-        .serviceStarted(.clipboard),
         .serviceStarted(.notifications),
         .serviceStarted(.windowCoordinator),
         .startupCompleted,
@@ -120,7 +120,6 @@ final class AppEnvironmentTests: XCTestCase {
         .startupBegan,
         .serviceStarted(.repository),
         .noteSessionLoaded,
-        .serviceStarted(.clipboard),
         .serviceStarted(.notifications),
         .serviceStarted(.windowCoordinator),
         .startupCompleted,
@@ -129,7 +128,6 @@ final class AppEnvironmentTests: XCTestCase {
         .repositoryFlushed,
         .serviceStopped(.windowCoordinator),
         .serviceStopped(.notifications),
-        .serviceStopped(.clipboard),
         .serviceStopped(.repository),
         .shutdownCompleted,
       ]
@@ -139,7 +137,6 @@ final class AppEnvironmentTests: XCTestCase {
     for service in [
       AppLifecycleService.windowCoordinator,
       .notifications,
-      .clipboard,
       .repository,
     ] {
       let stopIndex = try XCTUnwrap(events.firstIndex(of: .serviceStopped(service)))
@@ -154,7 +151,8 @@ final class AppEnvironmentTests: XCTestCase {
     XCTAssertEqual(environment.variant, .production)
     XCTAssertEqual(environment.state, .idle)
     XCTAssertTrue(environment.repository is PersistenceNoteRepository)
-    XCTAssertTrue(environment.clipboard is DisabledClipboardService)
+    XCTAssertTrue(environment.clipboard is SystemClipboardService)
+    XCTAssertFalse(environment.clipboard.isMonitoring)
     XCTAssertTrue(environment.ocr is VisionOCRService)
     XCTAssertTrue(environment.rateProvider is CachedCurrencyRateProvider)
     XCTAssertTrue(environment.rateCache is UserDefaultsCurrencyRateCache)

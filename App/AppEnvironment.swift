@@ -18,6 +18,7 @@ struct AppDependencies {
   let parser: any SourceParsing
   let windowCoordinator: any WindowCoordinating
   let clipboard: any ClipboardService
+  let autoPasteSettings: any AutoPasteSettingsStoring
   let ocr: any OCRService
   let ocrSettings: any OCRSettingsStoring
   let notifications: any NotificationService
@@ -61,6 +62,7 @@ final class AppEnvironment: ObservableObject {
   let parser: any SourceParsing
   let windowCoordinator: any WindowCoordinating
   let clipboard: any ClipboardService
+  let autoPasteSettingsStore: any AutoPasteSettingsStoring
   let ocr: any OCRService
   let ocrSettingsStore: any OCRSettingsStoring
   let notifications: any NotificationService
@@ -83,6 +85,7 @@ final class AppEnvironment: ObservableObject {
   let deleteConfirmationCoordinator: DeleteConfirmationCoordinator
   let timerModel: TimerModel
   let ocrModel: OCRWorkflowModel
+  let autoPasteModel: AutoPasteModel
   private let currencyRateCoordinator: CurrencyRateRefreshCoordinator
 
   @Published private(set) var windowConfiguration = WindowConfiguration()
@@ -98,7 +101,6 @@ final class AppEnvironment: ObservableObject {
 
   private(set) var state: AppEnvironmentState = .idle
   private var repositoryIsPrepared = false
-  private var clipboardIsStarted = false
   private var notificationsAreStarted = false
   private var windowCoordinatorIsStarted = false
   private var timerIsStarted = false
@@ -117,6 +119,7 @@ final class AppEnvironment: ObservableObject {
     parser = dependencies.parser
     windowCoordinator = dependencies.windowCoordinator
     clipboard = dependencies.clipboard
+    autoPasteSettingsStore = dependencies.autoPasteSettings
     ocr = dependencies.ocr
     ocrSettingsStore = dependencies.ocrSettings
     notifications = dependencies.notifications
@@ -144,6 +147,21 @@ final class AppEnvironment: ObservableObject {
       settingsStore: dependencies.lifecycleSettings
     )
     self.noteSession = noteSession
+    autoPasteModel = AutoPasteModel(
+      clipboard: dependencies.clipboard,
+      clock: dependencies.clock,
+      settingsStore: dependencies.autoPasteSettings,
+      appendHandler: { [weak noteSession] noteID, text, policy, capturedAt, isFirstCapture in
+        guard let noteSession else { return .destinationUnavailable }
+        return try await noteSession.appendAutoPasteCapture(
+          to: noteID,
+          capturedText: text,
+          policy: policy,
+          capturedAt: capturedAt,
+          isFirstCapture: isFirstCapture
+        )
+      }
+    )
     timerModel = TimerModel(
       timerClock: TimerClock(
         repository: dependencies.repository,
@@ -210,7 +228,8 @@ final class AppEnvironment: ObservableObject {
         uuidGenerator: SystemUUIDGenerator(),
         parser: PlainSourceParser(),
         windowCoordinator: SwiftUIWindowCoordinator(),
-        clipboard: DisabledClipboardService(),
+        clipboard: SystemClipboardService(),
+        autoPasteSettings: UserDefaultsAutoPasteSettingsStore(),
         ocr: VisionOCRService(),
         ocrSettings: UserDefaultsOCRSettingsStore(),
         notifications: UserNotificationService(),
@@ -244,6 +263,7 @@ final class AppEnvironment: ObservableObject {
         parser: PlainSourceParser(),
         windowCoordinator: DisabledWindowCoordinator(),
         clipboard: DisabledClipboardService(),
+        autoPasteSettings: InMemoryAutoPasteSettingsStore(),
         ocr: UnavailableOCRService(),
         ocrSettings: InMemoryOCRSettingsStore(),
         notifications: DisabledNotificationService(),
@@ -263,6 +283,16 @@ final class AppEnvironment: ObservableObject {
     )
   }
 
+  static func uiTest() -> AppEnvironment {
+    test(
+      windowCoordinator: SwiftUIWindowCoordinator(),
+      clipboard: SystemClipboardService(),
+      lifecycleSettings: InMemoryLifecycleSettingsStore(
+        settings: LifecycleSettings(createsNewNoteOnLaunch: true)
+      )
+    )
+  }
+
   static func test(
     repository: any NoteRepository = InMemoryNoteRepository(),
     clock: any WallClock = FixedWallClock(Date(timeIntervalSince1970: 0)),
@@ -271,6 +301,7 @@ final class AppEnvironment: ObservableObject {
     parser: any SourceParsing = PlainSourceParser(),
     windowCoordinator: any WindowCoordinating = DisabledWindowCoordinator(),
     clipboard: any ClipboardService = DisabledClipboardService(),
+    autoPasteSettings: any AutoPasteSettingsStoring = InMemoryAutoPasteSettingsStore(),
     ocr: any OCRService = UnavailableOCRService(),
     ocrSettings: any OCRSettingsStoring = InMemoryOCRSettingsStore(),
     notifications: any NotificationService = DisabledNotificationService(),
@@ -297,6 +328,7 @@ final class AppEnvironment: ObservableObject {
         parser: parser,
         windowCoordinator: windowCoordinator,
         clipboard: clipboard,
+        autoPasteSettings: autoPasteSettings,
         ocr: ocr,
         ocrSettings: ocrSettings,
         notifications: notifications,
@@ -330,6 +362,7 @@ final class AppEnvironment: ObservableObject {
       editorSettings = await editorSettingsStore.load()
       modeSettings = await modeSettingsStore.load()
       mathSettings = await mathSettingsStore.load()
+      await autoPasteModel.loadSettings()
       rateSnapshot = await currencyRateCoordinator.cachedSnapshot(
         base: mathSettings.primaryCurrency
       )
@@ -341,9 +374,6 @@ final class AppEnvironment: ObservableObject {
       await logger.record(.noteSessionLoaded)
       expandedLinkState = await expandedLinkStateStore.load()
       windowCoordinator.applyConfiguration(windowConfiguration)
-      clipboard.start()
-      clipboardIsStarted = true
-      await logger.record(.serviceStarted(.clipboard))
       await notifications.start()
       notificationsAreStarted = true
       await logger.record(.serviceStarted(.notifications))
@@ -379,6 +409,7 @@ final class AppEnvironment: ObservableObject {
     releaseFindReplace(restoresEditorFocus: false)
     releaseSlashCommand(restoresEditorFocus: false)
     ocrModel.cancel()
+    autoPasteModel.stop(.appTermination)
     await windowCoordinator.waitForPendingTransitions()
     if repositoryIsPrepared {
       do {
@@ -421,12 +452,6 @@ final class AppEnvironment: ObservableObject {
       notificationsAreStarted = false
       await logger.record(.serviceStopped(.notifications))
     }
-    if clipboardIsStarted {
-      clipboard.stop()
-      clipboardIsStarted = false
-      await logger.record(.serviceStopped(.clipboard))
-    }
-
     if repositoryIsPrepared {
       do {
         try await repository.shutdown()
@@ -474,6 +499,7 @@ final class AppEnvironment: ObservableObject {
     let outcome = try await noteSession.requestDeletion()
     guard outcome == .confirmationRequired else {
       if outcome == .deleted, let deletingNoteID {
+        autoPasteModel.stopIfDestination(deletingNoteID, reason: .destinationDeleted)
         try await timerModel.removeTimer(linkedTo: deletingNoteID)
       }
       return
@@ -486,6 +512,7 @@ final class AppEnvironment: ObservableObject {
       suppressFutureWarning: result.suppressesFutureWarning
     )
     if result.confirmsDeletion, let deletingNoteID {
+      autoPasteModel.stopIfDestination(deletingNoteID, reason: .destinationDeleted)
       try await timerModel.removeTimer(linkedTo: deletingNoteID)
     }
   }
@@ -497,6 +524,31 @@ final class AppEnvironment: ObservableObject {
     _ = try await repository.flush()
     guard let noteID = noteSession.currentNoteID else { return }
     try await timerModel.perform(command, noteID: noteID)
+  }
+
+  func executeAutoPasteCommand(_ command: AutoPasteCommand, source: String) async throws {
+    guard state == .running else { return }
+    try await noteSession.applyEditorText(source, hasMarkedText: false)
+    try await noteSession.prepareForDeparture()
+    _ = try await repository.flush()
+    if autoPasteModel.isActive {
+      autoPasteModel.stop(.repeatedCommand)
+      return
+    }
+    guard let noteID = noteSession.currentNoteID else { return }
+    autoPasteModel.startSession(
+      destinationNoteID: noteID,
+      destinationName: AutoPasteDestinationName().resolve(from: source),
+      command: command
+    )
+  }
+
+  func stopAutoPaste(_ reason: AutoPasteStopReason) {
+    autoPasteModel.stop(reason)
+  }
+
+  func markCurrentClipboardChangeAsOwn() {
+    autoPasteModel.markCurrentClipboardChangeAsOwn()
   }
 
   func stopCurrentTimer() async {
@@ -626,6 +678,10 @@ final class AppEnvironment: ObservableObject {
 
   func updateTimerSettings(_ settings: TimerSettings) async throws {
     try await timerModel.updateSettings(settings)
+  }
+
+  func updateAutoPasteSettings(_ settings: AutoPasteSettings) async throws {
+    try await autoPasteModel.updateSettings(settings)
   }
 
   func updateOCRSettings(_ settings: OCRSettings) async throws {
