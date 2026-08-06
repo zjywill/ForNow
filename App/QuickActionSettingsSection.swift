@@ -20,7 +20,8 @@ struct QuickActionSettingsSection: View {
         LabeledContent(action.displayName) {
           HStack(spacing: 8) {
             modifierMenu(for: action)
-            TextField("Key", text: keyBinding(for: action))
+            TextField("", text: keyBinding(for: action))
+              .labelsHidden()
               .multilineTextAlignment(.center)
               .frame(width: 44)
               .accessibilityLabel("\(action.displayName) key")
@@ -33,20 +34,27 @@ struct QuickActionSettingsSection: View {
           draft = QuickActionSettings()
           save()
         }
+        .accessibilityLabel("Restore Default Shortcuts")
+        .accessibilityIdentifier("Restore Default Shortcuts")
         Spacer()
         Button("Save Shortcuts") {
           save()
         }
-        .disabled(isSaving)
+        .accessibilityLabel("Save Shortcuts")
+        .accessibilityIdentifier("Save Shortcuts")
+        .disabled(isSaving || validationErrorMessage != nil)
       }
 
-      if let errorMessage {
-        Text(errorMessage)
+      if let displayedErrorMessage = errorMessage ?? validationErrorMessage {
+        Text(displayedErrorMessage)
           .font(.caption)
           .foregroundStyle(.red)
           .fixedSize(horizontal: false, vertical: true)
-          .accessibilityLabel("Shortcut settings error: \(errorMessage)")
+          .accessibilityLabel("Shortcut settings error: \(displayedErrorMessage)")
       }
+    }
+    .onChange(of: draft) { _, _ in
+      errorMessage = nil
     }
     .onChange(of: environmentModel.quickActionSettings) { _, settings in
       guard !isSaving else { return }
@@ -72,7 +80,11 @@ struct QuickActionSettingsSection: View {
   private func keyBinding(for action: QuickAction) -> Binding<String> {
     Binding(
       get: { draft[action].key },
-      set: { draft[action].key = String($0.prefix(1)) }
+      set: { value in
+        var updated = draft
+        updated[action].key = String(value.prefix(1))
+        draft = updated
+      }
     )
   }
 
@@ -83,17 +95,23 @@ struct QuickActionSettingsSection: View {
     Binding(
       get: { draft[action].modifiers.contains(modifier) },
       set: { isEnabled in
+        var updated = draft
         if isEnabled {
-          draft[action].modifiers.insert(modifier)
+          updated[action].modifiers.insert(modifier)
         } else {
-          draft[action].modifiers.remove(modifier)
+          updated[action].modifiers.remove(modifier)
         }
+        draft = updated
       }
     )
   }
 
   private func save() {
     guard !isSaving else { return }
+    if let validationErrorMessage {
+      errorMessage = validationErrorMessage
+      return
+    }
     isSaving = true
     errorMessage = nil
     let settings = draft
@@ -105,6 +123,18 @@ struct QuickActionSettingsSection: View {
       } catch {
         errorMessage = error.localizedDescription
       }
+    }
+  }
+
+  private var validationErrorMessage: String? {
+    do {
+      try QuickActionSettingsValidator().validate(
+        draft,
+        globalInvocation: environmentModel.currentGlobalShortcut
+      )
+      return nil
+    } catch {
+      return error.localizedDescription
     }
   }
 }

@@ -22,6 +22,17 @@ final class LaunchTests: XCTestCase {
     XCTAssertTrue(app.staticTexts["Increase Text Size"].exists)
     XCTAssertTrue(app.staticTexts["Text layout direction"].exists)
     XCTAssertTrue(app.switches["Translucent background"].exists)
+
+    let settingsWindow = app.windows["ForNow Settings"]
+    for action in [
+      "Previous Note", "Next Note", "Newest Note", "New Note", "Promote Note",
+      "Delete Note", "Search Notes", "Toggle Pin", "Increase Text Size", "Decrease Text Size",
+    ] {
+      let keyField = app.textFields["\(action) key"]
+      XCTAssertTrue(keyField.exists)
+      XCTAssertGreaterThanOrEqual(keyField.frame.minX, settingsWindow.frame.minX)
+      XCTAssertLessThanOrEqual(keyField.frame.maxX, settingsWindow.frame.maxX)
+    }
   }
 
   @MainActor

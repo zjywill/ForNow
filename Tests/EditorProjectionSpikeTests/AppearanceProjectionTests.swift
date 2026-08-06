@@ -98,6 +98,40 @@ final class AppearanceProjectionTests: XCTestCase {
   }
 
   @MainActor
+  func test_ET_EDIT_007_NaturalRTLListCheckboxUsesRightGutterWithoutCoveringText() async throws {
+    let source = "list\nسطر فارسی"
+    let container = ProjectionEditorContainer(initialText: source)
+    let window = NSWindow(
+      contentRect: NSRect(x: 0, y: 0, width: 480, height: 280),
+      styleMask: [.titled, .closable],
+      backing: .buffered,
+      defer: false
+    )
+    window.contentView = container
+    window.isReleasedWhenClosed = false
+    window.makeKeyAndOrderFront(nil)
+    defer { window.close() }
+    container.layoutSubtreeIfNeeded()
+    await container.waitForPendingProjection()
+    await Task.yield()
+    container.layoutSubtreeIfNeeded()
+
+    let checkbox = try XCTUnwrap(
+      container.decorationAccessibilityContainer.subviews
+        .compactMap { $0 as? NSButton }
+        .first { $0.accessibilityRole() == .checkBox }
+    )
+    let frameInTextView = container.textView.convert(
+      checkbox.frame,
+      from: container.decorationAccessibilityContainer
+    )
+
+    XCTAssertGreaterThanOrEqual(frameInTextView.minX, container.textView.bounds.maxX - 21)
+    XCTAssertEqual(container.textView.string, source)
+    XCTAssertFalse(container.textView.undoManager?.canUndo ?? false)
+  }
+
+  @MainActor
   private func renderedEditor(settings: AppearanceSettings) -> Data {
     let container = ProjectionEditorContainer(
       initialText: "",

@@ -1320,7 +1320,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     else { return }
     let button = ProjectionAdornmentButton()
     button.frame = NSRect(
-      x: max(2, sourceRect.minX - 22),
+      x: checkboxGutterX(for: range, sourceRect: sourceRect),
       y: sourceRect.midY - 9,
       width: 18,
       height: 18
@@ -1341,6 +1341,28 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     button.setAccessibilityLabel(isChecked ? "Uncheck item" : "Check item")
     button.setAccessibilityValue(isChecked ? "Checked" : "Unchecked")
     install(button)
+  }
+
+  private func checkboxGutterX(for range: SourceRange, sourceRect: NSRect) -> CGFloat {
+    let usesRightGutter: Bool
+    switch editorSettings.layoutDirection {
+    case .leftToRight:
+      usesRightGutter = false
+    case .rightToLeft:
+      usesRightGutter = true
+    case .natural:
+      let finalOffset = range.location.utf16Offset + range.length - 1
+      if range.length > 1,
+        let finalRect = editorRect(for: NSRange(location: finalOffset, length: 1)),
+        abs(finalRect.midX - sourceRect.midX) > 1
+      {
+        usesRightGutter = sourceRect.midX > finalRect.midX
+      } else {
+        usesRightGutter = false
+      }
+    }
+
+    return usesRightGutter ? max(2, textView.bounds.maxX - 20) : max(2, sourceRect.minX - 22)
   }
 
   private func addLink(range: SourceRange, presentation: LinkPresentation) {

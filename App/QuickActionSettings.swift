@@ -236,6 +236,36 @@ struct QuickActionSettingsValidator {
     }
   }
 
+  func safeDefaults(
+    avoiding globalInvocation: GlobalShortcutCandidate
+  ) -> QuickActionSettings {
+    let settings = QuickActionSettings()
+    if (try? validate(settings, globalInvocation: globalInvocation)) != nil {
+      return settings
+    }
+
+    let recoveryModifiers: [ShortcutModifiers] = [
+      [.command, .option],
+      [.control, .option],
+      [.command, .control],
+      [.command, .control, .option],
+    ]
+    let recoveryKeys = Array("234567890abcdefghijklmnopqrstuvwxyz")
+    for action in QuickAction.allCases {
+      for modifiers in recoveryModifiers {
+        for key in recoveryKeys {
+          var candidate = settings
+          candidate[action] = CommandShortcut(String(key), modifiers: modifiers)
+          if (try? validate(candidate, globalInvocation: globalInvocation)) != nil {
+            return candidate
+          }
+        }
+      }
+    }
+
+    return settings
+  }
+
   private static func identity(_ key: String, _ modifiers: ShortcutModifiers) -> Identity {
     Identity(key: key, modifiers: modifiers)
   }

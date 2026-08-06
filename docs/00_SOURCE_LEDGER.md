@@ -817,6 +817,19 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
   retained as history or logs, and a missing destination stops the session
   instead of recreating a note.
 
+### FORNOW-DECISION-016 - Opaque-first source-free appearance settings
+
+- Decision: ForNow V1 uses semantic opaque themes as the baseline, adds native
+  macOS 15+ material only through accessibility-aware presentation, and freezes
+  theme, paper, type, direction, and shortcut recovery behavior in
+  `docs/appearance/APPEARANCE_V1.md`.
+- Reason: Public evidence does not define semantic tokens, exact colors,
+  contrast thresholds, material fallback, RTL checklist placement, or recovery
+  when independently stored quick-action and global shortcuts conflict.
+- Constraint: Appearance never enters canonical note source or Undo; Reduce
+  Transparency restores a solid canvas; invalid in-app shortcut state cannot
+  replace or occupy the registered global invocation.
+
 ## Sync, Slots, And Extensions
 
 ### AN-BETA-001 - Slotted notes

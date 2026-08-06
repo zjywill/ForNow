@@ -400,6 +400,7 @@ final class AppEnvironment: ObservableObject {
       windowCoordinatorIsStarted = true
       currentGlobalShortcut = windowCoordinator.currentShortcut
       shortcutRegistrationResult = windowCoordinator.lastShortcutRegistration
+      await repairQuickActionSettingsIfNeeded()
       await logger.record(.serviceStarted(.windowCoordinator))
       try await timerModel.start()
       timerIsStarted = true
@@ -922,6 +923,20 @@ final class AppEnvironment: ObservableObject {
     return MeaningfulContentPolicy(
       modeAliases: registry.keywordInterpretationEnabled ? registry.allAliases : []
     )
+  }
+
+  private func repairQuickActionSettingsIfNeeded() async {
+    let validator = QuickActionSettingsValidator()
+    guard
+      (try? validator.validate(
+        quickActionSettings,
+        globalInvocation: currentGlobalShortcut
+      )) == nil
+    else { return }
+
+    let repaired = validator.safeDefaults(avoiding: currentGlobalShortcut)
+    quickActionSettings = repaired
+    try? await quickActionSettingsStore.save(repaired)
   }
 
   private func releaseSearch(restoresEditorFocus: Bool) {

@@ -1322,12 +1322,13 @@
     "FR-EDIT-007": {
       "title": "Layout direction override",
       "classification": "product-decision",
-      "sourceDescription": "`FORNOW-DECISION-006`; informed by `AN-REV-002`.",
+      "sourceDescription": "`FORNOW-DECISION-006`, `FORNOW-DECISION-016`; informed by `AN-REV-002`.",
       "evidence": [
         "AN-REV-002"
       ],
       "decisions": [
-        "FORNOW-DECISION-006"
+        "FORNOW-DECISION-006",
+        "FORNOW-DECISION-016"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -2167,13 +2168,13 @@
     },
     "FR-UI-001": {
       "title": "Semantic theme",
-      "classification": "parity",
-      "sourceDescription": "`AN-UI-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-UI-001`, `FORNOW-DECISION-016`.",
       "evidence": [
         "AN-UI-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-016"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -2187,13 +2188,13 @@
     },
     "FR-UI-002": {
       "title": "Paper style and translucency",
-      "classification": "parity",
-      "sourceDescription": "`AN-UI-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-UI-001`, `FORNOW-DECISION-016`.",
       "evidence": [
         "AN-UI-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-016"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -2217,13 +2218,14 @@
     "FR-UI-003": {
       "title": "Text size and settings validation",
       "classification": "product-decision",
-      "sourceDescription": "`AN-CMD-003`, `AN-UI-001`, `FORNOW-DECISION-005`.",
+      "sourceDescription": "`AN-CMD-003`, `AN-UI-001`, `FORNOW-DECISION-005`, `FORNOW-DECISION-016`.",
       "evidence": [
         "AN-CMD-003",
         "AN-UI-001"
       ],
       "decisions": [
-        "FORNOW-DECISION-005"
+        "FORNOW-DECISION-005",
+        "FORNOW-DECISION-016"
       ],
       "release": "macos-1.0",
       "tests": [

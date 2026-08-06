@@ -88,6 +88,13 @@ and policy-level 10,000-event tests verify no duplicate or self-copy loop and
 bounded history. Real-process Accessibility and SQLite/FTS inspection verify
 fixed-target navigation, every user stop path, source-only persistence, and zero
 capture after the indicator disappears.
+Step 4.4 Appearance and Settings is complete with independent semantic light and
+dark themes, five source-free paper treatments, three paper visibility levels,
+separate list spacing, XS through XL and double text size, Command-plus/minus,
+natural/LTR/RTL presentation, and macOS 15+ native translucency with mismatch,
+Reduce Transparency, and Increase Contrast policies. Quick-action shortcuts are
+versioned and remappable with live conflict diagnostics, active-binding
+rollback, and startup reconciliation that preserves the global invocation.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and

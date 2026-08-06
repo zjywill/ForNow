@@ -347,6 +347,7 @@ Split settings by ownership:
 - `MathSettings`;
 - `TimerSettings`;
 - `AppearanceSettings`;
+- `QuickActionSettings`;
 - `LifecycleSettings`;
 - `ExportSettings`;
 - `PrivacySettings`.
@@ -371,6 +372,9 @@ Required setting contracts:
   notification/takeover/sound switches, and volume `0...100`;
 - `AppearanceSettings`: independent light/dark theme IDs, paper type, paper
   opacity, text size, double size, translucency, and opacity `0...90`;
+- `QuickActionSettings`: a complete versioned map for navigation, new, promote,
+  delete, search, pin, and text-size commands; validation is shared with global
+  shortcut replacement and startup recovery;
 - `LifecycleSettings`: resume-note policy, expiration interval, note count,
   backup frequency, and retention count;
 - `ExportSettings`: quick destination, title/keyword policy, Obsidian vault,
@@ -392,6 +396,14 @@ digits outside `0...7`, currencies absent from the bundled ISO fixture, malforme
 symbols, nonpositive or same-currency custom rates, duplicate directed pairs,
 and more than 128 custom rates. Unsupported or malformed payloads fall back to
 defaults, and a failed write rolls the published application value back.
+
+Appearance rendering follows `docs/appearance/APPEARANCE_V1.md`. The editor
+resolves one semantic theme from the effective AppKit appearance, draws paper
+behind its transparent scroll and text views, and uses native material only on
+macOS 15+ when Reduce Transparency is off. Increase Contrast adds an explicit
+border and stronger paper marks. Font, paragraph spacing, and direction are
+temporary or default presentation attributes; they never enter the attributed
+source store, parser snapshot, persistence, FTS, or Undo manager.
 
 `PasteSettings` is stored in a separate versioned UserDefaults payload. The
 composition root loads it before the window coordinator creates the editor and

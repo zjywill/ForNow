@@ -144,4 +144,26 @@ final class AppearanceAndShortcutSettingsTests: XCTestCase {
     XCTAssertEqual(environment.currentGlobalShortcut, previousGlobal)
     try await environment.shutdown()
   }
+
+  @MainActor
+  func test_UT_UI_003_StartupRepairsShortcutConflictWithoutChangingInvocation() async throws {
+    var conflictingSettings = QuickActionSettings()
+    conflictingSettings[.newNote] = CommandShortcut("a", modifiers: .option)
+    let quickActionStore = InMemoryQuickActionSettingsStore(settings: conflictingSettings)
+    let environment = AppEnvironment.test(quickActionSettings: quickActionStore)
+
+    try await environment.start()
+
+    XCTAssertEqual(environment.currentGlobalShortcut, .optionA)
+    XCTAssertNoThrow(
+      try QuickActionSettingsValidator().validate(
+        environment.quickActionSettings,
+        globalInvocation: environment.currentGlobalShortcut
+      )
+    )
+    let storedSettings = await quickActionStore.load()
+    XCTAssertEqual(storedSettings, environment.quickActionSettings)
+    XCTAssertNotEqual(environment.quickActionSettings[.newNote], conflictingSettings[.newNote])
+    try await environment.shutdown()
+  }
 }

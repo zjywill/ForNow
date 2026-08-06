@@ -333,7 +333,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-EDIT-007 - Layout direction override
 
-- Source: `FORNOW-DECISION-006`; informed by `AN-REV-002`.
+- Source: `FORNOW-DECISION-006`, `FORNOW-DECISION-016`; informed by `AN-REV-002`.
 - Settings can force left-to-right or right-to-left text layout; the default
   follows the natural direction of the content.
 - The override changes presentation only and never rewrites source text.
@@ -664,14 +664,14 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-UI-001 - Semantic theme
 
-- Source: `AN-UI-001`.
+- Source: `AN-UI-001`, `FORNOW-DECISION-016`.
 - Themes define semantic colors, not view-specific hard-coded colors.
 - Light and dark system appearances store independent theme selections.
 - All themes pass text and control contrast checks.
 
 #### FR-UI-002 - Paper style and translucency
 
-- Source: `AN-UI-001`.
+- Source: `AN-UI-001`, `FORNOW-DECISION-016`.
 - Paper style is independent from color theme.
 - Paper choices are blank, lines, dots, small grid, and large grid.
 - Paper opacity choices are subtle, clear, and bold.
@@ -685,7 +685,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-UI-003 - Text size and settings validation
 
-- Source: `AN-CMD-003`, `AN-UI-001`, `FORNOW-DECISION-005`.
+- Source: `AN-CMD-003`, `AN-UI-001`, `FORNOW-DECISION-005`, `FORNOW-DECISION-016`.
 - Text sizes are XS, S, M, L, and XL, with a separate double-size setting.
 - Command-plus and Command-minus increase and decrease text size.
 - Quick-action shortcuts (navigation, new note, promote, delete, search, pin,
