@@ -16,6 +16,7 @@
 		1B8D11BB23221DEB83B36E39 /* WindowSpikeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BF3B14BDA74BC0364DA8F5 /* WindowSpikeModel.swift */; };
 		1D513DE3D5DD8BA1DA2D5FDC /* NoteNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3098242836B4AF144259EF9 /* NoteNavigationTests.swift */; };
 		1DAA9B4447DBD024F7275D5C /* ForNowDesign in Frameworks */ = {isa = PBXBuildFile; productRef = 6BA26A20526ADBC3AF9C7F5E /* ForNowDesign */; };
+		1E61552F3E7ADDB6AD8B0603 /* TimerModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A7E3E06ED34B276D160B433 /* TimerModelTests.swift */; };
 		1F742C1A2932ED30288F47E1 /* DeleteConfirmationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E66ADFC63F4CE218733F734 /* DeleteConfirmationCoordinator.swift */; };
 		209C4BB78932FB59EB721A7F /* TimerModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60EFF7C10ED7CB8644B7C0FE /* TimerModel.swift */; };
 		22A02A581FD66F6688DDC161 /* PasteSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B5AB93D61A3D40ADC4367E /* PasteSettingsStore.swift */; };
@@ -57,6 +58,7 @@
 		ADC48D945E9B40AC6130DD55 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C77F87198C8F21290CAA8B /* SettingsView.swift */; };
 		B323AA1A3147C095AE9871EC /* WindowSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E8EC15FD34128A7A307DA7 /* WindowSettingsStore.swift */; };
 		B4ED6B5A67A7096923F67A2F /* ModeSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36344F389ADCEA8E66038F5 /* ModeSettingsStore.swift */; };
+		B6F771A516FC86F6EA9B137E /* TimerClockScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B39ADAC3F8AA7B147B85E3 /* TimerClockScenarioTests.swift */; };
 		B7908F0DB4549F615F8AE3CE /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 513B5134E6E851F57B40AD1C /* ForNowEditor */; };
 		B8340A8895F4E97878C6589B /* AppLifecycleLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */; };
 		B9719521E5C29150130A9DA0 /* ForNowCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD8234C3E2C1F4067349038 /* ForNowCommands.swift */; };
@@ -116,6 +118,7 @@
 		1D836B85142E1E57CF91C56C /* NoteSearchCommandField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSearchCommandField.swift; sourceTree = "<group>"; };
 		1F2B741B69F54E829AE36311 /* ClipboardProjectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardProjectionTests.swift; sourceTree = "<group>"; };
 		1FF67B0A112356A91322DB90 /* FindReplacePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindReplacePanel.swift; sourceTree = "<group>"; };
+		23B39ADAC3F8AA7B147B85E3 /* TimerClockScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerClockScenarioTests.swift; sourceTree = "<group>"; };
 		23D7D150331EF87744AECF8A /* TimerSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerSettingsStore.swift; sourceTree = "<group>"; };
 		29FFDCC10F66CF5E7B05BD7F /* ForNowApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForNowApp.swift; sourceTree = "<group>"; };
 		2DB7E618DAE770E36D79FA9F /* ModeCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeCommandTests.swift; sourceTree = "<group>"; };
@@ -123,6 +126,7 @@
 		413C87A0021605F48BF59C9A /* ModeSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSettingsSection.swift; sourceTree = "<group>"; };
 		4485A7278FD702CFC67FC31F /* ConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionTests.swift; sourceTree = "<group>"; };
 		49569501A5AD196581CDF5BF /* CurrencyRateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyRateTests.swift; sourceTree = "<group>"; };
+		4A7E3E06ED34B276D160B433 /* TimerModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerModelTests.swift; sourceTree = "<group>"; };
 		58E7AF34D3A7E00476881734 /* ForNowWindowing */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowWindowing; path = Packages/ForNowWindowing; sourceTree = SOURCE_ROOT; };
 		5AEAFEA065BE8EE706045421 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5E0E56B44D1A023F913AE146 /* ForNowDesign */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowDesign; path = Packages/ForNowDesign; sourceTree = SOURCE_ROOT; };
@@ -302,6 +306,7 @@
 				7C165CAC35383E2282C38E89 /* NoteLifecycleTests.swift */,
 				A3098242836B4AF144259EF9 /* NoteNavigationTests.swift */,
 				12F20FA6B77512A8CF47A443 /* NoteSearchTests.swift */,
+				4A7E3E06ED34B276D160B433 /* TimerModelTests.swift */,
 			);
 			path = ForNowTests;
 			sourceTree = "<group>";
@@ -328,6 +333,7 @@
 				EC02F5CE9A748D269BC51A8A /* ListModeTests.swift */,
 				1864F88C94C6124652292DF3 /* MarkdownProjectionTests.swift */,
 				2DB7E618DAE770E36D79FA9F /* ModeCommandTests.swift */,
+				23B39ADAC3F8AA7B147B85E3 /* TimerClockScenarioTests.swift */,
 				05DA7B4A656A5E3C1FF041C2 /* TimerCommandTests.swift */,
 				794607665EA05A63B5B699A9 /* VariableTests.swift */,
 			);
@@ -698,6 +704,7 @@
 				A26A485EF9DF57AEBDDB6A8C /* NoteLifecycleTests.swift in Sources */,
 				1D513DE3D5DD8BA1DA2D5FDC /* NoteNavigationTests.swift in Sources */,
 				9788CA52644FC3CB082195CD /* NoteSearchTests.swift in Sources */,
+				1E61552F3E7ADDB6AD8B0603 /* TimerModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -742,6 +749,7 @@
 				0A7DCA311471B3AF0E11FDCE /* ListModeTests.swift in Sources */,
 				1726945452B96DC6269DFB3A /* MarkdownProjectionTests.swift in Sources */,
 				E08A4FED503EB50A6177101D /* ModeCommandTests.swift in Sources */,
+				B6F771A516FC86F6EA9B137E /* TimerClockScenarioTests.swift in Sources */,
 				2916B42069F9EB0AAE07461B /* TimerCommandTests.swift in Sources */,
 				5403CD1B6739405F6167788D /* VariableTests.swift in Sources */,
 			);

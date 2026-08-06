@@ -177,6 +177,103 @@ final class TimerCommandTests: XCTestCase {
     )
   }
 
+  @MainActor
+  func test_UIT_TIME_003_TimerControlExposesVoiceOverActionsAndEscapeStops() async throws {
+    let source = "timer 1: Tea"
+    let container = ProjectionEditorContainer(initialText: source)
+    let window = NSWindow(
+      contentRect: NSRect(x: 0, y: 0, width: 560, height: 280),
+      styleMask: [.titled, .closable],
+      backing: .buffered,
+      defer: false
+    )
+    window.contentView = container
+    window.makeKeyAndOrderFront(nil)
+    defer { window.close() }
+    var interactions: [EditorTimerInteraction] = []
+    container.timerInteractionHandler = { interactions.append($0) }
+    container.stopsTimerOnEscape = true
+    container.timerSnapshot = TimerSnapshot(
+      timer: NoteTimer(
+        id: timerID,
+        noteID: noteID,
+        kind: .countdown,
+        title: "Tea",
+        phase: .primary,
+        state: .running,
+        startedAt: Date(timeIntervalSince1970: 100),
+        workDuration: .seconds(60)
+      ),
+      elapsedInPhase: .seconds(12)
+    )
+    await container.waitForPendingProjection()
+    await Task.yield()
+    try? await Task.sleep(for: .milliseconds(20))
+    container.layoutSubtreeIfNeeded()
+
+    let timerButton = try XCTUnwrap(
+      container.decorationAccessibilityContainer.subviews
+        .compactMap { $0 as? NSButton }
+        .first { $0.accessibilityIdentifier() == "Timer control" }
+    )
+    XCTAssertEqual(timerButton.accessibilityRole(), .button)
+    XCTAssertEqual(timerButton.title, "0:48")
+    XCTAssertEqual(timerButton.accessibilityLabel(), "Timer. Tea. Countdown running. 0:48.")
+    XCTAssertEqual(
+      timerButton.accessibilityHelp(),
+      "Click to pause or resume. Double-click to stop."
+    )
+    let actions = try XCTUnwrap(timerButton.accessibilityCustomActions())
+    XCTAssertEqual(actions.map(\.name), ["Pause or resume timer", "Stop timer"])
+    XCTAssertEqual(actions[0].handler?(), true)
+    XCTAssertEqual(actions[1].handler?(), true)
+    XCTAssertEqual(interactions, [.singleClick, .stop])
+
+    let escape = try XCTUnwrap(
+      NSEvent.keyEvent(
+        with: .keyDown,
+        location: .zero,
+        modifierFlags: [],
+        timestamp: 0,
+        windowNumber: window.windowNumber,
+        context: nil,
+        characters: "\u{1B}",
+        charactersIgnoringModifiers: "\u{1B}",
+        isARepeat: false,
+        keyCode: 53
+      )
+    )
+    container.textView.keyDown(with: escape)
+    XCTAssertEqual(interactions, [.singleClick, .stop, .stop])
+    XCTAssertEqual(container.textView.string, source)
+
+    var completedTimer = container.timerSnapshot!.timer
+    completedTimer.state = .completed
+    completedTimer.startedAt = nil
+    completedTimer.accumulated = .seconds(60)
+    container.timerSnapshot = TimerSnapshot(
+      timer: completedTimer,
+      elapsedInPhase: .seconds(60)
+    )
+    await Task.yield()
+    try? await Task.sleep(for: .milliseconds(20))
+    container.layoutSubtreeIfNeeded()
+    let completedButton = try XCTUnwrap(
+      container.decorationAccessibilityContainer.subviews
+        .compactMap { $0 as? NSButton }
+        .first { $0.accessibilityIdentifier() == "Timer control" }
+    )
+    XCTAssertEqual(completedButton.title, "Completed 0:00")
+    XCTAssertFalse(completedButton.isEnabled)
+    XCTAssertEqual(completedButton.toolTip, "Timer completed")
+    XCTAssertEqual(
+      completedButton.accessibilityHelp(),
+      "Use the timer restart command to run this timer again."
+    )
+    XCTAssertTrue((completedButton.accessibilityCustomActions() ?? []).isEmpty)
+    XCTAssertEqual(container.textView.string, source)
+  }
+
   func test_UT_TIME_002A_StartTransitionsCreateRunningKinds() throws {
     let machine = TimerStateMachine()
     let date = Date(timeIntervalSince1970: 100)

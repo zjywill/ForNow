@@ -1149,7 +1149,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     let button = ProjectionAdornmentButton()
     button.title = snapshot.displayText
     button.font = .monospacedDigitSystemFont(ofSize: 14, weight: .semibold)
-    button.contentTintColor = snapshot.isPaused ? .secondaryLabelColor : .controlAccentColor
+    let isControllable = snapshot.isRunning || snapshot.isPaused
+    button.contentTintColor = isControllable ? .controlAccentColor : .secondaryLabelColor
     button.sizeToFit()
     button.frame.size.width = max(82, button.frame.width + 12)
     button.frame.size.height = max(20, button.frame.height)
@@ -1157,9 +1158,29 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     button.kind = .timer
     button.target = self
     button.action = #selector(activateAdornment(_:))
-    button.toolTip = snapshot.isRunning ? "Pause timer" : "Resume timer"
+    button.isEnabled = isControllable
     button.setAccessibilityLabel(snapshot.accessibilityLabel)
-    button.setAccessibilityHelp("Click to pause or resume. Double-click to stop.")
+    button.setAccessibilityIdentifier("Timer control")
+    if isControllable {
+      button.toolTip = snapshot.isRunning ? "Pause timer" : "Resume timer"
+      button.setAccessibilityHelp("Click to pause or resume. Double-click to stop.")
+      button.setAccessibilityCustomActions([
+        NSAccessibilityCustomAction(name: "Pause or resume timer") { [weak self] in
+          guard let self else { return false }
+          self.performTimerInteraction(.singleClick)
+          return true
+        },
+        NSAccessibilityCustomAction(name: "Stop timer") { [weak self] in
+          guard let self else { return false }
+          self.performTimerInteraction(.stop)
+          return true
+        },
+      ])
+    } else {
+      button.toolTip = snapshot.timer.state == .completed ? "Timer completed" : "Timer stopped"
+      button.setAccessibilityHelp("Use the timer restart command to run this timer again.")
+      button.setAccessibilityCustomActions([])
+    }
     install(button)
   }
 
@@ -1182,6 +1203,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     button.action = #selector(activateAdornment(_:))
     button.toolTip = "Timer commands"
     button.setAccessibilityLabel("Timer command tutorial")
+    button.setAccessibilityIdentifier("Timer command tutorial")
     install(button)
     guard shownTimerTutorialVersion != snapshot.version else { return }
     shownTimerTutorialVersion = snapshot.version

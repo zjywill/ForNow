@@ -1,7 +1,8 @@
 import Carbon.HIToolbox
 import CoreGraphics
-import ForNowWindowing
 import XCTest
+
+@testable import ForNowWindowing
 
 final class WindowSpikeTests: XCTestCase {
   func test_UT_WIN_001_DefaultShortcutAndConflictDiagnostics() {
@@ -210,5 +211,59 @@ final class WindowSpikeTests: XCTestCase {
       )
       XCTAssertTrue(WindowPlacement.isFullyVisible(dropdown, on: screen))
     }
+  }
+
+  @MainActor
+  func test_UIT_TIME_003_TakeoverIsAccessibleAndDismissesByClickOrEscape() throws {
+    let presentation = TimerTakeoverPresentation(
+      id: UUID(),
+      title: "Tea",
+      detail: "Countdown finished"
+    )
+    var dismissCount = 0
+    let view = TimerTakeoverContentView(presentation: presentation) {
+      dismissCount += 1
+    }
+    view.frame = NSRect(x: 0, y: 0, width: 800, height: 600)
+    view.layoutSubtreeIfNeeded()
+
+    XCTAssertTrue(view.acceptsFirstResponder)
+    XCTAssertEqual(view.accessibilityRole(), .group)
+    XCTAssertEqual(view.accessibilityIdentifier(), "Timer takeover")
+    XCTAssertEqual(view.accessibilityLabel(), "Tea. Countdown finished")
+    XCTAssertEqual(view.accessibilityHelp(), "Press Escape or click to dismiss")
+
+    let click = try XCTUnwrap(
+      NSEvent.mouseEvent(
+        with: .leftMouseDown,
+        location: NSPoint(x: 10, y: 10),
+        modifierFlags: [],
+        timestamp: 0,
+        windowNumber: 0,
+        context: nil,
+        eventNumber: 1,
+        clickCount: 1,
+        pressure: 1
+      )
+    )
+    view.mouseDown(with: click)
+    XCTAssertEqual(dismissCount, 1)
+
+    let escape = try XCTUnwrap(
+      NSEvent.keyEvent(
+        with: .keyDown,
+        location: .zero,
+        modifierFlags: [],
+        timestamp: 0,
+        windowNumber: 0,
+        context: nil,
+        characters: "\u{1B}",
+        charactersIgnoringModifiers: "\u{1B}",
+        isARepeat: false,
+        keyCode: 53
+      )
+    )
+    view.keyDown(with: escape)
+    XCTAssertEqual(dismissCount, 2)
   }
 }

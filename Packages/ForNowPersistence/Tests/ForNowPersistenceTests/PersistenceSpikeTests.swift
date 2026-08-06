@@ -72,6 +72,69 @@ struct PersistenceSpikeTests {
     }
   }
 
+  @Test("IT-TIME-001: timer round-trip, relaunch, source isolation, and note cascade")
+  func timerPersistsWithoutMutatingCanonicalSource() async throws {
+    try await withWorkspace { workspace in
+      let source = "timer 25 5: Focus block\ncanonical timer source"
+      let noteID = UUID()
+      let timerID = UUID()
+      let startedAt = Date(timeIntervalSince1970: 1_700_000_123)
+      let firstStore = try workspace.makeStore()
+      let note = try await firstStore.createNote(
+        id: noteID,
+        body: source,
+        at: Date(timeIntervalSince1970: 1_700_000_000)
+      )
+      let timer = NoteTimer(
+        id: timerID,
+        noteID: noteID,
+        kind: .pomodoro,
+        title: "Focus block",
+        phase: .rest,
+        state: .running,
+        startedAt: startedAt,
+        accumulated: .seconds(17),
+        workDuration: .seconds(1_500),
+        restDuration: .seconds(300)
+      )
+
+      try await firstStore.saveCurrentTimer(timer)
+      #expect(try await firstStore.currentTimer() == timer)
+      #expect(try await firstStore.note(id: noteID)?.body == source)
+      #expect(try await firstStore.note(id: noteID)?.sourceRevision == note.sourceRevision)
+      #expect(try await firstStore.search("canonical timer source").map(\.id) == [noteID])
+
+      let missingNoteTimer = NoteTimer(
+        id: UUID(),
+        noteID: UUID(),
+        kind: .countdown,
+        phase: .primary,
+        state: .running,
+        startedAt: startedAt,
+        workDuration: .seconds(60)
+      )
+      do {
+        try await firstStore.saveCurrentTimer(missingNoteTimer)
+        Issue.record("Replacing the current timer with an unknown note must fail")
+      } catch {
+        #expect(try await firstStore.currentTimer() == timer)
+      }
+
+      try await firstStore.checkpoint()
+      try await firstStore.close()
+
+      let relaunchedStore = try workspace.makeStore()
+      #expect(try await relaunchedStore.currentTimer() == timer)
+      #expect(try await relaunchedStore.note(id: noteID)?.body == source)
+      #expect(try await relaunchedStore.search("Focus block").map(\.id) == [noteID])
+      try await relaunchedStore.deleteNote(id: noteID)
+      #expect(try await relaunchedStore.currentTimer() == nil)
+      #expect(try await relaunchedStore.search("canonical timer source").isEmpty)
+      try await relaunchedStore.verifyIntegrity()
+      try await relaunchedStore.close()
+    }
+  }
+
   @Test("PT-SEARCH-001: 10,000-note warm FTS first page stays under 50 ms p95")
   func warmSearchFirstPagePerformance() async throws {
     try await withWorkspace { workspace in

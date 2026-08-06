@@ -627,7 +627,7 @@ public final class DisabledWindowCoordinator: WindowCoordinating {
 }
 
 @MainActor
-private final class TimerTakeoverContentView: NSView {
+final class TimerTakeoverContentView: NSView {
   private let dismiss: @MainActor () -> Void
 
   override var acceptsFirstResponder: Bool { true }
@@ -678,6 +678,7 @@ private final class TimerTakeoverContentView: NSView {
     setAccessibilityRole(.group)
     setAccessibilityLabel("\(presentation.title). \(presentation.detail)")
     setAccessibilityHelp("Press Escape or click to dismiss")
+    setAccessibilityIdentifier("Timer takeover")
   }
 
   @available(*, unavailable)
