@@ -1029,13 +1029,13 @@
     },
     "FR-NOTE-005": {
       "title": "Confirmed permanent deletion",
-      "classification": "parity",
-      "sourceDescription": "`AN-LIFE-002`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-LIFE-002`, `FORNOW-DECISION-018`.",
       "evidence": [
         "AN-LIFE-002"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-018"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -1049,13 +1049,13 @@
     },
     "FR-NOTE-006": {
       "title": "Expiration",
-      "classification": "parity",
-      "sourceDescription": "`AN-LIFE-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-LIFE-001`, `FORNOW-DECISION-018`.",
       "evidence": [
         "AN-LIFE-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-018"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -1141,13 +1141,13 @@
     },
     "FR-NOTE-010": {
       "title": "Bulk deletion by modification date",
-      "classification": "parity",
-      "sourceDescription": "`AN-NOTE-SET-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-NOTE-SET-001`, `FORNOW-DECISION-018`.",
       "evidence": [
         "AN-NOTE-SET-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-018"
       ],
       "release": "macos-1.0",
       "tests": [

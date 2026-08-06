@@ -844,6 +844,19 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
   invalid, oversized, unavailable, failed, or cancelled exports perform no
   external action beyond cleanup of an owned temporary file.
 
+### FORNOW-DECISION-018 - Explicit expiration and backup-first bulk deletion
+
+- Decision: ForNow V1 persists an explicit deadline for each expiring note,
+  preserves lifecycle timestamps during metadata-only activity, and freezes
+  calendar calculation, scheduling, preview, revalidation, backup, and deletion
+  behavior in `docs/lifecycle/EXPIRATION_AND_BULK_DELETION_V1.md`.
+- Reason: Public evidence defines five expiration choices and deletion by last
+  modification date but does not define calendar boundaries, policy migration,
+  the cutoff predicate, or changes between preview and confirmation.
+- Constraint: Expiration is idempotent; bulk confirmation can only remove the
+  still-eligible members of its frozen preview after a validated safety backup;
+  cancellation or backup failure deletes nothing.
+
 ## Sync, Slots, And Extensions
 
 ### AN-BETA-001 - Slotted notes

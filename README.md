@@ -100,6 +100,12 @@ document, Command-S routing, atomic UTF-8 TXT and Markdown output, ZIP export-al
 Obsidian, Bear, Apple Shortcut, and bounded custom-URL adapters, versioned
 settings, Unicode-safe deterministic filenames, availability diagnostics, and
 failure paths that preserve Note, SQLite, and FTS source.
+Step 5.2 Expiration and Bulk Deletion is complete with five calendar-based
+expiration choices, explicit persisted deadlines, idempotent launch, scheduled,
+wake, and clock-change processing, metadata-preserving lifecycle timestamps,
+strict frozen bulk previews, validated backup-before-mutation, transactional
+Note/FTS/Timer deletion, cancel-first destructive confirmation, and exact count,
+result, and failure states in Settings.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and
