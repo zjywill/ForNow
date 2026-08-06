@@ -1,3 +1,4 @@
+import AppKit
 import ForNowEditor
 import ForNowWindowing
 import SwiftUI
@@ -246,15 +247,14 @@ struct AutoPasteIndicator: View {
 
   var body: some View {
     HStack(spacing: 8) {
-      Button(action: stop) {
-        Image(systemName: "clipboard.fill")
-          .foregroundStyle(.tint)
-          .opacity(reducesMotion || !dimsIcon ? 1 : 0.35)
-      }
-      .buttonStyle(.borderless)
+      AccessibleIconButton(
+        systemName: "clipboard.fill",
+        accessibilityLabel: "Stop AutoPaste",
+        tintColor: .controlAccentColor,
+        action: stop
+      )
       .frame(width: 28, height: 28)
-      .help("Stop AutoPaste")
-      .accessibilityLabel("Stop AutoPaste")
+      .opacity(reducesMotion || !dimsIcon ? 1 : 0.35)
 
       Text("AutoPaste to \(session.destinationName)")
         .font(.callout)
@@ -270,13 +270,13 @@ struct AutoPasteIndicator: View {
           .accessibilityLabel("\(session.captureCount) captured items")
       }
 
-      Button(action: stop) {
-        Image(systemName: "xmark")
-      }
-      .buttonStyle(.borderless)
+      AccessibleIconButton(
+        systemName: "xmark",
+        accessibilityLabel: "Stop AutoPaste",
+        tintColor: .secondaryLabelColor,
+        action: stop
+      )
       .frame(width: 28, height: 28)
-      .help("Stop AutoPaste")
-      .accessibilityLabel("Stop AutoPaste")
     }
     .padding(.horizontal, 10)
     .frame(height: 40)
@@ -296,6 +296,58 @@ struct AutoPasteIndicator: View {
       withAnimation(.easeInOut(duration: 0.65).repeatForever(autoreverses: true)) {
         dimsIcon = true
       }
+    }
+  }
+}
+
+@MainActor
+private struct AccessibleIconButton: NSViewRepresentable {
+  let systemName: String
+  let accessibilityLabel: String
+  let tintColor: NSColor
+  let action: () -> Void
+
+  func makeCoordinator() -> Coordinator {
+    Coordinator(action: action)
+  }
+
+  func makeNSView(context: Context) -> NSButton {
+    let button = NSButton()
+    button.isBordered = false
+    button.imagePosition = .imageOnly
+    button.setButtonType(.momentaryPushIn)
+    button.target = context.coordinator
+    button.action = #selector(Coordinator.activate)
+    configure(button)
+    return button
+  }
+
+  func updateNSView(_ button: NSButton, context: Context) {
+    context.coordinator.action = action
+    configure(button)
+  }
+
+  private func configure(_ button: NSButton) {
+    button.image = NSImage(
+      systemSymbolName: systemName,
+      accessibilityDescription: accessibilityLabel
+    )
+    button.contentTintColor = tintColor
+    button.toolTip = accessibilityLabel
+    button.setAccessibilityLabel(accessibilityLabel)
+    button.setAccessibilityIdentifier(accessibilityLabel)
+  }
+
+  @MainActor
+  final class Coordinator: NSObject {
+    var action: () -> Void
+
+    init(action: @escaping () -> Void) {
+      self.action = action
+    }
+
+    @objc func activate() {
+      action()
     }
   }
 }

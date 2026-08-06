@@ -582,7 +582,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-AUTO-001 - Explicit session
 
-- Source: `AN-AUTO-001`.
+- Source: `AN-AUTO-001`, `FORNOW-DECISION-015`.
 - Typing `paste` and pressing Enter starts monitoring.
 - A persistent indicator names the destination note.
 - Escape, typing `paste` again, or activating the blinking indicator stops it.
@@ -590,14 +590,14 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-AUTO-002 - Deduplication
 
-- Source: `AN-AUTO-001`.
+- Source: `AN-AUTO-001`, `FORNOW-DECISION-015`.
 - Observe pasteboard change counts.
 - Store a bounded hash history for repeated events.
 - Copying from ForNow itself does not create an infinite capture loop.
 
 #### FR-AUTO-003 - Capture policy
 
-- Source: `AN-AUTO-002`.
+- Source: `AN-AUTO-002`, `FORNOW-DECISION-015`.
 - Policies define prefix, suffix, separator, link treatment, and timestamp
   behavior.
 - Newline is the default delimiter.

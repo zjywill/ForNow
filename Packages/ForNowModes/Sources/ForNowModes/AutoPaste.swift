@@ -165,7 +165,8 @@ public struct AutoPasteCapturePolicy: Sendable, Equatable {
   ) -> String {
     let item = formattedItem(capturedText, capturedAt: date)
     guard !source.isEmpty else { return item }
-    if isFirstCapture, source.hasSuffix("\n") || (!separator.isEmpty && source.hasSuffix(separator)) {
+    if isFirstCapture, source.hasSuffix("\n") || (!separator.isEmpty && source.hasSuffix(separator))
+    {
       return source + item
     }
     return source + separator + item
@@ -193,7 +194,8 @@ public struct AutoPasteCapturePolicy: Sendable, Equatable {
       case .preserve:
         replacement = nsSource.substring(with: match.range)
       case .readableText:
-        replacement = label.isEmpty || label == destination
+        replacement =
+          label.isEmpty || label == destination
           ? destination : "\(label) (\(destination))"
       case .destinationOnly:
         replacement = destination

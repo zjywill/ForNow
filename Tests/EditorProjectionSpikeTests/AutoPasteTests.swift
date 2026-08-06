@@ -58,7 +58,7 @@ final class AutoPasteTests: XCTestCase {
     XCTAssertFalse(String(reflecting: deduplicator).contains(privateText))
   }
 
-  func test_UT_AUTO_002F_OneThousandMixedEventsProduceOnlyDistinctCaptures() {
+  func test_UT_AUTO_002F_OneThousandEventsRespectTheBoundedHistoryWindow() {
     var deduplicator = AutoPasteEventDeduplicator(historyLimit: 64)
     var accepted = 0
 
@@ -72,7 +72,7 @@ final class AutoPasteTests: XCTestCase {
     XCTAssertEqual(deduplicator.historyCount, 64)
   }
 
-  func test_SOAK_AUTO_002_TenThousandDistinctEventsStayBounded() {
+  func test_SOAK_AUTO_001_TenThousandDistinctEventsStayBounded() {
     var deduplicator = AutoPasteEventDeduplicator(historyLimit: 64)
 
     for index in 0..<10_000 {

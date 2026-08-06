@@ -79,6 +79,15 @@ language choices, image-first paste and Finder drag/drop capture, source-version
 stale-position confirmation, one-operation Undo, recoverable errors, and
 source-only SQLite/FTS persistence. Real-process socket monitoring observed no
 OCR network traffic.
+Step 4.3 AutoPaste is complete with exact `paste` and custom-delimiter commands,
+a fixed-destination scoped session, an accessible persistent stop indicator,
+session-only pasteboard polling, bounded change-count and SHA-256 deduplication,
+application-owned copy suppression, sequential canonical appends, and persistent
+affix, separator, link, and timestamp settings. Application-level 1,000-event
+and policy-level 10,000-event tests verify no duplicate or self-copy loop and
+bounded history. Real-process Accessibility and SQLite/FTS inspection verify
+fixed-target navigation, every user stop path, source-only persistence, and zero
+capture after the indicator disappears.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and

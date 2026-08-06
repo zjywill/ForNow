@@ -803,6 +803,20 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
   insert, stale anchors require confirmation at the current cursor, and the
   final recognized text is one canonical undoable source edit.
 
+### FORNOW-DECISION-015 - Fixed-target bounded AutoPaste sessions
+
+- Decision: ForNow V1 snapshots one destination note and capture policy when an
+  explicit AutoPaste session starts, observes only later string pasteboard
+  changes, and freezes normalization, deduplication, own-copy suppression, and
+  stop behavior in `docs/autopaste/AUTOPASTE_V1.md`.
+- Reason: Public evidence does not define existing-content capture, navigation
+  retargeting, duplicate-history bounds, IME interaction, or destination loss.
+  A fixed target and bounded hashes make the destination and privacy boundary
+  explicit.
+- Constraint: Inactive state performs no polling, clipboard bodies are never
+  retained as history or logs, and a missing destination stops the session
+  instead of recreating a note.
+
 ## Sync, Slots, And Extensions
 
 ### AN-BETA-001 - Slotted notes

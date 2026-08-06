@@ -99,7 +99,8 @@ final class AutoPasteModelTests: XCTestCase {
     try await environment.shutdown()
   }
 
-  func test_IT_AUTO_001_RepeatedCommandAndEscapeStopWithoutCapturingCurrentClipboard() async throws {
+  func test_IT_AUTO_001_RepeatedCommandAndEscapeStopWithoutCapturingCurrentClipboard() async throws
+  {
     let clipboard = ManualClipboardService()
     let environment = AppEnvironment.test(clipboard: clipboard)
     try await environment.start()
@@ -190,6 +191,55 @@ final class AutoPasteModelTests: XCTestCase {
     try await environment.shutdown()
   }
 
+  func test_IT_AUTO_001_OneThousandClipboardEventsCreateNoDuplicateOrSelfLoop() async throws {
+    let clipboard = ManualClipboardService()
+    let repository = InMemoryNoteRepository()
+    let environment = AppEnvironment.test(repository: repository, clipboard: clipboard)
+    try await environment.start()
+    try await environment.executeAutoPasteCommand(
+      AutoPasteCommand(),
+      source: "Soak target\npaste\n"
+    )
+
+    for index in 0..<900 {
+      clipboard.emit(changeCount: index + 1, text: "item-\(index)")
+    }
+    for _ in 0..<25 {
+      clipboard.poll()
+    }
+    for changeCount in 901...925 {
+      clipboard.emit(changeCount: changeCount, text: "item-899")
+    }
+    for changeCount in 926...950 {
+      clipboard.setPasteboard(changeCount: changeCount, text: "own-\(changeCount)")
+      environment.markCurrentClipboardChangeAsOwn()
+      clipboard.poll()
+    }
+    for index in 900..<925 {
+      clipboard.emit(changeCount: index + 51, text: "item-\(index)")
+    }
+
+    await environment.autoPasteModel.waitForPendingEvents()
+
+    let capturedLines = Array(
+      environment.noteSession.text.components(separatedBy: "\n").dropFirst(2))
+    XCTAssertEqual(clipboard.pollingActivityCount, 1_000)
+    XCTAssertEqual(environment.autoPasteModel.session?.captureCount, 925)
+    XCTAssertEqual(capturedLines.count, 925)
+    XCTAssertEqual(Set(capturedLines).count, 925)
+    XCTAssertEqual(capturedLines.first, "item-0")
+    XCTAssertEqual(capturedLines.last, "item-924")
+    XCTAssertFalse(capturedLines.contains(where: { $0.hasPrefix("own-") }))
+
+    let noteID = try XCTUnwrap(environment.noteSession.currentNoteID)
+    let persistedNote = try await repository.note(id: noteID)
+    let persisted = try XCTUnwrap(persistedNote)
+    XCTAssertEqual(persisted.body, environment.noteSession.text)
+    environment.stopAutoPaste(.indicator)
+    XCTAssertFalse(clipboard.isMonitoring)
+    try await environment.shutdown()
+  }
+
   func test_UIT_AUTO_001_IndicatorExposesDestinationAndCaptureCount() {
     let session = AutoPasteSession(
       id: UUID(),
@@ -201,7 +251,8 @@ final class AutoPasteModelTests: XCTestCase {
 
     XCTAssertEqual(session.destinationName, "Project Inbox")
     XCTAssertEqual(session.captureCount, 3)
-    XCTAssertEqual("AutoPaste active for \(session.destinationName)", "AutoPaste active for Project Inbox")
+    XCTAssertEqual(
+      "AutoPaste active for \(session.destinationName)", "AutoPaste active for Project Inbox")
   }
 
   func testAutoPasteSettingsRoundTripAndEnvironmentLoadsThem() async throws {

@@ -1230,13 +1230,26 @@ Limits:
 
 ### AutoPaste
 
-`PasteboardMonitor`:
+`SystemClipboardService` owns the AppKit pasteboard boundary. It creates a
+main-run-loop timer only while a session is active, records the current
+`NSPasteboard.general.changeCount` as the start baseline, reads only `.string`,
+and invalidates the timer, callback, baseline, and owned-write counts on stop.
+Production startup therefore performs no clipboard polling.
 
-- polls `NSPasteboard.general.changeCount` only while active;
-- reads only supported text types;
-- stores no historical clipboard outside the destination note;
-- ignores its own write tokens;
-- stops on destination loss or app termination.
+`AutoPasteModel` owns the single application-wide session and snapshots its
+destination note ID, display name, and capture policy. It serializes accepted
+events, defers a current-note append while AppKit has IME marked text, and stops
+instead of recreating a missing destination. Navigation does not retarget an
+active session.
+
+Event acceptance normalizes CRLF/CR and removes NUL, compares change counts,
+and retains a FIFO window of 64 SHA-256 content hashes. The monitor separately
+retains at most 32 application-owned change counts so editor copies cannot feed
+back into the session. Clipboard bodies are not used as history or logs.
+
+Every accepted item is formatted through an immutable session policy and
+flushed as canonical note source. The fixed V1 behavior is defined by
+`docs/autopaste/AUTOPASTE_V1.md` and `FORNOW-DECISION-015`.
 
 ### Currency
 

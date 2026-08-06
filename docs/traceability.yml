@@ -1938,13 +1938,13 @@
     },
     "FR-AUTO-001": {
       "title": "Explicit session",
-      "classification": "parity",
-      "sourceDescription": "`AN-AUTO-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-AUTO-001`, `FORNOW-DECISION-015`.",
       "evidence": [
         "AN-AUTO-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-015"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -1958,17 +1958,17 @@
     },
     "FR-AUTO-002": {
       "title": "Deduplication",
-      "classification": "parity",
-      "sourceDescription": "`AN-AUTO-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-AUTO-001`, `FORNOW-DECISION-015`.",
       "evidence": [
         "AN-AUTO-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-015"
       ],
       "release": "macos-1.0",
       "tests": [
-        "SOAK-AUTO-002",
+        "SOAK-AUTO-001",
         "UT-AUTO-002A",
         "UT-AUTO-002B",
         "UT-AUTO-002C",
@@ -1982,13 +1982,13 @@
     },
     "FR-AUTO-003": {
       "title": "Capture policy",
-      "classification": "parity",
-      "sourceDescription": "`AN-AUTO-002`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-AUTO-002`, `FORNOW-DECISION-015`.",
       "evidence": [
         "AN-AUTO-002"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-015"
       ],
       "release": "macos-1.0",
       "tests": [

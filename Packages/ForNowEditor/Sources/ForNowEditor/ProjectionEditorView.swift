@@ -106,7 +106,8 @@ public struct ProjectionEditorView: NSViewRepresentable {
     linkExpansionDidToggle: @escaping @MainActor (LinkIdentity) -> Void = { _ in },
     timerCommandDidCommit: @escaping @MainActor (TimerCommand, String) -> Void = { _, _ in },
     timerInteractionHandler: @escaping @MainActor (EditorTimerInteraction) -> Void = { _ in },
-    autoPasteCommandDidCommit: @escaping @MainActor (AutoPasteCommand, String) -> Void = { _, _ in },
+    autoPasteCommandDidCommit: @escaping @MainActor (AutoPasteCommand, String) -> Void = { _, _ in
+    },
     autoPasteStopHandler: @escaping @MainActor () -> Void = {},
     pasteboardDidWrite: @escaping @MainActor () -> Void = {}
   ) {

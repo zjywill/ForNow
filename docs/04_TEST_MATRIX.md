@@ -220,7 +220,7 @@ Fixtures:
 | Requirement | Test IDs | Minimum verification |
 |---|---|---|
 | `FR-AUTO-001` | `UT-AUTO-001`, `IT-AUTO-001`, `UIT-AUTO-001` | Start and all stop paths, visible indicator |
-| `FR-AUTO-002` | `UT-AUTO-002A` through `UT-AUTO-002F`, `SOAK-AUTO-002` | Change count, dedupe, self-loop, bounded history |
+| `FR-AUTO-002` | `UT-AUTO-002A` through `UT-AUTO-002F`, `SOAK-AUTO-001` | Change count, dedupe, self-loop, bounded history |
 | `FR-AUTO-003` | `UT-AUTO-003A` through `UT-AUTO-003H` | Default/custom delimiter and policy formatting |
 
 Privacy assertions:

@@ -37,13 +37,14 @@ struct AutoPasteSession: Equatable, Sendable {
 
 @MainActor
 final class AutoPasteModel: ObservableObject {
-  typealias AppendHandler = @MainActor @Sendable (
-    _ destinationNoteID: NoteID,
-    _ capturedText: String,
-    _ policy: AutoPasteCapturePolicy,
-    _ capturedAt: Date,
-    _ isFirstCapture: Bool
-  ) async throws -> AutoPasteAppendOutcome
+  typealias AppendHandler =
+    @MainActor @Sendable (
+      _ destinationNoteID: NoteID,
+      _ capturedText: String,
+      _ policy: AutoPasteCapturePolicy,
+      _ capturedAt: Date,
+      _ isFirstCapture: Bool
+    ) async throws -> AutoPasteAppendOutcome
 
   @Published private(set) var phase = AutoPastePhase.inactive
   @Published private(set) var session: AutoPasteSession?
