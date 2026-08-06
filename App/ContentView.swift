@@ -10,6 +10,7 @@ struct ContentView: View {
   @ObservedObject private var findReplace: FindReplaceModel
   @ObservedObject private var slashCommand: SlashCommandModel
   @ObservedObject private var environmentModel: AppEnvironment
+  @ObservedObject private var timerModel: TimerModel
 
   init(environment: AppEnvironment) {
     self.environment = environment
@@ -18,6 +19,7 @@ struct ContentView: View {
     _findReplace = ObservedObject(wrappedValue: environment.findReplace)
     _slashCommand = ObservedObject(wrappedValue: environment.slashCommand)
     _environmentModel = ObservedObject(wrappedValue: environment)
+    _timerModel = ObservedObject(wrappedValue: environment.timerModel)
   }
 
   var body: some View {
@@ -41,6 +43,8 @@ struct ContentView: View {
           modeSettings: environmentModel.modeSettings,
           mathSettings: environmentModel.mathSettings,
           currencyContext: environmentModel.currencyConversionContext,
+          timerSnapshot: timerModel.snapshot(linkedTo: noteSession.currentNoteID),
+          stopsTimerOnEscape: timerModel.snapshot?.isRunning == true,
           expandedLinkIdentities: environmentModel.expandedLinkIdentities(
             for: noteSession.currentNoteID
           ),
@@ -64,6 +68,21 @@ struct ContentView: View {
             guard let noteID = noteSession.currentNoteID else { return }
             Task {
               try? await environment.toggleExpandedLink(identity, noteID: noteID)
+            }
+          },
+          timerCommandDidCommit: { command, source in
+            Task {
+              try? await environment.executeTimerCommand(command, source: source)
+            }
+          },
+          timerInteractionHandler: { interaction in
+            Task {
+              switch interaction {
+              case .singleClick:
+                try? await timerModel.handleSingleClick()
+              case .stop:
+                try? await timerModel.handleStop()
+              }
             }
           }
         )

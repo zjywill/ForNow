@@ -20,6 +20,11 @@ public struct EditorViewportState: Sendable, Equatable {
   }
 }
 
+public enum EditorTimerInteraction: Sendable, Equatable {
+  case singleClick
+  case stop
+}
+
 public struct ProjectionEditorView: NSViewRepresentable {
   private let sourceText: String
   private let accessibilityLabel: String
@@ -34,10 +39,14 @@ public struct ProjectionEditorView: NSViewRepresentable {
   private let modeSettings: ModeSettings
   private let mathSettings: MathSettings
   private let currencyContext: CurrencyConversionContext
+  private let timerSnapshot: TimerSnapshot?
+  private let stopsTimerOnEscape: Bool
   private let expandedLinkIdentities: Set<LinkIdentity>
   private let linkExpansionDidToggle: (@MainActor (LinkIdentity) -> Void)?
   private let findReplaceTarget: EditorFindReplaceTarget?
   private let slashCommandTarget: EditorSlashCommandTarget?
+  private let timerCommandDidCommit: (@MainActor (TimerCommand, String) -> Void)?
+  private let timerInteractionHandler: (@MainActor (EditorTimerInteraction) -> Void)?
 
   public init(initialText: String) {
     sourceText = initialText
@@ -53,10 +62,14 @@ public struct ProjectionEditorView: NSViewRepresentable {
     modeSettings = ModeSettings()
     mathSettings = MathSettings()
     currencyContext = CurrencyConversionContext()
+    timerSnapshot = nil
+    stopsTimerOnEscape = false
     expandedLinkIdentities = []
     linkExpansionDidToggle = nil
     findReplaceTarget = nil
     slashCommandTarget = nil
+    timerCommandDidCommit = nil
+    timerInteractionHandler = nil
   }
 
   public init(
@@ -70,13 +83,17 @@ public struct ProjectionEditorView: NSViewRepresentable {
     modeSettings: ModeSettings = ModeSettings(),
     mathSettings: MathSettings = MathSettings(),
     currencyContext: CurrencyConversionContext = CurrencyConversionContext(),
+    timerSnapshot: TimerSnapshot? = nil,
+    stopsTimerOnEscape: Bool = false,
     expandedLinkIdentities: Set<LinkIdentity> = [],
     findReplaceTarget: EditorFindReplaceTarget? = nil,
     slashCommandTarget: EditorSlashCommandTarget? = nil,
     sourceDidChange: @escaping @MainActor (String, Bool) -> Void,
     viewportDidChange: @escaping @MainActor (EditorViewportState) -> Void,
     navigationHandler: @escaping @MainActor (NoteNavigationDirection) -> Void,
-    linkExpansionDidToggle: @escaping @MainActor (LinkIdentity) -> Void = { _ in }
+    linkExpansionDidToggle: @escaping @MainActor (LinkIdentity) -> Void = { _ in },
+    timerCommandDidCommit: @escaping @MainActor (TimerCommand, String) -> Void = { _, _ in },
+    timerInteractionHandler: @escaping @MainActor (EditorTimerInteraction) -> Void = { _ in }
   ) {
     self.sourceText = sourceText
     self.accessibilityLabel = accessibilityLabel
@@ -88,6 +105,8 @@ public struct ProjectionEditorView: NSViewRepresentable {
     self.modeSettings = modeSettings
     self.mathSettings = mathSettings
     self.currencyContext = currencyContext
+    self.timerSnapshot = timerSnapshot
+    self.stopsTimerOnEscape = stopsTimerOnEscape
     self.expandedLinkIdentities = expandedLinkIdentities
     self.findReplaceTarget = findReplaceTarget
     self.slashCommandTarget = slashCommandTarget
@@ -95,6 +114,8 @@ public struct ProjectionEditorView: NSViewRepresentable {
     self.viewportDidChange = viewportDidChange
     self.navigationHandler = navigationHandler
     self.linkExpansionDidToggle = linkExpansionDidToggle
+    self.timerCommandDidCommit = timerCommandDidCommit
+    self.timerInteractionHandler = timerInteractionHandler
   }
 
   public func makeNSView(context: Context) -> ProjectionEditorContainer {
@@ -113,7 +134,11 @@ public struct ProjectionEditorView: NSViewRepresentable {
     container.navigationHandler = navigationHandler
     container.pasteSettings = pasteSettings
     container.expandedLinkIdentities = expandedLinkIdentities
+    container.timerSnapshot = timerSnapshot
+    container.stopsTimerOnEscape = stopsTimerOnEscape
     container.linkExpansionDidToggle = linkExpansionDidToggle
+    container.timerCommandDidCommit = timerCommandDidCommit
+    container.timerInteractionHandler = timerInteractionHandler
     findReplaceTarget?.attach(to: container)
     slashCommandTarget?.attach(to: container)
     container.textView.setAccessibilityLabel(accessibilityLabel)
@@ -135,7 +160,11 @@ public struct ProjectionEditorView: NSViewRepresentable {
     nsView.mathSettings = mathSettings
     nsView.currencyContext = currencyContext
     nsView.expandedLinkIdentities = expandedLinkIdentities
+    nsView.timerSnapshot = timerSnapshot
+    nsView.stopsTimerOnEscape = stopsTimerOnEscape
     nsView.linkExpansionDidToggle = linkExpansionDidToggle
+    nsView.timerCommandDidCommit = timerCommandDidCommit
+    nsView.timerInteractionHandler = timerInteractionHandler
     findReplaceTarget?.attach(to: nsView)
     slashCommandTarget?.attach(to: nsView)
     nsView.textView.setAccessibilityLabel(accessibilityLabel)
@@ -209,6 +238,15 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   }
   public var linkExpansionDidToggle: (@MainActor (LinkIdentity) -> Void)?
   public var linkOpenHandler: (@MainActor (URL) -> Bool)?
+  public var timerSnapshot: TimerSnapshot? {
+    didSet {
+      guard timerSnapshot != oldValue else { return }
+      scheduleAdornmentRefresh()
+    }
+  }
+  public var stopsTimerOnEscape = false
+  public var timerCommandDidCommit: (@MainActor (TimerCommand, String) -> Void)?
+  public var timerInteractionHandler: (@MainActor (EditorTimerInteraction) -> Void)?
 
   private let scrollView = NSScrollView()
   private var parsePipeline: ProjectionParsePipeline
@@ -236,6 +274,8 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
   private var isApplyingVariableAutocomplete = false
   private var suppressedVariableAutocompleteVersion: UInt64?
   private var suppressedVariableAutocompleteSelection: NSRange?
+  private var pendingTimerSingleClickTask: Task<Void, Never>?
+  private var shownTimerTutorialVersion: UInt64?
 
   public init(
     initialText: String,
@@ -252,6 +292,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     self.modeSettings = modeSettings
     self.mathSettings = mathSettings
     self.currencyContext = currencyContext
+    timerSnapshot = nil
     self.pasteboard = pasteboard
     followsEditorSettingsInParser = parser == nil
     parsePipeline = ProjectionParsePipeline(
@@ -343,6 +384,12 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     textView.variableAutocompleteKeyHandler = { [weak self] key in
       self?.handleVariableAutocompleteKey(key) ?? false
     }
+    textView.timerCommandCommitHandler = { [weak self] in
+      self?.commitTimerCommandBeforeCaret()
+    }
+    textView.timerEscapeHandler = { [weak self] in
+      self?.handleTimerEscape() ?? false
+    }
 
     scrollView.contentView.postsBoundsChangedNotifications = true
     NotificationCenter.default.addObserver(
@@ -358,6 +405,7 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
 
   deinit {
     parseRequestTask?.cancel()
+    pendingTimerSingleClickTask?.cancel()
     let parsePipeline = self.parsePipeline
     Task {
       await parsePipeline.cancel()
@@ -850,7 +898,20 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
         addLink(range: range, presentation: presentation)
       case .result(let anchor, let presentation):
         addResult(anchor: anchor, presentation: presentation)
+      case .timer(let anchor, let presentation):
+        if presentation.showsTutorial {
+          addTimerTutorial(anchor: anchor, presentation: presentation)
+        }
       }
+    }
+    if let timerSnapshot,
+      let latestTimerDecoration = projection.decorations.reversed().first(where: {
+        if case .timer = $0 { return true }
+        return false
+      }),
+      case .timer(let anchor, _) = latestTimerDecoration
+    {
+      addTimer(anchor: anchor, snapshot: timerSnapshot)
     }
     for diagnostic in projection.diagnostics {
       addDiagnostic(diagnostic)
@@ -1078,6 +1139,58 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
     install(button)
   }
 
+  private func addTimer(anchor: SourceOffset, snapshot: TimerSnapshot) {
+    let anchorOffset = min(anchor.utf16Offset, self.snapshot.utf16Count)
+    guard anchorOffset > 0,
+      let anchorRect = editorRect(
+        for: NSRange(location: anchorOffset - 1, length: 1)
+      )
+    else { return }
+    let button = ProjectionAdornmentButton()
+    button.title = snapshot.displayText
+    button.font = .monospacedDigitSystemFont(ofSize: 14, weight: .semibold)
+    button.contentTintColor = snapshot.isPaused ? .secondaryLabelColor : .controlAccentColor
+    button.sizeToFit()
+    button.frame.size.width = max(82, button.frame.width + 12)
+    button.frame.size.height = max(20, button.frame.height)
+    button.frame.origin = NSPoint(x: anchorRect.maxX + 8, y: anchorRect.midY - 10)
+    button.kind = .timer
+    button.target = self
+    button.action = #selector(activateAdornment(_:))
+    button.toolTip = snapshot.isRunning ? "Pause timer" : "Resume timer"
+    button.setAccessibilityLabel(snapshot.accessibilityLabel)
+    button.setAccessibilityHelp("Click to pause or resume. Double-click to stop.")
+    install(button)
+  }
+
+  private func addTimerTutorial(anchor: SourceOffset, presentation: TimerPresentation) {
+    let anchorOffset = min(anchor.utf16Offset, snapshot.utf16Count)
+    guard anchorOffset > 0,
+      let anchorRect = editorRect(for: NSRange(location: anchorOffset - 1, length: 1))
+    else { return }
+    let button = ProjectionAdornmentButton()
+    button.frame = NSRect(x: anchorRect.maxX + 8, y: anchorRect.midY - 9, width: 18, height: 18)
+    button.image = NSImage(
+      systemSymbolName: "questionmark.circle",
+      accessibilityDescription: "Timer commands"
+    )
+    button.imagePosition = .imageOnly
+    button.contentTintColor = .secondaryLabelColor
+    button.kind = .timerTutorial
+    button.timerAlias = presentation.matchedAlias
+    button.target = self
+    button.action = #selector(activateAdornment(_:))
+    button.toolTip = "Timer commands"
+    button.setAccessibilityLabel("Timer command tutorial")
+    install(button)
+    guard shownTimerTutorialVersion != snapshot.version else { return }
+    shownTimerTutorialVersion = snapshot.version
+    DispatchQueue.main.async { [weak self, weak button] in
+      guard let self, let button, button.window != nil else { return }
+      self.showTimerTutorial(button)
+    }
+  }
+
   private func addDiagnostic(_ diagnostic: ProjectionDiagnostic) {
     let range = diagnostic.sourceRange?.nsRange ?? NSRange(location: 0, length: 0)
     let boundedLocation = min(range.location, max(0, snapshot.utf16Count - 1))
@@ -1149,9 +1262,78 @@ public final class ProjectionEditorContainer: NSView, NSTextViewDelegate {
         modifiers.insert(.shift)
       }
       _ = performLinkInteraction(presentation, modifiers: modifiers)
+    case .timer:
+      handleTimerClick()
+    case .timerTutorial:
+      showTimerTutorial(sender)
     case .none:
       break
     }
+  }
+
+  public func performTimerInteraction(_ interaction: EditorTimerInteraction) {
+    timerInteractionHandler?(interaction)
+  }
+
+  private func handleTimerClick() {
+    let clickCount = NSApp.currentEvent?.clickCount ?? 1
+    if clickCount >= 2 {
+      pendingTimerSingleClickTask?.cancel()
+      pendingTimerSingleClickTask = nil
+      performTimerInteraction(.stop)
+      return
+    }
+    pendingTimerSingleClickTask?.cancel()
+    pendingTimerSingleClickTask = Task { [weak self] in
+      try? await Task.sleep(for: .seconds(NSEvent.doubleClickInterval))
+      guard !Task.isCancelled, let self else { return }
+      self.pendingTimerSingleClickTask = nil
+      self.performTimerInteraction(.singleClick)
+    }
+  }
+
+  private func handleTimerEscape() -> Bool {
+    guard stopsTimerOnEscape else { return false }
+    pendingTimerSingleClickTask?.cancel()
+    pendingTimerSingleClickTask = nil
+    performTimerInteraction(.stop)
+    return true
+  }
+
+  private func commitTimerCommandBeforeCaret() {
+    let source = snapshot.text as NSString
+    let caret = textView.selectedRange().location
+    guard caret >= 2, source.length > 0 else { return }
+    let probe = min(source.length - 1, caret - 2)
+    var lineStart = 0
+    var lineEnd = 0
+    var contentsEnd = 0
+    source.getLineStart(
+      &lineStart,
+      end: &lineEnd,
+      contentsEnd: &contentsEnd,
+      for: NSRange(location: probe, length: 0)
+    )
+    let range = NSRange(location: lineStart, length: contentsEnd - lineStart)
+    let line = source.substring(with: range)
+    guard
+      case .command(let match) = TimerCommandParser(settings: modeSettings).evaluateLine(
+        line,
+        sourceRange: range,
+        isFirstSourceLine: lineStart == 0
+      )
+    else { return }
+    timerCommandDidCommit?(match.command, snapshot.text)
+  }
+
+  private func showTimerTutorial(_ sender: ProjectionAdornmentButton) {
+    sender.timerTutorialPopover?.close()
+    let popover = NSPopover()
+    popover.behavior = .transient
+    popover.contentSize = NSSize(width: 360, height: 272)
+    popover.contentViewController = TimerTutorialViewController(alias: sender.timerAlias ?? "timer")
+    sender.timerTutorialPopover = popover
+    popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .maxY)
   }
 
   @discardableResult
@@ -1259,6 +1441,8 @@ private final class ProjectionTextView: NSTextView {
   var slashCommandKeyHandler: ((EditorSlashCommandKey) -> Bool)?
   var slashCommandsAreActive = false
   var variableAutocompleteKeyHandler: ((EditorVariableAutocompleteKey) -> Bool)?
+  var timerCommandCommitHandler: (() -> Void)?
+  var timerEscapeHandler: (() -> Bool)?
 
   private var gestureInterpreter = HorizontalNavigationGestureInterpreter()
   private let detachedUndoManager = UndoManager()
@@ -1349,6 +1533,9 @@ private final class ProjectionTextView: NSTextView {
       {
         return
       }
+      if event.keyCode == 53, timerEscapeHandler?() == true {
+        return
+      }
     }
     if commandModifiers.isEmpty, let entry = directionalEntry(for: event.keyCode),
       directionalEntryHandler?(entry) == true
@@ -1357,6 +1544,11 @@ private final class ProjectionTextView: NSTextView {
     }
     cancelDirectionalEntryHandler?()
     super.keyDown(with: event)
+  }
+
+  override func insertNewline(_ sender: Any?) {
+    super.insertNewline(sender)
+    timerCommandCommitHandler?()
   }
 
   override func scrollWheel(with event: NSEvent) {
@@ -1453,6 +1645,8 @@ private final class ProjectionAdornmentButton: NSButton {
     case checkbox
     case copy
     case link
+    case timer
+    case timerTutorial
     case none
   }
 
@@ -1460,7 +1654,55 @@ private final class ProjectionAdornmentButton: NSButton {
   var markerRange: SourceRange?
   var copiedText: String?
   var linkPresentation: LinkPresentation?
+  var timerAlias: String?
+  var timerTutorialPopover: NSPopover?
   var kind: Kind = .none
+}
+
+@MainActor
+private final class TimerTutorialViewController: NSViewController {
+  private let alias: String
+
+  init(alias: String) {
+    self.alias = alias
+    super.init(nibName: nil, bundle: nil)
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    nil
+  }
+
+  override func loadView() {
+    let commands = [
+      "\(alias) - stopwatch",
+      "\(alias) 3.5 or 3:30 - countdown",
+      "\(alias) 5: Title - titled countdown",
+      "\(alias) 25 5 - work and break",
+      "\(alias) pomo - 25 / 5",
+      "\(alias) p - pause or resume",
+      "\(alias) r - restart",
+      "\(alias) s or 0 - stop",
+    ]
+    let heading = NSTextField(labelWithString: "Timer commands")
+    heading.font = .systemFont(ofSize: 15, weight: .semibold)
+    let labels = commands.map { command -> NSTextField in
+      let label = NSTextField(labelWithString: command)
+      label.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+      label.textColor = .secondaryLabelColor
+      label.lineBreakMode = .byTruncatingTail
+      return label
+    }
+    let stack = NSStackView(views: [heading] + labels)
+    stack.orientation = .vertical
+    stack.alignment = .leading
+    stack.spacing = 8
+    stack.edgeInsets = NSEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+    stack.setAccessibilityElement(true)
+    stack.setAccessibilityRole(.group)
+    stack.setAccessibilityLabel("Timer command tutorial")
+    view = stack
+  }
 }
 
 @MainActor

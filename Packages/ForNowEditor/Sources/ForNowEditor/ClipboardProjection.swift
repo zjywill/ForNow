@@ -175,6 +175,8 @@ public struct ProjectionCopyPolicy: Sendable {
       presentation.copiedText
     case .checkbox:
       nil
+    case .timer:
+      nil
     }
   }
 

@@ -10,6 +10,7 @@ struct SettingsView: View {
 
   @ObservedObject private var noteSession: NoteSessionModel
   @ObservedObject private var environmentModel: AppEnvironment
+  @ObservedObject private var timerModel: TimerModel
   @State private var newCustomRateSource = CurrencyCode(rawValue: "USD")
   @State private var newCustomRateTarget = CurrencyCode(rawValue: "EUR")
   @State private var newCustomRateValue = "1"
@@ -18,6 +19,7 @@ struct SettingsView: View {
     self.environment = environment
     _noteSession = ObservedObject(wrappedValue: environment.noteSession)
     _environmentModel = ObservedObject(wrappedValue: environment)
+    _timerModel = ObservedObject(wrappedValue: environment.timerModel)
   }
 
   var body: some View {
@@ -217,6 +219,43 @@ struct SettingsView: View {
         }
       }
 
+      Section("Timer") {
+        Toggle("Pause timer when quitting", isOn: timerBinding(\.pausesOnQuit))
+        Toggle("Show time in menu bar", isOn: timerBinding(\.showsTimeInMenuBar))
+
+        LabeledContent("Countdown") {
+          VStack(alignment: .leading, spacing: 6) {
+            Toggle("Notification", isOn: timerBinding(\.showsCountdownNotifications))
+            Toggle("Full-screen takeover", isOn: timerBinding(\.showsCountdownTakeover))
+            Toggle("Sound", isOn: timerBinding(\.playsCountdownSound))
+          }
+        }
+
+        LabeledContent("Pomodoro break") {
+          VStack(alignment: .leading, spacing: 6) {
+            Toggle(
+              "Notification",
+              isOn: timerBinding(\.showsPomodoroBreakNotifications)
+            )
+            Toggle(
+              "Full-screen takeover",
+              isOn: timerBinding(\.showsPomodoroBreakTakeover)
+            )
+            Toggle("Sound", isOn: timerBinding(\.playsPomodoroBreakSound))
+          }
+        }
+
+        LabeledContent("Sound volume") {
+          HStack(spacing: 10) {
+            Slider(value: timerVolume, in: 0...100, step: 1)
+              .frame(width: 180)
+            Text("\(timerModel.settings.soundVolume)%")
+              .monospacedDigit()
+              .frame(width: 42, alignment: .trailing)
+          }
+        }
+      }
+
       Section("Deletion") {
         Button("Reset Delete Warning") {
           Task { try? await noteSession.resetDeleteWarning() }
@@ -339,6 +378,30 @@ struct SettingsView: View {
         var settings = environmentModel.mathSettings
         settings[keyPath: keyPath] = value
         Task { try? await environment.updateMathSettings(settings) }
+      }
+    )
+  }
+
+  private func timerBinding<Value>(_ keyPath: WritableKeyPath<TimerSettings, Value>)
+    -> Binding<Value>
+  {
+    Binding(
+      get: { timerModel.settings[keyPath: keyPath] },
+      set: { value in
+        var settings = timerModel.settings
+        settings[keyPath: keyPath] = value
+        Task { try? await environment.updateTimerSettings(settings) }
+      }
+    )
+  }
+
+  private var timerVolume: Binding<Double> {
+    Binding(
+      get: { Double(timerModel.settings.soundVolume) },
+      set: { value in
+        var settings = timerModel.settings
+        settings.soundVolume = Int(value.rounded())
+        Task { try? await environment.updateTimerSettings(settings) }
       }
     )
   }

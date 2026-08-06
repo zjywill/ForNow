@@ -777,6 +777,18 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
 - Constraint: iPad-specific layout, interactive background Live Activity
   controls, and user-installable JavaScript extensions are outside iOS 1.0.
 
+### FORNOW-DECISION-013 - Monotonic live timers with timestamp recovery
+
+- Decision: ForNow V1 uses one actor-owned current timer, commits commands only
+  when a source line is explicitly submitted, derives live display from a
+  monotonic clock, and reconciles persisted wall-clock anchors at lifecycle
+  boundaries as frozen in `docs/timers/TIMER_V1.md`.
+- Reason: Public evidence leaves exact command replay, shutdown, clock-change,
+  and work/rest completion behavior open. The chosen contract avoids replaying
+  canonical source and avoids live jumps when the wall clock changes.
+- Constraint: Projection parsing never executes commands, no per-second counter
+  is persisted, and denied notification permission cannot affect timer state.
+
 ## Sync, Slots, And Extensions
 
 ### AN-BETA-001 - Slotted notes

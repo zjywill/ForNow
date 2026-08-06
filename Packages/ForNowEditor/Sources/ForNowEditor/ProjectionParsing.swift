@@ -123,6 +123,10 @@ public struct EditorProjectionValidator: Sendable {
           && markerRange.map(snapshot.contains) != false
       case .result(let anchor, _):
         isValid = anchor.utf16Offset <= snapshot.utf16Count
+      case .timer(let anchor, let presentation):
+        isValid =
+          anchor.utf16Offset <= snapshot.utf16Count
+          && snapshot.contains(presentation.sourceRange)
       }
       if !isValid {
         diagnostics.append(

@@ -535,6 +535,18 @@ private actor FailingPrepareNoteRepository: NoteRepository {
     throw Failure.prepare
   }
 
+  func currentTimer() throws -> NoteTimer? {
+    throw Failure.prepare
+  }
+
+  func saveCurrentTimer(_ timer: NoteTimer) throws {
+    throw Failure.prepare
+  }
+
+  func deleteTimer(id: TimerID) throws {
+    throw Failure.prepare
+  }
+
   func shutdown() throws {
     throw Failure.prepare
   }

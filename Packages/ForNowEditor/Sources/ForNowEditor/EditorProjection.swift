@@ -1,3 +1,4 @@
+import ForNowCore
 import ForNowModes
 import Foundation
 
@@ -51,6 +52,25 @@ public struct CalculationPresentation: Sendable, Equatable {
   }
 }
 
+public struct TimerPresentation: Sendable, Equatable {
+  public let command: TimerCommand
+  public let matchedAlias: String
+  public let sourceRange: SourceRange
+  public let showsTutorial: Bool
+
+  public init(
+    command: TimerCommand,
+    matchedAlias: String,
+    sourceRange: SourceRange,
+    showsTutorial: Bool
+  ) {
+    self.command = command
+    self.matchedAlias = matchedAlias
+    self.sourceRange = sourceRange
+    self.showsTutorial = showsTutorial
+  }
+}
+
 public enum ProjectionDiagnosticSeverity: String, Sendable, Equatable {
   case information
   case warning
@@ -81,6 +101,7 @@ public enum EditorDecoration: Sendable, Equatable {
   case checkbox(range: SourceRange, markerRange: SourceRange?, isChecked: Bool)
   case link(range: SourceRange, presentation: LinkPresentation)
   case result(anchor: SourceOffset, presentation: CalculationPresentation)
+  case timer(anchor: SourceOffset, presentation: TimerPresentation)
 
   public var sourceRange: SourceRange? {
     switch self {
@@ -88,6 +109,8 @@ public enum EditorDecoration: Sendable, Equatable {
       range
     case .result:
       nil
+    case .timer(_, let presentation):
+      presentation.sourceRange
     }
   }
 }
@@ -189,10 +212,17 @@ public struct SpikeProjectionParser: Sendable {
     )
     decorations.append(contentsOf: aggregateProjection.decorations)
     try checkCancellation(if: checksCancellation)
+    let timerProjection = try timerProjection(
+      in: snapshot.text,
+      checksCancellation: checksCancellation
+    )
+    decorations.append(contentsOf: timerProjection.decorations)
+    try checkCancellation(if: checksCancellation)
     return EditorProjection(
       sourceVersion: snapshot.version,
       decorations: decorations,
       diagnostics: mathProjection.diagnostics + aggregateProjection.diagnostics
+        + timerProjection.diagnostics
     )
   }
 
@@ -384,6 +414,37 @@ public struct SpikeProjectionParser: Sendable {
         ]
       } ?? []
     let diagnostics = evaluation.diagnostics.map { diagnostic in
+      ProjectionDiagnostic(
+        code: diagnostic.code.rawValue,
+        severity: .error,
+        sourceRange: SourceRange(diagnostic.sourceRange),
+        message: diagnostic.message
+      )
+    }
+    return (decorations, diagnostics)
+  }
+
+  private func timerProjection(
+    in text: String,
+    checksCancellation: Bool
+  ) throws -> (decorations: [EditorDecoration], diagnostics: [ProjectionDiagnostic]) {
+    let parser = TimerCommandParser(settings: modeSettings)
+    let document =
+      checksCancellation
+      ? try parser.parseCancellable(in: text)
+      : parser.parse(in: text)
+    let decorations = document.commands.map { match in
+      EditorDecoration.timer(
+        anchor: SourceOffset(utf16Offset: match.anchorUTF16Offset),
+        presentation: TimerPresentation(
+          command: match.command,
+          matchedAlias: match.matchedAlias,
+          sourceRange: SourceRange(match.sourceRange),
+          showsTutorial: match.showsTutorial
+        )
+      )
+    }
+    let diagnostics = document.diagnostics.map { diagnostic in
       ProjectionDiagnostic(
         code: diagnostic.code.rawValue,
         severity: .error,

@@ -14,6 +14,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   init(environment: AppEnvironment) {
     self.environment = environment
     super.init()
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(systemClockDidChange(_:)),
+      name: .NSSystemClockDidChange,
+      object: nil
+    )
+    NSWorkspace.shared.notificationCenter.addObserver(
+      self,
+      selector: #selector(systemDidWake(_:)),
+      name: NSWorkspace.didWakeNotification,
+      object: nil
+    )
+  }
+
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+    NSWorkspace.shared.notificationCenter.removeObserver(self)
   }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
@@ -59,5 +76,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     false
+  }
+
+  @objc private func systemClockDidChange(_ notification: Notification) {
+    Task { [environment] in
+      await environment.timerModel.synchronizeClock()
+    }
+  }
+
+  @objc private func systemDidWake(_ notification: Notification) {
+    Task { [environment] in
+      await environment.timerModel.synchronizeClock()
+    }
   }
 }

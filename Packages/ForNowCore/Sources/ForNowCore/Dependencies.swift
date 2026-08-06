@@ -63,6 +63,9 @@ public protocol NoteRepository: Sendable {
   func searchPage(_ query: String, limit: Int, offset: Int) async throws -> NoteSearchPage
   @discardableResult func promoteNote(id: UUID, at date: Date) async throws -> Note
   func deleteNote(id: UUID) async throws
+  func currentTimer() async throws -> NoteTimer?
+  func saveCurrentTimer(_ timer: NoteTimer) async throws
+  func deleteTimer(id: TimerID) async throws
   func shutdown() async throws
 }
 
@@ -74,6 +77,7 @@ public enum InMemoryNoteRepositoryError: Error, Equatable, Sendable {
 public actor InMemoryNoteRepository: NoteRepository {
   private var notes: [UUID: Note]
   private var pendingDrafts: [UUID: NoteDraft] = [:]
+  private var timer: NoteTimer?
   private var nextOrderKey: Int64
   private var isShutDown = false
 
@@ -168,6 +172,29 @@ public actor InMemoryNoteRepository: NoteRepository {
     try prepare()
     notes[id] = nil
     pendingDrafts[id] = nil
+    if timer?.noteID == id {
+      timer = nil
+    }
+  }
+
+  public func currentTimer() throws -> NoteTimer? {
+    try prepare()
+    return timer
+  }
+
+  public func saveCurrentTimer(_ timer: NoteTimer) throws {
+    try prepare()
+    guard notes[timer.noteID] != nil else {
+      throw InMemoryNoteRepositoryError.noteNotFound(timer.noteID)
+    }
+    self.timer = timer
+  }
+
+  public func deleteTimer(id: TimerID) throws {
+    try prepare()
+    if timer?.id == id {
+      timer = nil
+    }
   }
 
   public func shutdown() throws {

@@ -23,6 +23,7 @@ public struct PersistenceFaultInjector: Sendable {
 public enum PersistenceStoreError: Error, Equatable, LocalizedError, Sendable {
   case noteNotFound(UUID)
   case invalidStoredNoteID(String)
+  case invalidStoredTimer
   case orderSequenceOverflow
   case sourceRevisionOverflow
   case invalidBackupManifest
@@ -40,6 +41,8 @@ public enum PersistenceStoreError: Error, Equatable, LocalizedError, Sendable {
       "Note \(id.uuidString) was not found."
     case .invalidStoredNoteID(let value):
       "Stored note ID is not a UUID: \(value)"
+    case .invalidStoredTimer:
+      "The stored timer row is invalid."
     case .orderSequenceOverflow:
       "The note ordering sequence is exhausted."
     case .sourceRevisionOverflow:

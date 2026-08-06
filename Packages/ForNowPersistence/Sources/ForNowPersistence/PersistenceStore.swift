@@ -188,6 +188,49 @@ public actor PersistenceStore {
     }
   }
 
+  public func currentTimer() throws -> NoteTimer? {
+    try pool.read { db in
+      guard let row = try Row.fetchOne(db, sql: "SELECT * FROM timer LIMIT 1") else {
+        return nil
+      }
+      return try TimerRow(row: row).timer()
+    }
+  }
+
+  public func saveCurrentTimer(_ timer: NoteTimer) throws {
+    try faultInjector.hit(.beforeDatabaseWrite)
+    try pool.write { db in
+      try db.execute(sql: "DELETE FROM timer")
+      try db.execute(
+        sql: """
+          INSERT INTO timer (
+              id, note_id, kind, title, phase, state, started_at,
+              accumulated_seconds, work_seconds, rest_seconds
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          """,
+        arguments: [
+          timer.id.uuidString,
+          timer.noteID.uuidString,
+          timer.kind.rawValue,
+          timer.title,
+          timer.phase.rawValue,
+          timer.state.rawValue,
+          timer.startedAt?.timeIntervalSince1970,
+          TimerDuration.seconds(timer.accumulated),
+          timer.workDuration.map(TimerDuration.seconds),
+          timer.restDuration.map(TimerDuration.seconds),
+        ]
+      )
+    }
+  }
+
+  public func deleteTimer(id: TimerID) throws {
+    try faultInjector.hit(.beforeDatabaseWrite)
+    try pool.write { db in
+      try db.execute(sql: "DELETE FROM timer WHERE id = ?", arguments: [id.uuidString])
+    }
+  }
+
   public func schemaVersion() throws -> Int {
     try pool.read(PersistenceSchema.version(in:))
   }
@@ -291,7 +334,17 @@ public actor PersistenceStore {
           WHERE n.id IS NULL
           """
       ) ?? 0
-    guard noteCount == ftsCount, missingFTS == 0, orphanedFTS == 0 else {
+    let orphanedTimers =
+      try Int.fetchOne(
+        db,
+        sql: """
+          SELECT COUNT(*)
+          FROM timer AS t
+          LEFT JOIN note AS n ON n.id = t.note_id
+          WHERE n.id IS NULL
+          """
+      ) ?? 0
+    guard noteCount == ftsCount, missingFTS == 0, orphanedFTS == 0, orphanedTimers == 0 else {
       throw PersistenceStoreError.ftsIndexDiverged
     }
   }

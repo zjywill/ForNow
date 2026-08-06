@@ -13,6 +13,7 @@ import SwiftUI
 struct AppDependencies {
   let repository: any NoteRepository
   let clock: any WallClock
+  let monotonicClock: any MonotonicClock
   let uuidGenerator: any UUIDGenerating
   let parser: any SourceParsing
   let windowCoordinator: any WindowCoordinating
@@ -27,6 +28,8 @@ struct AppDependencies {
   let editorSettings: any EditorSettingsStoring
   let modeSettings: any ModeSettingsStoring
   let mathSettings: any MathSettingsStoring
+  let timerSettings: any TimerSettingsStoring
+  let timerSoundPlayer: any TimerSoundPlaying
   let expandedLinkState: any ExpandedLinkStateStoring
   let logger: any AppLifecycleLogging
 }
@@ -52,6 +55,7 @@ final class AppEnvironment: ObservableObject {
   let variant: AppEnvironmentVariant
   let repository: any NoteRepository
   let clock: any WallClock
+  let monotonicClock: any MonotonicClock
   let uuidGenerator: any UUIDGenerating
   let parser: any SourceParsing
   let windowCoordinator: any WindowCoordinating
@@ -66,6 +70,8 @@ final class AppEnvironment: ObservableObject {
   let editorSettingsStore: any EditorSettingsStoring
   let modeSettingsStore: any ModeSettingsStoring
   let mathSettingsStore: any MathSettingsStoring
+  let timerSettingsStore: any TimerSettingsStoring
+  let timerSoundPlayer: any TimerSoundPlaying
   let expandedLinkStateStore: any ExpandedLinkStateStoring
   let logger: any AppLifecycleLogging
   let noteSession: NoteSessionModel
@@ -73,6 +79,7 @@ final class AppEnvironment: ObservableObject {
   let findReplace: FindReplaceModel
   let slashCommand: SlashCommandModel
   let deleteConfirmationCoordinator: DeleteConfirmationCoordinator
+  let timerModel: TimerModel
   private let currencyRateCoordinator: CurrencyRateRefreshCoordinator
 
   @Published private(set) var windowConfiguration = WindowConfiguration()
@@ -91,6 +98,7 @@ final class AppEnvironment: ObservableObject {
   private var clipboardIsStarted = false
   private var notificationsAreStarted = false
   private var windowCoordinatorIsStarted = false
+  private var timerIsStarted = false
   private var settingsSuspension: AutoHideSuspension?
   private var searchSuspension: AutoHideSuspension?
   private var findReplaceSuspension: AutoHideSuspension?
@@ -101,6 +109,7 @@ final class AppEnvironment: ObservableObject {
     self.variant = variant
     repository = dependencies.repository
     clock = dependencies.clock
+    monotonicClock = dependencies.monotonicClock
     uuidGenerator = dependencies.uuidGenerator
     parser = dependencies.parser
     windowCoordinator = dependencies.windowCoordinator
@@ -115,6 +124,8 @@ final class AppEnvironment: ObservableObject {
     editorSettingsStore = dependencies.editorSettings
     modeSettingsStore = dependencies.modeSettings
     mathSettingsStore = dependencies.mathSettings
+    timerSettingsStore = dependencies.timerSettings
+    timerSoundPlayer = dependencies.timerSoundPlayer
     expandedLinkStateStore = dependencies.expandedLinkState
     logger = dependencies.logger
     currencyRateCoordinator = CurrencyRateRefreshCoordinator(
@@ -129,6 +140,19 @@ final class AppEnvironment: ObservableObject {
       settingsStore: dependencies.lifecycleSettings
     )
     self.noteSession = noteSession
+    timerModel = TimerModel(
+      timerClock: TimerClock(
+        repository: dependencies.repository,
+        wallClock: dependencies.clock,
+        monotonicClock: dependencies.monotonicClock,
+        uuidGenerator: dependencies.uuidGenerator
+      ),
+      wallClock: dependencies.clock,
+      settingsStore: dependencies.timerSettings,
+      notifications: dependencies.notifications,
+      soundPlayer: dependencies.timerSoundPlayer,
+      windowCoordinator: dependencies.windowCoordinator
+    )
     findReplace = FindReplaceModel()
     slashCommand = SlashCommandModel()
     noteSearch = NoteSearchModel(
@@ -174,6 +198,7 @@ final class AppEnvironment: ObservableObject {
           backupDirectoryURL: paths.backupDirectoryURL
         ),
         clock: SystemWallClock(),
+        monotonicClock: SystemMonotonicClock(),
         uuidGenerator: SystemUUIDGenerator(),
         parser: PlainSourceParser(),
         windowCoordinator: SwiftUIWindowCoordinator(),
@@ -191,6 +216,8 @@ final class AppEnvironment: ObservableObject {
         editorSettings: UserDefaultsEditorSettingsStore(),
         modeSettings: UserDefaultsModeSettingsStore(),
         mathSettings: UserDefaultsMathSettingsStore(),
+        timerSettings: UserDefaultsTimerSettingsStore(),
+        timerSoundPlayer: SystemTimerSoundPlayer(),
         expandedLinkState: UserDefaultsExpandedLinkStateStore(),
         logger: OSLifecycleLogger()
       )
@@ -203,6 +230,7 @@ final class AppEnvironment: ObservableObject {
       dependencies: AppDependencies(
         repository: InMemoryNoteRepository(),
         clock: FixedWallClock(Date(timeIntervalSince1970: 0)),
+        monotonicClock: ManualMonotonicClock(),
         uuidGenerator: SequenceUUIDGenerator(values: [Self.previewUUID]),
         parser: PlainSourceParser(),
         windowCoordinator: DisabledWindowCoordinator(),
@@ -217,6 +245,8 @@ final class AppEnvironment: ObservableObject {
         editorSettings: InMemoryEditorSettingsStore(),
         modeSettings: InMemoryModeSettingsStore(),
         mathSettings: InMemoryMathSettingsStore(),
+        timerSettings: InMemoryTimerSettingsStore(),
+        timerSoundPlayer: DisabledTimerSoundPlayer(),
         expandedLinkState: InMemoryExpandedLinkStateStore(),
         logger: InMemoryLifecycleLogger()
       )
@@ -226,6 +256,7 @@ final class AppEnvironment: ObservableObject {
   static func test(
     repository: any NoteRepository = InMemoryNoteRepository(),
     clock: any WallClock = FixedWallClock(Date(timeIntervalSince1970: 0)),
+    monotonicClock: any MonotonicClock = ManualMonotonicClock(),
     uuidGenerator: any UUIDGenerating = SequenceUUIDGenerator(values: [previewUUID]),
     parser: any SourceParsing = PlainSourceParser(),
     windowCoordinator: any WindowCoordinating = DisabledWindowCoordinator(),
@@ -240,6 +271,8 @@ final class AppEnvironment: ObservableObject {
     editorSettings: any EditorSettingsStoring = InMemoryEditorSettingsStore(),
     modeSettings: any ModeSettingsStoring = InMemoryModeSettingsStore(),
     mathSettings: any MathSettingsStoring = InMemoryMathSettingsStore(),
+    timerSettings: any TimerSettingsStoring = InMemoryTimerSettingsStore(),
+    timerSoundPlayer: any TimerSoundPlaying = DisabledTimerSoundPlayer(),
     expandedLinkState: any ExpandedLinkStateStoring = InMemoryExpandedLinkStateStore(),
     logger: any AppLifecycleLogging = InMemoryLifecycleLogger()
   ) -> AppEnvironment {
@@ -248,6 +281,7 @@ final class AppEnvironment: ObservableObject {
       dependencies: AppDependencies(
         repository: repository,
         clock: clock,
+        monotonicClock: monotonicClock,
         uuidGenerator: uuidGenerator,
         parser: parser,
         windowCoordinator: windowCoordinator,
@@ -262,6 +296,8 @@ final class AppEnvironment: ObservableObject {
         editorSettings: editorSettings,
         modeSettings: modeSettings,
         mathSettings: mathSettings,
+        timerSettings: timerSettings,
+        timerSoundPlayer: timerSoundPlayer,
         expandedLinkState: expandedLinkState,
         logger: logger
       )
@@ -304,6 +340,8 @@ final class AppEnvironment: ObservableObject {
       currentGlobalShortcut = windowCoordinator.currentShortcut
       shortcutRegistrationResult = windowCoordinator.lastShortcutRegistration
       await logger.record(.serviceStarted(.windowCoordinator))
+      try await timerModel.start()
+      timerIsStarted = true
       state = .running
       await logger.record(.startupCompleted)
       scheduleAutomaticCurrencyRefreshIfNeeded()
@@ -336,6 +374,16 @@ final class AppEnvironment: ObservableObject {
         firstError = error
         await logger.record(.noteSessionPreparationFailed)
       }
+    }
+    if timerIsStarted {
+      do {
+        try await timerModel.prepareForQuit()
+      } catch {
+        if firstError == nil {
+          firstError = error
+        }
+      }
+      timerIsStarted = false
     }
     if repositoryIsPrepared {
       do {
@@ -407,8 +455,14 @@ final class AppEnvironment: ObservableObject {
   }
 
   func deleteCurrentNote() async throws {
+    let deletingNoteID = noteSession.currentNoteID
     let outcome = try await noteSession.requestDeletion()
-    guard outcome == .confirmationRequired else { return }
+    guard outcome == .confirmationRequired else {
+      if outcome == .deleted, let deletingNoteID {
+        try await timerModel.removeTimer(linkedTo: deletingNoteID)
+      }
+      return
+    }
     let suspension = windowCoordinator.beginOwnedPanel(.confirmation)
     defer { windowCoordinator.endOwnedPanel(suspension) }
     let result = await deleteConfirmationCoordinator.requestConfirmation()
@@ -416,6 +470,22 @@ final class AppEnvironment: ObservableObject {
       confirm: result.confirmsDeletion,
       suppressFutureWarning: result.suppressesFutureWarning
     )
+    if result.confirmsDeletion, let deletingNoteID {
+      try await timerModel.removeTimer(linkedTo: deletingNoteID)
+    }
+  }
+
+  func executeTimerCommand(_ command: TimerCommand, source: String) async throws {
+    guard state == .running else { return }
+    try await noteSession.applyEditorText(source, hasMarkedText: false)
+    try await noteSession.prepareForDeparture()
+    _ = try await repository.flush()
+    guard let noteID = noteSession.currentNoteID else { return }
+    try await timerModel.perform(command, noteID: noteID)
+  }
+
+  func stopCurrentTimer() async {
+    try? await timerModel.handleStop()
   }
 
   func openSearch() {
@@ -537,6 +607,10 @@ final class AppEnvironment: ObservableObject {
       }
       throw error
     }
+  }
+
+  func updateTimerSettings(_ settings: TimerSettings) async throws {
+    try await timerModel.updateSettings(settings)
   }
 
   var currencyConversionContext: CurrencyConversionContext {

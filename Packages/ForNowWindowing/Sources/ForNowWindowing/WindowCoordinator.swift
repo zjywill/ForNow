@@ -28,6 +28,8 @@ public protocol WindowCoordinating: AnyObject {
   var lastShortcutRegistration: ShortcutRegistrationResult { get }
   var isWindowVisible: Bool { get }
   var windowCreationCount: Int { get }
+  var timerStatusPresentation: TimerStatusPresentation? { get }
+  var timerTakeoverPresentation: TimerTakeoverPresentation? { get }
 
   func configure(_ callbacks: WindowCoordinatorCallbacks)
   func start()
@@ -37,6 +39,9 @@ public protocol WindowCoordinating: AnyObject {
   func showWindow(source: WindowInvocationSource)
   func toggleWindow(source: WindowInvocationSource)
   func closeWindow()
+  func updateTimerStatus(_ presentation: TimerStatusPresentation?)
+  func presentTimerTakeover(_ presentation: TimerTakeoverPresentation)
+  func dismissTimerTakeover()
   func applicationDidBecomeActive()
   func applicationDidResignActive()
   func beginOwnedPanel(_ kind: OwnedPanelKind) -> AutoHideSuspension
@@ -52,6 +57,8 @@ public final class SwiftUIWindowCoordinator: NSObject, WindowCoordinating, NSWin
   public private(set) var lastShortcutRegistration: ShortcutRegistrationResult = .accepted
   public var isWindowVisible: Bool { window?.isVisible == true }
   public private(set) var windowCreationCount = 0
+  public private(set) var timerStatusPresentation: TimerStatusPresentation?
+  public private(set) var timerTakeoverPresentation: TimerTakeoverPresentation?
   public private(set) var hotkeyToCaretSamplesMilliseconds: [Double] = []
   public private(set) var isRunning = false
 
@@ -60,6 +67,7 @@ public final class SwiftUIWindowCoordinator: NSObject, WindowCoordinating, NSWin
   private let shortcut: ValidatedGlobalShortcut
   private var window: NSWindow?
   private var statusItem: NSStatusItem?
+  private var timerTakeoverPanel: NSPanel?
   private var transitionTask: Task<Void, Never>?
   private var isExecutingClose = false
   private var reopensAfterClose = false
@@ -100,6 +108,7 @@ public final class SwiftUIWindowCoordinator: NSObject, WindowCoordinating, NSWin
     transitionTask = nil
     shortcut.uninstall()
     removeStatusItem()
+    dismissTimerTakeover()
     window?.delegate = nil
     window?.orderOut(nil)
     window?.close()
@@ -141,6 +150,53 @@ public final class SwiftUIWindowCoordinator: NSObject, WindowCoordinating, NSWin
 
   public func closeWindow() {
     enqueueTransition(.close)
+  }
+
+  public func updateTimerStatus(_ presentation: TimerStatusPresentation?) {
+    guard timerStatusPresentation != presentation else { return }
+    timerStatusPresentation = presentation
+    if isRunning {
+      updatePresence()
+    }
+  }
+
+  public func presentTimerTakeover(_ presentation: TimerTakeoverPresentation) {
+    timerTakeoverPresentation = presentation
+    timerTakeoverPanel?.orderOut(nil)
+    timerTakeoverPanel?.close()
+
+    let screen =
+      NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) })
+      ?? NSScreen.main
+      ?? NSScreen.screens.first
+    guard let screen else { return }
+    let panel = NSPanel(
+      contentRect: screen.frame,
+      styleMask: [.borderless],
+      backing: .buffered,
+      defer: false,
+      screen: screen
+    )
+    panel.level = .screenSaver
+    panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+    panel.backgroundColor = .black
+    panel.isOpaque = true
+    panel.hidesOnDeactivate = false
+    panel.isReleasedWhenClosed = false
+    panel.contentView = TimerTakeoverContentView(presentation: presentation) { [weak self] in
+      self?.dismissTimerTakeover()
+    }
+    timerTakeoverPanel = panel
+    NSApp.activate(ignoringOtherApps: true)
+    panel.makeKeyAndOrderFront(nil)
+    panel.makeFirstResponder(panel.contentView)
+  }
+
+  public func dismissTimerTakeover() {
+    timerTakeoverPanel?.orderOut(nil)
+    timerTakeoverPanel?.close()
+    timerTakeoverPanel = nil
+    timerTakeoverPresentation = nil
   }
 
   public func applicationDidBecomeActive() {
@@ -469,20 +525,41 @@ public final class SwiftUIWindowCoordinator: NSObject, WindowCoordinating, NSWin
   private func updatePresence() {
     let presence = configuration.presence
     NSApp.setActivationPolicy(presence.showsDockIcon ? .regular : .accessory)
-    if presence.showsStatusItem {
+    if presence.showsStatusItem || timerStatusPresentation != nil {
       if statusItem == nil {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(
-          systemSymbolName: "note.text",
-          accessibilityDescription: "Toggle ForNow"
-        )
         item.button?.target = self
         item.button?.action = #selector(statusItemInvoked)
-        item.button?.toolTip = "Toggle ForNow"
         statusItem = item
       }
+      updateStatusItemContent()
     } else {
       removeStatusItem()
+    }
+  }
+
+  private func updateStatusItemContent() {
+    guard let statusItem, let button = statusItem.button else { return }
+    if let timerStatusPresentation {
+      statusItem.length = NSStatusItem.variableLength
+      button.image = NSImage(
+        systemSymbolName: "timer",
+        accessibilityDescription: timerStatusPresentation.accessibilityLabel
+      )
+      button.imagePosition = .imageLeading
+      button.title = " \(timerStatusPresentation.text)"
+      button.toolTip = timerStatusPresentation.accessibilityLabel
+      button.setAccessibilityLabel(timerStatusPresentation.accessibilityLabel)
+    } else {
+      statusItem.length = NSStatusItem.squareLength
+      button.image = NSImage(
+        systemSymbolName: "note.text",
+        accessibilityDescription: "Toggle ForNow"
+      )
+      button.imagePosition = .imageOnly
+      button.title = ""
+      button.toolTip = "Toggle ForNow"
+      button.setAccessibilityLabel("Toggle ForNow")
     }
   }
 
@@ -504,6 +581,8 @@ public final class DisabledWindowCoordinator: WindowCoordinating {
   public private(set) var lastShortcutRegistration: ShortcutRegistrationResult = .accepted
   public private(set) var isWindowVisible = false
   public private(set) var windowCreationCount = 0
+  public private(set) var timerStatusPresentation: TimerStatusPresentation?
+  public private(set) var timerTakeoverPresentation: TimerTakeoverPresentation?
 
   public init() {}
 
@@ -526,6 +605,15 @@ public final class DisabledWindowCoordinator: WindowCoordinating {
   public func showWindow(source: WindowInvocationSource) {}
   public func toggleWindow(source: WindowInvocationSource) {}
   public func closeWindow() {}
+  public func updateTimerStatus(_ presentation: TimerStatusPresentation?) {
+    timerStatusPresentation = presentation
+  }
+  public func presentTimerTakeover(_ presentation: TimerTakeoverPresentation) {
+    timerTakeoverPresentation = presentation
+  }
+  public func dismissTimerTakeover() {
+    timerTakeoverPresentation = nil
+  }
   public func applicationDidBecomeActive() {}
   public func applicationDidResignActive() {}
 
@@ -536,6 +624,78 @@ public final class DisabledWindowCoordinator: WindowCoordinating {
   public func endOwnedPanel(_ suspension: AutoHideSuspension) {}
   public func flushPendingSourceForCommand() async throws {}
   public func waitForPendingTransitions() async {}
+}
+
+@MainActor
+private final class TimerTakeoverContentView: NSView {
+  private let dismiss: @MainActor () -> Void
+
+  override var acceptsFirstResponder: Bool { true }
+
+  init(
+    presentation: TimerTakeoverPresentation,
+    dismiss: @escaping @MainActor () -> Void
+  ) {
+    self.dismiss = dismiss
+    super.init(frame: .zero)
+    wantsLayer = true
+    layer?.backgroundColor = NSColor.black.cgColor
+
+    let symbol = NSImageView(
+      image: NSImage(
+        systemSymbolName: "timer",
+        accessibilityDescription: presentation.title
+      ) ?? NSImage()
+    )
+    symbol.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 54, weight: .regular)
+    symbol.contentTintColor = .white
+
+    let title = NSTextField(labelWithString: presentation.title)
+    title.font = .systemFont(ofSize: 42, weight: .semibold)
+    title.textColor = .white
+    title.alignment = .center
+    title.maximumNumberOfLines = 2
+
+    let detail = NSTextField(labelWithString: presentation.detail)
+    detail.font = .monospacedDigitSystemFont(ofSize: 22, weight: .regular)
+    detail.textColor = .secondaryLabelColor
+    detail.alignment = .center
+    detail.maximumNumberOfLines = 2
+
+    let stack = NSStackView(views: [symbol, title, detail])
+    stack.orientation = .vertical
+    stack.alignment = .centerX
+    stack.spacing = 18
+    stack.translatesAutoresizingMaskIntoConstraints = false
+    addSubview(stack)
+    NSLayoutConstraint.activate([
+      stack.centerXAnchor.constraint(equalTo: centerXAnchor),
+      stack.centerYAnchor.constraint(equalTo: centerYAnchor),
+      stack.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 40),
+      stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -40),
+    ])
+    setAccessibilityElement(true)
+    setAccessibilityRole(.group)
+    setAccessibilityLabel("\(presentation.title). \(presentation.detail)")
+    setAccessibilityHelp("Press Escape or click to dismiss")
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    nil
+  }
+
+  override func mouseDown(with event: NSEvent) {
+    dismiss()
+  }
+
+  override func keyDown(with event: NSEvent) {
+    if event.keyCode == 53 {
+      dismiss()
+    } else {
+      super.keyDown(with: event)
+    }
+  }
 }
 
 private final class ForNowPanel: NSPanel {

@@ -88,6 +88,21 @@ public actor PersistenceNoteRepository: NoteRepository {
     try await store.deleteNote(id: id)
   }
 
+  public func currentTimer() async throws -> NoteTimer? {
+    let (store, _) = try components()
+    return try await store.currentTimer()
+  }
+
+  public func saveCurrentTimer(_ timer: NoteTimer) async throws {
+    let (store, _) = try components()
+    try await store.saveCurrentTimer(timer)
+  }
+
+  public func deleteTimer(id: TimerID) async throws {
+    let (store, _) = try components()
+    try await store.deleteTimer(id: id)
+  }
+
   public func shutdown() async throws {
     guard let store, let saver else { return }
     _ = try await saver.flushAll()
