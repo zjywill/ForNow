@@ -181,6 +181,8 @@ struct SettingsView: View {
         }
       }
 
+      ExportSettingsSection(environment: environment)
+
       Section("Appearance") {
         Picker("Light mode theme", selection: appearanceBinding(\.lightThemeID)) {
           ForEach(BuiltInThemeID.allCases, id: \.self) { themeID in

@@ -608,20 +608,20 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-EXP-001 - Canonical export document
 
-- Source: `AN-EXP-001`, `AN-CLIP-002`.
+- Source: `AN-EXP-001`, `AN-CLIP-002`, `FORNOW-DECISION-017`.
 - All destinations consume one clean export model.
 - Destination adapters may transform the model but not read editor decorations.
 
 #### FR-EXP-002 - File export
 
-- Source: `AN-EXP-001`.
+- Source: `AN-EXP-001`, `FORNOW-DECISION-017`.
 - Support UTF-8 `.txt` and `.md`.
 - File writes are atomic and never overwrite without user approval.
 - Export-all produces a ZIP containing one text file per exported note.
 
 #### FR-EXP-003 - Application adapters
 
-- Source: `AN-EXP-002`.
+- Source: `AN-EXP-002`, `FORNOW-DECISION-017`.
 - Apple Notes, Bear, and Obsidian are isolated adapters.
 - Missing applications produce setup guidance, not silent failure.
 - A failed export preserves the source note.
@@ -630,7 +630,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-EXP-004 - Custom URL export
 
-- Source: `AN-EXPORT-003`.
+- Source: `AN-EXPORT-003`, `FORNOW-DECISION-017`.
 - Custom destinations use a versioned template containing only approved URL
   schemes.
 - `{CONTENT}`, `{TITLE}`, and `{DATE}` placeholders are substituted from the

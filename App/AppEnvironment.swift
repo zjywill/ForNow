@@ -31,6 +31,9 @@ struct AppDependencies {
   let editorSettings: any EditorSettingsStoring
   let appearanceSettings: any AppearanceSettingsStoring
   let quickActionSettings: any QuickActionSettingsStoring
+  let exportSettings: any ExportSettingsStoring
+  let exportFileChooser: any ExportFileChoosing
+  let externalURLOpener: any ExternalURLOpening
   let modeSettings: any ModeSettingsStoring
   let mathSettings: any MathSettingsStoring
   let timerSettings: any TimerSettingsStoring
@@ -77,6 +80,9 @@ final class AppEnvironment: ObservableObject {
   let editorSettingsStore: any EditorSettingsStoring
   let appearanceSettingsStore: any AppearanceSettingsStoring
   let quickActionSettingsStore: any QuickActionSettingsStoring
+  let exportSettingsStore: any ExportSettingsStoring
+  let exportFileChooser: any ExportFileChoosing
+  let externalURLOpener: any ExternalURLOpening
   let modeSettingsStore: any ModeSettingsStoring
   let mathSettingsStore: any MathSettingsStoring
   let timerSettingsStore: any TimerSettingsStoring
@@ -98,6 +104,14 @@ final class AppEnvironment: ObservableObject {
   @Published private(set) var editorSettings = EditorSettings()
   @Published private(set) var appearanceSettings = AppearanceSettings()
   @Published private(set) var quickActionSettings = QuickActionSettings()
+  @Published private(set) var exportSettings = ExportSettings()
+  @Published private(set) var exportDestinationDiagnostic = ExportDestinationDiagnostic(
+    status: .available,
+    message: "A save location will be requested."
+  )
+  @Published private(set) var isExporting = false
+  @Published private(set) var exportErrorMessage: String?
+  @Published private(set) var lastExportReceipt: ExportReceipt?
   @Published private(set) var modeSettings = ModeSettings()
   @Published private(set) var mathSettings = MathSettings()
   @Published private(set) var rateSnapshot: RateSnapshot?
@@ -138,6 +152,9 @@ final class AppEnvironment: ObservableObject {
     editorSettingsStore = dependencies.editorSettings
     appearanceSettingsStore = dependencies.appearanceSettings
     quickActionSettingsStore = dependencies.quickActionSettings
+    exportSettingsStore = dependencies.exportSettings
+    exportFileChooser = dependencies.exportFileChooser
+    externalURLOpener = dependencies.externalURLOpener
     modeSettingsStore = dependencies.modeSettings
     mathSettingsStore = dependencies.mathSettings
     timerSettingsStore = dependencies.timerSettings
@@ -253,6 +270,9 @@ final class AppEnvironment: ObservableObject {
         editorSettings: UserDefaultsEditorSettingsStore(),
         appearanceSettings: UserDefaultsAppearanceSettingsStore(),
         quickActionSettings: UserDefaultsQuickActionSettingsStore(),
+        exportSettings: UserDefaultsExportSettingsStore(),
+        exportFileChooser: SystemExportFileChooser(),
+        externalURLOpener: SystemExternalURLOpener(),
         modeSettings: UserDefaultsModeSettingsStore(),
         mathSettings: UserDefaultsMathSettingsStore(),
         timerSettings: UserDefaultsTimerSettingsStore(),
@@ -286,6 +306,9 @@ final class AppEnvironment: ObservableObject {
         editorSettings: InMemoryEditorSettingsStore(),
         appearanceSettings: InMemoryAppearanceSettingsStore(),
         quickActionSettings: InMemoryQuickActionSettingsStore(),
+        exportSettings: InMemoryExportSettingsStore(),
+        exportFileChooser: CancelledExportFileChooser(),
+        externalURLOpener: UnavailableExternalURLOpener(),
         modeSettings: InMemoryModeSettingsStore(),
         mathSettings: InMemoryMathSettingsStore(),
         timerSettings: InMemoryTimerSettingsStore(),
@@ -326,6 +349,9 @@ final class AppEnvironment: ObservableObject {
     editorSettings: any EditorSettingsStoring = InMemoryEditorSettingsStore(),
     appearanceSettings: any AppearanceSettingsStoring = InMemoryAppearanceSettingsStore(),
     quickActionSettings: any QuickActionSettingsStoring = InMemoryQuickActionSettingsStore(),
+    exportSettings: any ExportSettingsStoring = InMemoryExportSettingsStore(),
+    exportFileChooser: any ExportFileChoosing = CancelledExportFileChooser(),
+    externalURLOpener: any ExternalURLOpening = UnavailableExternalURLOpener(),
     modeSettings: any ModeSettingsStoring = InMemoryModeSettingsStore(),
     mathSettings: any MathSettingsStoring = InMemoryMathSettingsStore(),
     timerSettings: any TimerSettingsStoring = InMemoryTimerSettingsStore(),
@@ -355,6 +381,9 @@ final class AppEnvironment: ObservableObject {
         editorSettings: editorSettings,
         appearanceSettings: appearanceSettings,
         quickActionSettings: quickActionSettings,
+        exportSettings: exportSettings,
+        exportFileChooser: exportFileChooser,
+        externalURLOpener: externalURLOpener,
         modeSettings: modeSettings,
         mathSettings: mathSettings,
         timerSettings: timerSettings,
@@ -379,6 +408,7 @@ final class AppEnvironment: ObservableObject {
       editorSettings = await editorSettingsStore.load()
       appearanceSettings = await appearanceSettingsStore.load()
       quickActionSettings = await quickActionSettingsStore.load()
+      exportSettings = await exportSettingsStore.load()
       modeSettings = await modeSettingsStore.load()
       mathSettings = await mathSettingsStore.load()
       await autoPasteModel.loadSettings()
@@ -401,6 +431,7 @@ final class AppEnvironment: ObservableObject {
       currentGlobalShortcut = windowCoordinator.currentShortcut
       shortcutRegistrationResult = windowCoordinator.lastShortcutRegistration
       await repairQuickActionSettingsIfNeeded()
+      await refreshExportDestinationDiagnostic()
       await logger.record(.serviceStarted(.windowCoordinator))
       try await timerModel.start()
       timerIsStarted = true
@@ -681,6 +712,218 @@ final class AppEnvironment: ObservableObject {
       }
       throw error
     }
+  }
+
+  func updateExportSettings(_ settings: ExportSettings) async throws {
+    var settings = settings
+    settings.normalize()
+    guard settings.version == ExportSettings.currentVersion else {
+      throw ExportError.invalidTemplate("Only export settings version 1 is supported.")
+    }
+    if settings.quickDestination == .customURL {
+      _ = try ValidatedCustomURLTemplate(source: settings.customURLTemplate)
+    }
+    let previousSettings = exportSettings
+    exportSettings = settings
+    do {
+      try await exportSettingsStore.save(settings)
+      await refreshExportDestinationDiagnostic()
+    } catch {
+      if exportSettings == settings {
+        exportSettings = previousSettings
+      }
+      throw error
+    }
+  }
+
+  @discardableResult
+  func performQuickExport() async throws -> ExportReceipt? {
+    guard !isExporting else { return nil }
+    isExporting = true
+    exportErrorMessage = nil
+    defer { isExporting = false }
+    do {
+      let document = try await currentExportDocument()
+      let receipt: ExportReceipt?
+      switch exportSettings.quickDestination {
+      case .plainText, .markdown:
+        let format: ExportFileFormat =
+          exportSettings.quickDestination == .plainText ? .plainText : .markdown
+        guard
+          let selection = await exportFileChooser.chooseFile(
+            suggestedFilenameBase: ExportFilenameSanitizer().filenameBase(for: document),
+            format: format
+          )
+        else { return nil }
+        receipt = try await FileExportDestination(
+          destinationURL: selection.url,
+          format: format,
+          overwritePolicy: selection.overwritePolicy
+        ).export(document)
+      case .obsidian:
+        receipt = try await ObsidianExportDestination(
+          vault: exportSettings.obsidianVault,
+          opener: externalURLOpener
+        ).export(document)
+      case .bear:
+        receipt = try await BearExportDestination(opener: externalURLOpener).export(document)
+      case .appleNotes:
+        receipt = try await AppleShortcutExportDestination(
+          shortcutName: exportSettings.appleShortcutName,
+          opener: externalURLOpener
+        ).export(document)
+      case .customURL:
+        receipt = try await CustomURLExportDestination(
+          template: ValidatedCustomURLTemplate(source: exportSettings.customURLTemplate),
+          opener: externalURLOpener
+        ).export(document)
+      }
+      lastExportReceipt = receipt
+      return receipt
+    } catch {
+      exportErrorMessage = error.localizedDescription
+      throw error
+    }
+  }
+
+  @discardableResult
+  func performExportAll() async throws -> ExportReceipt? {
+    guard !isExporting else { return nil }
+    isExporting = true
+    exportErrorMessage = nil
+    defer { isExporting = false }
+    do {
+      try await windowCoordinator.flushPendingSourceForCommand()
+      _ = try await repository.flush()
+      let exportedAt = clock.now()
+      let documents = try await repository.allNotes().map { note in
+        ExportDocumentBuilder().document(
+          from: note,
+          settings: exportSettings,
+          modeSettings: modeSettings,
+          exportedAt: exportedAt
+        )
+      }
+      guard !documents.isEmpty else { throw ExportError.emptyDocument }
+      guard
+        let selection = await exportFileChooser.chooseArchive(
+          suggestedFilenameBase: "ForNow Export"
+        )
+      else { return nil }
+      let receipt = try await ZIPExportDestination(
+        destinationURL: selection.url,
+        overwritePolicy: selection.overwritePolicy
+      ).export(documents)
+      lastExportReceipt = receipt
+      return receipt
+    } catch {
+      exportErrorMessage = error.localizedDescription
+      throw error
+    }
+  }
+
+  func dismissExportError() {
+    exportErrorMessage = nil
+  }
+
+  func refreshExportDestinationDiagnostic() async {
+    let settings = exportSettings
+    switch settings.quickDestination {
+    case .plainText, .markdown:
+      exportDestinationDiagnostic = ExportDestinationDiagnostic(
+        status: .available,
+        message: "A save location will be requested."
+      )
+    case .customURL:
+      do {
+        let template = try ValidatedCustomURLTemplate(source: settings.customURLTemplate)
+        let sample = diagnosticExportDocument()
+        let url = try template.render(document: sample)
+        exportDestinationDiagnostic = await availabilityDiagnostic(
+          for: url,
+          availableMessage: "The custom destination is available.",
+          unavailableMessage: "No application handles this custom URL scheme."
+        )
+      } catch {
+        exportDestinationDiagnostic = ExportDestinationDiagnostic(
+          status: .requiresConfiguration,
+          message: error.localizedDescription
+        )
+      }
+    case .obsidian:
+      let url = try? ApplicationExportURLBuilder.obsidian(
+        document: diagnosticExportDocument(),
+        vault: settings.obsidianVault
+      )
+      exportDestinationDiagnostic = await availabilityDiagnostic(
+        for: url,
+        availableMessage: "Obsidian is available.",
+        unavailableMessage: "Install Obsidian or choose another destination."
+      )
+    case .bear:
+      let url = try? ApplicationExportURLBuilder.bear(document: diagnosticExportDocument())
+      exportDestinationDiagnostic = await availabilityDiagnostic(
+        for: url,
+        availableMessage: "Bear is available.",
+        unavailableMessage: "Install Bear or choose another destination."
+      )
+    case .appleNotes:
+      let url = try? ApplicationExportURLBuilder.appleShortcut(
+        document: diagnosticExportDocument(),
+        shortcutName: settings.appleShortcutName
+      )
+      exportDestinationDiagnostic = await availabilityDiagnostic(
+        for: url,
+        availableMessage: "Apple Shortcuts is available; verify the configured shortcut exists.",
+        unavailableMessage: "Apple Shortcuts is unavailable."
+      )
+    }
+  }
+
+  private func currentExportDocument() async throws -> ExportDocument {
+    try await windowCoordinator.flushPendingSourceForCommand()
+    _ = try await repository.flush()
+    guard let noteID = noteSession.currentNoteID,
+      let note = try await repository.note(id: noteID)
+    else {
+      throw ExportError.emptyDocument
+    }
+    return ExportDocumentBuilder().document(
+      from: note,
+      settings: exportSettings,
+      modeSettings: modeSettings,
+      exportedAt: clock.now()
+    )
+  }
+
+  private func diagnosticExportDocument() -> ExportDocument {
+    ExportDocument(
+      id: Self.previewUUID,
+      sourceRevision: 0,
+      title: "ForNow",
+      content: "Export diagnostic",
+      text: "ForNow\nExport diagnostic",
+      createdAt: clock.now(),
+      modifiedAt: clock.now(),
+      exportedAt: clock.now()
+    )
+  }
+
+  private func availabilityDiagnostic(
+    for url: URL?,
+    availableMessage: String,
+    unavailableMessage: String
+  ) async -> ExportDestinationDiagnostic {
+    guard let url else {
+      return ExportDestinationDiagnostic(
+        status: .requiresConfiguration,
+        message: "The destination URL could not be constructed."
+      )
+    }
+    guard await externalURLOpener.isAvailable(for: url) else {
+      return ExportDestinationDiagnostic(status: .unavailable, message: unavailableMessage)
+    }
+    return ExportDestinationDiagnostic(status: .available, message: availableMessage)
   }
 
   func updateModeSettings(_ settings: ModeSettings) async throws {

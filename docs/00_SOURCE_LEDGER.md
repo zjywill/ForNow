@@ -830,6 +830,20 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
   Transparency restores a solid canvas; invalid in-app shortcut state cannot
   replace or occupy the registered global invocation.
 
+### FORNOW-DECISION-017 - Canonical bounded quick export
+
+- Decision: ForNow V1 derives one immutable export document from canonical
+  source, retains full cleaned file text when deriving a title, commits files
+  atomically, and freezes destination URLs, filename rules, custom scheme and
+  component allowlists, encoding, and size bounds in
+  `docs/export/QUICK_EXPORT_V1.md`.
+- Reason: Public evidence defines destinations and placeholders but not the
+  exact canonical fields, title/file interaction, atomic no-overwrite behavior,
+  application URL shapes, safe custom schemes, date format, or payload bounds.
+- Constraint: Export adapters never read editor decorations or mutate source;
+  invalid, oversized, unavailable, failed, or cancelled exports perform no
+  external action beyond cleanup of an owned temporary file.
+
 ## Sync, Slots, And Extensions
 
 ### AN-BETA-001 - Slotted notes

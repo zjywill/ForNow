@@ -207,6 +207,13 @@ struct ContentView: View {
     } message: {
       Text(autoPasteModel.errorMessage ?? "The destination could not be updated.")
     }
+    .alert("Export Failed", isPresented: exportErrorBinding) {
+      Button("OK") {
+        environment.dismissExportError()
+      }
+    } message: {
+      Text(environmentModel.exportErrorMessage ?? "The note could not be exported.")
+    }
   }
 
   private var activeTheme: SemanticTheme {
@@ -244,6 +251,17 @@ struct ContentView: View {
       set: { isPresented in
         if !isPresented {
           autoPasteModel.dismissError()
+        }
+      }
+    )
+  }
+
+  private var exportErrorBinding: Binding<Bool> {
+    Binding(
+      get: { environmentModel.exportErrorMessage != nil },
+      set: { isPresented in
+        if !isPresented {
+          environment.dismissExportError()
         }
       }
     )

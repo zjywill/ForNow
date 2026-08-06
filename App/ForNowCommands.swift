@@ -9,6 +9,19 @@ struct ForNowCommands: Commands {
   }
 
   var body: some Commands {
+    CommandGroup(replacing: .saveItem) {
+      Button("Quick Export") {
+        Task { try? await environment.performQuickExport() }
+      }
+      .keyboardShortcut("s", modifiers: .command)
+      .disabled(environment.isExporting)
+
+      Button("Export All") {
+        Task { try? await environment.performExportAll() }
+      }
+      .disabled(environment.isExporting)
+    }
+
     CommandGroup(after: .appSettings) {
       Button("Toggle Window") {
         environment.toggleWindow()

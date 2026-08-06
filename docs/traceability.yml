@@ -2008,14 +2008,14 @@
     },
     "FR-EXP-001": {
       "title": "Canonical export document",
-      "classification": "parity",
-      "sourceDescription": "`AN-EXP-001`, `AN-CLIP-002`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-EXP-001`, `AN-CLIP-002`, `FORNOW-DECISION-017`.",
       "evidence": [
         "AN-CLIP-002",
         "AN-EXP-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-017"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -2032,13 +2032,13 @@
     },
     "FR-EXP-002": {
       "title": "File export",
-      "classification": "parity",
-      "sourceDescription": "`AN-EXP-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-EXP-001`, `FORNOW-DECISION-017`.",
       "evidence": [
         "AN-EXP-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-017"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -2059,13 +2059,13 @@
     },
     "FR-EXP-003": {
       "title": "Application adapters",
-      "classification": "parity",
-      "sourceDescription": "`AN-EXP-002`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-EXP-002`, `FORNOW-DECISION-017`.",
       "evidence": [
         "AN-EXP-002"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-017"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -2083,13 +2083,13 @@
     },
     "FR-EXP-004": {
       "title": "Custom URL export",
-      "classification": "parity",
-      "sourceDescription": "`AN-EXPORT-003`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-EXPORT-003`, `FORNOW-DECISION-017`.",
       "evidence": [
         "AN-EXPORT-003"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-017"
       ],
       "release": "macos-1.0",
       "tests": [
