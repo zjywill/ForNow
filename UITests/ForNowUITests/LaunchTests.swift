@@ -55,4 +55,24 @@ final class LaunchTests: XCTestCase {
     stop.click()
     XCTAssertTrue(status.waitForNonExistence(timeout: 2))
   }
+
+  @MainActor
+  func test_UIT_NOTE_010_SettingsExposeExpirationAndSafeBulkDeletionPreview() {
+    let app = XCUIApplication()
+    app.launchEnvironment["FORNOW_UI_TESTING"] = "1"
+    app.launch()
+    app.typeKey(",", modifierFlags: .command)
+
+    XCTAssertTrue(app.popUpButtons["Note expiration choice"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.datePickers["Bulk deletion cutoff"].exists)
+    let preview = app.buttons["Preview bulk deletion"]
+    XCTAssertTrue(preview.exists)
+    preview.click()
+    XCTAssertTrue(app.staticTexts["Bulk deletion preview count"].waitForExistence(timeout: 2))
+    XCTAssertEqual(
+      app.staticTexts["Bulk deletion irreversible warning"].label,
+      "This action cannot be undone."
+    )
+    XCTAssertFalse(app.buttons["Confirm bulk deletion"].isEnabled)
+  }
 }

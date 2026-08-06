@@ -62,7 +62,23 @@ public protocol NoteRepository: Sendable {
   func search(_ query: String) async throws -> [Note]
   func searchPage(_ query: String, limit: Int, offset: Int) async throws -> NoteSearchPage
   @discardableResult func promoteNote(id: UUID, at date: Date) async throws -> Note
+  @discardableResult func promoteNote(
+    id: UUID,
+    at date: Date,
+    expiresAt: Date?
+  ) async throws -> Note
   func deleteNote(id: UUID) async throws
+  @discardableResult func applyExpirationPolicy(
+    _ policy: NoteExpirationPolicy,
+    effectiveAt date: Date
+  ) async throws -> [Note]
+  @discardableResult func deleteExpiredNotes(at date: Date) async throws
+    -> ExpirationDeletionReceipt
+  func previewBulkDeletion(before cutoff: Date) async throws -> BulkDeletionPreview
+  @discardableResult func confirmBulkDeletion(
+    _ preview: BulkDeletionPreview,
+    backupAt date: Date
+  ) async throws -> BulkDeletionReceipt
   func currentTimer() async throws -> NoteTimer?
   func saveCurrentTimer(_ timer: NoteTimer) async throws
   func deleteTimer(id: TimerID) async throws
@@ -71,6 +87,7 @@ public protocol NoteRepository: Sendable {
 
 public enum InMemoryNoteRepositoryError: Error, Equatable, Sendable {
   case noteNotFound(UUID)
+  case safetyBackupFailed
   case shutDown
 }
 
@@ -80,10 +97,13 @@ public actor InMemoryNoteRepository: NoteRepository {
   private var timer: NoteTimer?
   private var nextOrderKey: Int64
   private var isShutDown = false
+  private var failsSafetyBackup: Bool
+  private var safetyBackupDates: [Date] = []
 
-  public init(notes: [Note] = []) {
+  public init(notes: [Note] = [], failsSafetyBackup: Bool = false) {
     self.notes = Dictionary(uniqueKeysWithValues: notes.map { ($0.id, $0) })
     nextOrderKey = (notes.map(\.orderKey).max() ?? -1) + 1
+    self.failsSafetyBackup = failsSafetyBackup
   }
 
   public func prepare() throws {
@@ -158,23 +178,89 @@ public actor InMemoryNoteRepository: NoteRepository {
 
   @discardableResult
   public func promoteNote(id: UUID, at date: Date) throws -> Note {
+    try promoteNote(id: id, at: date, expiresAt: notes[id]?.expiresAt)
+  }
+
+  @discardableResult
+  public func promoteNote(id: UUID, at date: Date, expiresAt: Date?) throws -> Note {
     try prepare()
     guard var note = notes[id] else {
       throw InMemoryNoteRepositoryError.noteNotFound(id)
     }
     note.orderKey = takeNextOrderKey()
     note.modifiedAt = date
+    note.expiresAt = expiresAt
     notes[id] = note
     return note
   }
 
   public func deleteNote(id: UUID) throws {
     try prepare()
-    notes[id] = nil
-    pendingDrafts[id] = nil
-    if timer?.noteID == id {
-      timer = nil
+    removeNotes(ids: [id])
+  }
+
+  @discardableResult
+  public func applyExpirationPolicy(
+    _ policy: NoteExpirationPolicy,
+    effectiveAt date: Date
+  ) throws -> [Note] {
+    _ = try flush()
+    for id in notes.keys {
+      guard var note = notes[id] else { continue }
+      note.expiresAt = policy.expirationDate(referenceDate: max(note.modifiedAt, date))
+      notes[id] = note
     }
+    return try allNotes()
+  }
+
+  @discardableResult
+  public func deleteExpiredNotes(at date: Date) throws -> ExpirationDeletionReceipt {
+    _ = try flush()
+    let expiredIDs: [UUID] = notes.values.compactMap { note in
+      guard let expiresAt = note.expiresAt, expiresAt <= date else { return nil }
+      return note.id
+    }
+    removeNotes(ids: expiredIDs)
+    return ExpirationDeletionReceipt(evaluatedAt: date, deletedNoteIDs: expiredIDs)
+  }
+
+  public func previewBulkDeletion(before cutoff: Date) throws -> BulkDeletionPreview {
+    try prepare()
+    return BulkDeletionPreview(
+      cutoff: cutoff,
+      noteIDs: notes.values.filter { $0.modifiedAt < cutoff }.map(\.id)
+    )
+  }
+
+  @discardableResult
+  public func confirmBulkDeletion(
+    _ preview: BulkDeletionPreview,
+    backupAt date: Date
+  ) throws -> BulkDeletionReceipt {
+    _ = try flush()
+    guard !failsSafetyBackup else {
+      throw InMemoryNoteRepositoryError.safetyBackupFailed
+    }
+    safetyBackupDates.append(date)
+    let eligibleIDs = preview.noteIDs.filter { id in
+      guard let note = notes[id] else { return false }
+      return note.modifiedAt < preview.cutoff
+    }
+    let backup = SafetyBackupReceipt(createdAt: date, noteCount: notes.count)
+    removeNotes(ids: eligibleIDs)
+    return BulkDeletionReceipt(
+      preview: preview,
+      deletedNoteIDs: eligibleIDs,
+      safetyBackup: backup
+    )
+  }
+
+  public func setFailsSafetyBackup(_ fails: Bool) {
+    failsSafetyBackup = fails
+  }
+
+  public func safetyBackupCount() -> Int {
+    safetyBackupDates.count
   }
 
   public func currentTimer() throws -> NoteTimer? {
@@ -211,6 +297,17 @@ public actor InMemoryNoteRepository: NoteRepository {
   private func sourceRevision(existing: Note?, body: String) -> Int64 {
     guard let existing else { return 0 }
     return existing.body == body ? existing.sourceRevision : existing.sourceRevision + 1
+  }
+
+  private func removeNotes(ids: [UUID]) {
+    let idSet = Set(ids)
+    for id in idSet {
+      notes[id] = nil
+      pendingDrafts[id] = nil
+    }
+    if let timer, idSet.contains(timer.noteID) {
+      self.timer = nil
+    }
   }
 
   private static func isOrderedBefore(_ lhs: Note, _ rhs: Note) -> Bool {

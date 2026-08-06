@@ -180,11 +180,118 @@ public actor PersistenceStore {
     }
   }
 
+  @discardableResult
+  public func promoteNote(id: UUID, at date: Date, expiresAt: Date?) throws -> Note {
+    try faultInjector.hit(.beforeDatabaseWrite)
+    return try pool.write { db in
+      guard try Self.fetchNote(id: id, in: db) != nil else {
+        throw PersistenceStoreError.noteNotFound(id)
+      }
+      let orderKey = try Self.nextOrderKey(in: db)
+      try db.execute(
+        sql: "UPDATE note SET order_key = ?, modified_at = ?, expires_at = ? WHERE id = ?",
+        arguments: [
+          orderKey,
+          date.timeIntervalSince1970,
+          expiresAt?.timeIntervalSince1970,
+          id.uuidString,
+        ]
+      )
+      guard let promoted = try Self.fetchNote(id: id, in: db) else {
+        throw PersistenceStoreError.noteNotFound(id)
+      }
+      return promoted
+    }
+  }
+
   public func deleteNote(id: UUID) throws {
     try faultInjector.hit(.beforeDatabaseWrite)
     try pool.write { db in
       try db.execute(sql: "DELETE FROM note_fts WHERE note_id = ?", arguments: [id.uuidString])
       try db.execute(sql: "DELETE FROM note WHERE id = ?", arguments: [id.uuidString])
+    }
+  }
+
+  @discardableResult
+  public func applyExpirationPolicy(
+    _ policy: NoteExpirationPolicy,
+    effectiveAt date: Date
+  ) throws -> [Note] {
+    try faultInjector.hit(.beforeDatabaseWrite)
+    return try pool.write { db in
+      let rows = try NoteRow.fetchAll(in: db)
+      for row in rows {
+        let note = try row.note()
+        let referenceDate = max(note.modifiedAt, date)
+        try db.execute(
+          sql: "UPDATE note SET expires_at = ? WHERE id = ?",
+          arguments: [
+            policy.expirationDate(referenceDate: referenceDate)?.timeIntervalSince1970,
+            note.id.uuidString,
+          ]
+        )
+      }
+      return try NoteRow.fetchAll(in: db).map { try $0.note() }
+    }
+  }
+
+  @discardableResult
+  public func deleteExpiredNotes(at date: Date) throws -> ExpirationDeletionReceipt {
+    try faultInjector.hit(.beforeDatabaseWrite)
+    let deletedIDs = try pool.write { db in
+      let ids = try String.fetchAll(
+        db,
+        sql: """
+          SELECT id FROM note
+          WHERE expires_at IS NOT NULL AND expires_at <= ?
+          ORDER BY id ASC
+          """,
+        arguments: [date.timeIntervalSince1970]
+      ).map { value in
+        guard let id = UUID(uuidString: value) else {
+          throw PersistenceStoreError.invalidStoredNoteID(value)
+        }
+        return id
+      }
+      try Self.deleteNotes(ids: ids, in: db)
+      return ids
+    }
+    return ExpirationDeletionReceipt(evaluatedAt: date, deletedNoteIDs: deletedIDs)
+  }
+
+  public func previewBulkDeletion(before cutoff: Date) throws -> BulkDeletionPreview {
+    try pool.read { db in
+      let ids = try String.fetchAll(
+        db,
+        sql: "SELECT id FROM note WHERE modified_at < ? ORDER BY id ASC",
+        arguments: [cutoff.timeIntervalSince1970]
+      ).map { value in
+        guard let id = UUID(uuidString: value) else {
+          throw PersistenceStoreError.invalidStoredNoteID(value)
+        }
+        return id
+      }
+      return BulkDeletionPreview(cutoff: cutoff, noteIDs: ids)
+    }
+  }
+
+  @discardableResult
+  public func deleteNotes(matching preview: BulkDeletionPreview) throws -> [UUID] {
+    try faultInjector.hit(.beforeDatabaseWrite)
+    return try pool.write { db in
+      var eligibleIDs: [UUID] = []
+      for id in preview.noteIDs {
+        let modifiedAt = try Double.fetchOne(
+          db,
+          sql: "SELECT modified_at FROM note WHERE id = ?",
+          arguments: [id.uuidString]
+        )
+        if let modifiedAt, modifiedAt < preview.cutoff.timeIntervalSince1970 {
+          eligibleIDs.append(id)
+        }
+      }
+      try Self.deleteNotes(ids: eligibleIDs, in: db)
+      return eligibleIDs
     }
   }
 
@@ -370,6 +477,13 @@ public actor PersistenceStore {
         sql: "INSERT INTO note_fts (note_id, body) VALUES (?, ?)",
         arguments: [id.uuidString, body]
       )
+    }
+  }
+
+  static func deleteNotes(ids: [UUID], in db: Database) throws {
+    for id in ids {
+      try db.execute(sql: "DELETE FROM note_fts WHERE note_id = ?", arguments: [id.uuidString])
+      try db.execute(sql: "DELETE FROM note WHERE id = ?", arguments: [id.uuidString])
     }
   }
 

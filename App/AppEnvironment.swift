@@ -94,6 +94,7 @@ final class AppEnvironment: ObservableObject {
   let findReplace: FindReplaceModel
   let slashCommand: SlashCommandModel
   let deleteConfirmationCoordinator: DeleteConfirmationCoordinator
+  let bulkDeletionConfirmationCoordinator: BulkDeletionConfirmationCoordinator
   let timerModel: TimerModel
   let ocrModel: OCRWorkflowModel
   let autoPasteModel: AutoPasteModel
@@ -112,6 +113,12 @@ final class AppEnvironment: ObservableObject {
   @Published private(set) var isExporting = false
   @Published private(set) var exportErrorMessage: String?
   @Published private(set) var lastExportReceipt: ExportReceipt?
+  @Published private(set) var lastExpirationReceipt: ExpirationDeletionReceipt?
+  @Published private(set) var expirationErrorMessage: String?
+  @Published private(set) var bulkDeletionPreview: BulkDeletionPreview?
+  @Published private(set) var lastBulkDeletionReceipt: BulkDeletionReceipt?
+  @Published private(set) var bulkDeletionErrorMessage: String?
+  @Published private(set) var isBulkDeletionWorking = false
   @Published private(set) var modeSettings = ModeSettings()
   @Published private(set) var mathSettings = MathSettings()
   @Published private(set) var rateSnapshot: RateSnapshot?
@@ -130,6 +137,8 @@ final class AppEnvironment: ObservableObject {
   private var findReplaceSuspension: AutoHideSuspension?
   private var slashCommandSuspension: AutoHideSuspension?
   private var automaticCurrencyRefreshTask: Task<Void, Never>?
+  private var expirationScheduleTask: Task<Void, Never>?
+  private var isProcessingExpiration = false
 
   init(variant: AppEnvironmentVariant, dependencies: AppDependencies) {
     self.variant = variant
@@ -215,6 +224,7 @@ final class AppEnvironment: ObservableObject {
       }
     )
     deleteConfirmationCoordinator = DeleteConfirmationCoordinator()
+    bulkDeletionConfirmationCoordinator = BulkDeletionConfirmationCoordinator()
     windowCoordinator.configure(
       WindowCoordinatorCallbacks(
         makeContentViewController: { [weak self] in
@@ -403,6 +413,7 @@ final class AppEnvironment: ObservableObject {
       try await repository.prepare()
       repositoryIsPrepared = true
       await logger.record(.serviceStarted(.repository))
+      lastExpirationReceipt = try await repository.deleteExpiredNotes(at: clock.now())
       windowConfiguration = await windowSettings.load()
       pasteSettings = await pasteSettingsStore.load()
       editorSettings = await editorSettingsStore.load()
@@ -439,6 +450,7 @@ final class AppEnvironment: ObservableObject {
       state = .running
       await logger.record(.startupCompleted)
       scheduleAutomaticCurrencyRefreshIfNeeded()
+      scheduleExpirationProcessing()
     } catch {
       state = .failed
       await logger.record(.startupFailed)
@@ -454,6 +466,12 @@ final class AppEnvironment: ObservableObject {
     automaticCurrencyRefreshTask?.cancel()
     await automaticCurrencyRefreshTask?.value
     automaticCurrencyRefreshTask = nil
+    expirationScheduleTask?.cancel()
+    await expirationScheduleTask?.value
+    expirationScheduleTask = nil
+    while isProcessingExpiration || isBulkDeletionWorking {
+      await Task.yield()
+    }
 
     var firstError: (any Error)?
     releaseSearch(restoresEditorFocus: false)
@@ -566,6 +584,102 @@ final class AppEnvironment: ObservableObject {
       autoPasteModel.stopIfDestination(deletingNoteID, reason: .destinationDeleted)
       try await timerModel.removeTimer(linkedTo: deletingNoteID)
     }
+  }
+
+  func updateExpirationChoice(_ choice: NoteExpirationChoice) async throws {
+    guard choice != noteSession.settings.noteExpirationChoice else { return }
+    try await windowCoordinator.flushPendingSourceForCommand()
+    var settings = noteSession.settings
+    settings.noteExpirationChoice = choice
+    try await noteSession.updateSettings(settings)
+    _ = try await processExpiredNotes()
+  }
+
+  @discardableResult
+  func processExpiredNotes() async throws -> ExpirationDeletionReceipt? {
+    guard state == .running, repositoryIsPrepared, !isProcessingExpiration else { return nil }
+    isProcessingExpiration = true
+    defer { isProcessingExpiration = false }
+    do {
+      let receipt = try await repository.deleteExpiredNotes(at: clock.now())
+      lastExpirationReceipt = receipt
+      expirationErrorMessage = nil
+      try await reconcileDeletedNoteIDs(receipt.deletedNoteIDs)
+      return receipt
+    } catch {
+      expirationErrorMessage = error.localizedDescription
+      throw error
+    }
+  }
+
+  func synchronizeWallClock() async {
+    await timerModel.synchronizeClock()
+    do {
+      _ = try await processExpiredNotes()
+    } catch {
+      NSSound.beep()
+    }
+  }
+
+  @discardableResult
+  func previewBulkDeletion(before cutoff: Date) async throws -> BulkDeletionPreview {
+    guard !isBulkDeletionWorking else { throw BulkDeletionOperationError.inProgress }
+    isBulkDeletionWorking = true
+    defer { isBulkDeletionWorking = false }
+    do {
+      try await windowCoordinator.flushPendingSourceForCommand()
+      _ = try await repository.flush()
+      let preview = try await repository.previewBulkDeletion(before: cutoff)
+      bulkDeletionPreview = preview
+      lastBulkDeletionReceipt = nil
+      bulkDeletionErrorMessage = nil
+      return preview
+    } catch {
+      bulkDeletionErrorMessage = error.localizedDescription
+      throw error
+    }
+  }
+
+  func cancelBulkDeletion() {
+    bulkDeletionPreview = nil
+    bulkDeletionErrorMessage = nil
+  }
+
+  @discardableResult
+  func confirmBulkDeletion() async throws -> BulkDeletionReceipt? {
+    guard let preview = bulkDeletionPreview, preview.count > 0, !isBulkDeletionWorking else {
+      return nil
+    }
+    isBulkDeletionWorking = true
+    defer { isBulkDeletionWorking = false }
+    do {
+      try await windowCoordinator.flushPendingSourceForCommand()
+      _ = try await repository.flush()
+      let receipt = try await repository.confirmBulkDeletion(
+        preview,
+        backupAt: clock.now()
+      )
+      lastBulkDeletionReceipt = receipt
+      bulkDeletionPreview = nil
+      bulkDeletionErrorMessage = nil
+      try await reconcileDeletedNoteIDs(receipt.deletedNoteIDs)
+      return receipt
+    } catch {
+      bulkDeletionErrorMessage = error.localizedDescription
+      throw error
+    }
+  }
+
+  @discardableResult
+  func requestBulkDeletionConfirmation() async throws -> BulkDeletionReceipt? {
+    guard let preview = bulkDeletionPreview, preview.count > 0 else { return nil }
+    let suspension = windowCoordinator.beginOwnedPanel(.confirmation)
+    defer { windowCoordinator.endOwnedPanel(suspension) }
+    guard await bulkDeletionConfirmationCoordinator.requestConfirmation(for: preview) else {
+      cancelBulkDeletion()
+      return nil
+    }
+    return try await confirmBulkDeletion()
   }
 
   func executeTimerCommand(_ command: TimerCommand, source: String) async throws {
@@ -924,6 +1038,50 @@ final class AppEnvironment: ObservableObject {
       return ExportDestinationDiagnostic(status: .unavailable, message: unavailableMessage)
     }
     return ExportDestinationDiagnostic(status: .available, message: availableMessage)
+  }
+
+  private func scheduleExpirationProcessing() {
+    expirationScheduleTask?.cancel()
+    expirationScheduleTask = Task { @MainActor [weak self] in
+      while !Task.isCancelled {
+        do {
+          try await Task.sleep(for: .seconds(60))
+        } catch {
+          return
+        }
+        guard let self else { return }
+        do {
+          _ = try await self.processExpiredNotes()
+        } catch {
+          NSSound.beep()
+        }
+      }
+    }
+  }
+
+  private func reconcileDeletedNoteIDs(_ noteIDs: [UUID]) async throws {
+    guard !noteIDs.isEmpty else { return }
+    var firstError: (any Error)?
+    for noteID in noteIDs {
+      autoPasteModel.stopIfDestination(noteID, reason: .destinationDeleted)
+      do {
+        try await timerModel.removeTimer(linkedTo: noteID)
+      } catch {
+        if firstError == nil {
+          firstError = error
+        }
+      }
+    }
+    do {
+      try await noteSession.reconcileDeletedNotes(noteIDs)
+    } catch {
+      if firstError == nil {
+        firstError = error
+      }
+    }
+    if let firstError {
+      throw firstError
+    }
   }
 
   func updateModeSettings(_ settings: ModeSettings) async throws {

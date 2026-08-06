@@ -23,15 +23,19 @@ actor UserDefaultsLifecycleSettingsStore: LifecycleSettingsStoring {
     guard
       let data = defaults.data(forKey: Key.settings),
       let settings = try? decoder.decode(LifecycleSettings.self, from: data),
-      settings.version == LifecycleSettings.currentVersion
+      (1...LifecycleSettings.currentVersion).contains(settings.version)
     else {
       return LifecycleSettings()
     }
-    return settings
+    let migrated = settings.migratedToCurrentVersion()
+    if migrated != settings, let data = try? encoder.encode(migrated) {
+      defaults.set(data, forKey: Key.settings)
+    }
+    return migrated
   }
 
   func save(_ settings: LifecycleSettings) throws {
-    let data = try encoder.encode(settings)
+    let data = try encoder.encode(settings.migratedToCurrentVersion())
     defaults.set(data, forKey: Key.settings)
   }
 

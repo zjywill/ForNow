@@ -21,6 +21,7 @@ struct SettingsView: View {
   @State private var newCustomRateValue = "1"
   @State private var confirmsMismatchedTranslucency = false
   @State private var accessibilityDisplayRevision = false
+  @State private var bulkDeletionCutoff: Date
 
   init(environment: AppEnvironment) {
     self.environment = environment
@@ -29,6 +30,9 @@ struct SettingsView: View {
     _timerModel = ObservedObject(wrappedValue: environment.timerModel)
     _ocrModel = ObservedObject(wrappedValue: environment.ocrModel)
     _autoPasteModel = ObservedObject(wrappedValue: environment.autoPasteModel)
+    _bulkDeletionCutoff = State(
+      initialValue: Calendar.autoupdatingCurrent.startOfDay(for: environment.clock.now())
+    )
   }
 
   var body: some View {
@@ -94,6 +98,20 @@ struct SettingsView: View {
           Text("Never").tag(ReopenNewNotePolicy.never)
         }
         Toggle("Show note count", isOn: showsNoteCount)
+        Picker("Automatically delete notes", selection: expirationChoice) {
+          Text("Today").tag(NoteExpirationChoice.today)
+          Text("After one week").tag(NoteExpirationChoice.oneWeek)
+          Text("After one month").tag(NoteExpirationChoice.oneMonth)
+          Text("After one year").tag(NoteExpirationChoice.oneYear)
+          Text("Never").tag(NoteExpirationChoice.never)
+        }
+        .accessibilityIdentifier("Note expiration choice")
+
+        if let expirationErrorMessage = environmentModel.expirationErrorMessage {
+          Text(expirationErrorMessage)
+            .font(.caption)
+            .foregroundStyle(.red)
+        }
       }
 
       Section("Paste") {
@@ -404,6 +422,58 @@ struct SettingsView: View {
           Task { try? await noteSession.resetDeleteWarning() }
         }
         .disabled(!noteSession.settings.suppressesDeleteWarning)
+
+        DatePicker(
+          "Delete notes modified before",
+          selection: $bulkDeletionCutoff,
+          displayedComponents: .date
+        )
+        .accessibilityIdentifier("Bulk deletion cutoff")
+
+        Button {
+          Task {
+            let cutoff = Calendar.autoupdatingCurrent.startOfDay(for: bulkDeletionCutoff)
+            _ = try? await environment.previewBulkDeletion(before: cutoff)
+          }
+        } label: {
+          Label("Preview Notes", systemImage: "eye")
+        }
+        .disabled(environmentModel.isBulkDeletionWorking)
+        .accessibilityIdentifier("Preview bulk deletion")
+
+        if let preview = environmentModel.bulkDeletionPreview {
+          Text("\(preview.count) \(noteLabel(preview.count)) match the selected cutoff.")
+            .font(.callout)
+            .accessibilityIdentifier("Bulk deletion preview count")
+          Text("This action cannot be undone.")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("Bulk deletion irreversible warning")
+
+          Button(role: .destructive) {
+            Task { _ = try? await environment.requestBulkDeletionConfirmation() }
+          } label: {
+            Label("Delete \(preview.count) Permanently", systemImage: "trash")
+          }
+          .disabled(preview.count == 0 || environmentModel.isBulkDeletionWorking)
+          .accessibilityIdentifier("Confirm bulk deletion")
+        }
+
+        if let receipt = environmentModel.lastBulkDeletionReceipt {
+          Text(
+            "Deleted \(receipt.deletedCount) \(noteLabel(receipt.deletedCount)); safety backup created."
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("Bulk deletion result")
+        }
+
+        if let errorMessage = environmentModel.bulkDeletionErrorMessage {
+          Text(errorMessage)
+            .font(.caption)
+            .foregroundStyle(.red)
+            .accessibilityIdentifier("Bulk deletion error")
+        }
       }
     }
     .formStyle(.grouped)
@@ -416,6 +486,9 @@ struct SettingsView: View {
       )
     ) { _ in
       accessibilityDisplayRevision.toggle()
+    }
+    .onChange(of: bulkDeletionCutoff) {
+      environment.cancelBulkDeletion()
     }
     .alert("Theme Appearance Mismatch", isPresented: $confirmsMismatchedTranslucency) {
       Button("Cancel", role: .cancel) {}
@@ -441,6 +514,19 @@ struct SettingsView: View {
 
   private var showsNoteCount: Binding<Bool> {
     lifecycleBinding(\.showsNoteCount)
+  }
+
+  private var expirationChoice: Binding<NoteExpirationChoice> {
+    Binding(
+      get: { noteSession.settings.noteExpirationChoice },
+      set: { choice in
+        Task { try? await environment.updateExpirationChoice(choice) }
+      }
+    )
+  }
+
+  private func noteLabel(_ count: Int) -> String {
+    count == 1 ? "note" : "notes"
   }
 
   private var presentationMode: Binding<WindowPresentationMode> {

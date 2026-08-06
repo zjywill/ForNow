@@ -529,7 +529,33 @@ private actor FailingPrepareNoteRepository: NoteRepository {
     throw Failure.prepare
   }
 
+  func promoteNote(id: UUID, at date: Date, expiresAt: Date?) throws -> Note {
+    throw Failure.prepare
+  }
+
   func deleteNote(id: UUID) throws {
+    throw Failure.prepare
+  }
+
+  func applyExpirationPolicy(
+    _ policy: NoteExpirationPolicy,
+    effectiveAt date: Date
+  ) throws -> [Note] {
+    throw Failure.prepare
+  }
+
+  func deleteExpiredNotes(at date: Date) throws -> ExpirationDeletionReceipt {
+    throw Failure.prepare
+  }
+
+  func previewBulkDeletion(before cutoff: Date) throws -> BulkDeletionPreview {
+    throw Failure.prepare
+  }
+
+  func confirmBulkDeletion(
+    _ preview: BulkDeletionPreview,
+    backupAt date: Date
+  ) throws -> BulkDeletionReceipt {
     throw Failure.prepare
   }
 

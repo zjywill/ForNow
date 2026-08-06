@@ -55,6 +55,7 @@
 		7D57C7D5B4545A233EC41B09 /* WindowSpikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A3A7FB57C36574E119A871 /* WindowSpikeView.swift */; };
 		81463DA4007D26B904C0838A /* TimerSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23D7D150331EF87744AECF8A /* TimerSettingsStore.swift */; };
 		83F5F831C0BD1BBC5D95ED36 /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = 2B346C0BEF96BDD33FE254EE /* ForNowModes */; };
+		874F87CC058FCDF12AA18312 /* NoteRetentionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E8FACC9F23B5E5C3D0E05F /* NoteRetentionTests.swift */; };
 		8ECFECD7FF6D045A6C7C61E8 /* NoteSearchCommandField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D836B85142E1E57CF91C56C /* NoteSearchCommandField.swift */; };
 		8FDAA27E39F02D9B5BAAA45A /* ForNowModes in Frameworks */ = {isa = PBXBuildFile; productRef = B2C57FEBCEDD2D3D97C98DF2 /* ForNowModes */; };
 		935F01A5C14AF23C1F07F860 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 513B5134E6E851F57B40AD1C /* ForNowEditor */; };
@@ -66,6 +67,7 @@
 		A26A485EF9DF57AEBDDB6A8C /* NoteLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C165CAC35383E2282C38E89 /* NoteLifecycleTests.swift */; };
 		A2A5C21DED243C3A94971DE1 /* LinkProjectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E994064F4A5A0F52432D6622 /* LinkProjectionTests.swift */; };
 		A45B014D50B60B416907A6E4 /* ForNowEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 10C50E7BB046823827B9944D /* ForNowEditor */; };
+		A4BB8642B9F009AA2FF650C6 /* BulkDeletionConfirmationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8BF537AECA30310B177B9AA /* BulkDeletionConfirmationCoordinator.swift */; };
 		AB1FE9BB36E7BCDC7BCC64BA /* OCRWorkflowModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B071FC5E43AD06C5674C31 /* OCRWorkflowModel.swift */; };
 		ADC48D945E9B40AC6130DD55 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C77F87198C8F21290CAA8B /* SettingsView.swift */; };
 		B323AA1A3147C095AE9871EC /* WindowSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E8EC15FD34128A7A307DA7 /* WindowSettingsStore.swift */; };
@@ -185,6 +187,7 @@
 		BBD8234C3E2C1F4067349038 /* ForNowCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForNowCommands.swift; sourceTree = "<group>"; };
 		C3B91BAB26AC57ECEE497A94 /* AutoPasteSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPasteSettingsStore.swift; sourceTree = "<group>"; };
 		C81C53F71A7CE9DFA866908F /* ForNowIntegrations */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowIntegrations; path = Packages/ForNowIntegrations; sourceTree = SOURCE_ROOT; };
+		C8BF537AECA30310B177B9AA /* BulkDeletionConfirmationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkDeletionConfirmationCoordinator.swift; sourceTree = "<group>"; };
 		C9A7FDA6468F9924D976AEAB /* WindowSpikeCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSpikeCoordinator.swift; sourceTree = "<group>"; };
 		CC48BB4A25BC266F0F366AFB /* ForNowModes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowModes; path = Packages/ForNowModes; sourceTree = SOURCE_ROOT; };
 		CD4443BA5B95C21C5B724370 /* ModeSettingsAndSlashCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSettingsAndSlashCommandTests.swift; sourceTree = "<group>"; };
@@ -199,6 +202,7 @@
 		E3BF3B14BDA74BC0364DA8F5 /* WindowSpikeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSpikeModel.swift; sourceTree = "<group>"; };
 		E6C6677A9539A4572EFC2EC0 /* SlashCommandPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlashCommandPanel.swift; sourceTree = "<group>"; };
 		E7B203094DF32A6E063024D0 /* WindowSpikeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WindowSpikeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7E8FACC9F23B5E5C3D0E05F /* NoteRetentionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteRetentionTests.swift; sourceTree = "<group>"; };
 		E83275B8A941AB7AA4239DE7 /* ForNowPersistence */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowPersistence; path = Packages/ForNowPersistence; sourceTree = SOURCE_ROOT; };
 		E994064F4A5A0F52432D6622 /* LinkProjectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkProjectionTests.swift; sourceTree = "<group>"; };
 		E9A88BF1F120F5880F72A535 /* BasicMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicMathTests.swift; sourceTree = "<group>"; };
@@ -294,6 +298,7 @@
 				DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */,
 				E2CA7680A70A1038AAFCF7DF /* AutoPasteModel.swift */,
 				C3B91BAB26AC57ECEE497A94 /* AutoPasteSettingsStore.swift */,
+				C8BF537AECA30310B177B9AA /* BulkDeletionConfirmationCoordinator.swift */,
 				5AEAFEA065BE8EE706045421 /* ContentView.swift */,
 				F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */,
 				0E66ADFC63F4CE218733F734 /* DeleteConfirmationCoordinator.swift */,
@@ -357,6 +362,7 @@
 				CD4443BA5B95C21C5B724370 /* ModeSettingsAndSlashCommandTests.swift */,
 				7C165CAC35383E2282C38E89 /* NoteLifecycleTests.swift */,
 				A3098242836B4AF144259EF9 /* NoteNavigationTests.swift */,
+				E7E8FACC9F23B5E5C3D0E05F /* NoteRetentionTests.swift */,
 				12F20FA6B77512A8CF47A443 /* NoteSearchTests.swift */,
 				4705D258DE240F0B75C642A6 /* OCRWorkflowTests.swift */,
 				522744C5F65440A96C885A66 /* QuickExportTests.swift */,
@@ -727,6 +733,7 @@
 				F8542A91AF8B37B7E04381D3 /* AppearanceSettingsStore.swift in Sources */,
 				2722837775B6F49954182DDB /* AutoPasteModel.swift in Sources */,
 				3AB6B6C7A931E5F2CC650261 /* AutoPasteSettingsStore.swift in Sources */,
+				A4BB8642B9F009AA2FF650C6 /* BulkDeletionConfirmationCoordinator.swift in Sources */,
 				2A5B110B400373DBB22DF147 /* ContentView.swift in Sources */,
 				554524835CBE96DA69D6008E /* CurrencyRateRefreshCoordinator.swift in Sources */,
 				1F742C1A2932ED30288F47E1 /* DeleteConfirmationCoordinator.swift in Sources */,
@@ -775,6 +782,7 @@
 				329ACC5A26912274B202D12D /* ModeSettingsAndSlashCommandTests.swift in Sources */,
 				A26A485EF9DF57AEBDDB6A8C /* NoteLifecycleTests.swift in Sources */,
 				1D513DE3D5DD8BA1DA2D5FDC /* NoteNavigationTests.swift in Sources */,
+				874F87CC058FCDF12AA18312 /* NoteRetentionTests.swift in Sources */,
 				9788CA52644FC3CB082195CD /* NoteSearchTests.swift in Sources */,
 				4A8605670AC6BADDE69B5E4B /* OCRWorkflowTests.swift in Sources */,
 				793DC2E974CE2E75517043B6 /* QuickExportTests.swift in Sources */,

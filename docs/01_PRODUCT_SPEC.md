@@ -217,7 +217,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-NOTE-005 - Confirmed permanent deletion
 
-- Source: `AN-LIFE-002`.
+- Source: `AN-LIFE-002`, `FORNOW-DECISION-018`.
 - Command-D requests deletion.
 - A non-empty note requires confirmation unless the user has explicitly
   suppressed the warning.
@@ -227,7 +227,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-NOTE-006 - Expiration
 
-- Source: `AN-LIFE-001`.
+- Source: `AN-LIFE-001`, `FORNOW-DECISION-018`.
 - Expiration choices are today, one week, one month, one year, or never.
 - Expiration processing is idempotent.
 - A clock change may delay expiration but must not duplicate deletion events.
@@ -268,7 +268,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-NOTE-010 - Bulk deletion by modification date
 
-- Source: `AN-NOTE-SET-001`.
+- Source: `AN-NOTE-SET-001`, `FORNOW-DECISION-018`.
 - Settings accept a cutoff date and preview the number of matching notes.
 - Only notes with `modifiedAt` earlier than the confirmed cutoff are deleted.
 - Confirmation creates a safety backup before mutation.

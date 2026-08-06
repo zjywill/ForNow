@@ -83,13 +83,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   @objc private func systemClockDidChange(_ notification: Notification) {
     Task { [environment] in
-      await environment.timerModel.synchronizeClock()
+      await environment.synchronizeWallClock()
     }
   }
 
   @objc private func systemDidWake(_ notification: Notification) {
     Task { [environment] in
-      await environment.timerModel.synchronizeClock()
+      await environment.synchronizeWallClock()
     }
   }
 }

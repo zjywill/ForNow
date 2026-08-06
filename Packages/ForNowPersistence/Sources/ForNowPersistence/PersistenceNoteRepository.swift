@@ -10,24 +10,28 @@ public actor PersistenceNoteRepository: NoteRepository {
   public nonisolated let backupDirectoryURL: URL
 
   private let debounce: Duration
+  private let faultInjector: PersistenceFaultInjector
   private var store: PersistenceStore?
   private var saver: DebouncedNoteSaver?
 
   public init(
     databaseURL: URL,
     backupDirectoryURL: URL,
-    debounce: Duration = .milliseconds(250)
+    debounce: Duration = .milliseconds(250),
+    faultInjector: PersistenceFaultInjector = .none
   ) {
     self.databaseURL = databaseURL
     self.backupDirectoryURL = backupDirectoryURL
     self.debounce = debounce
+    self.faultInjector = faultInjector
   }
 
   public func prepare() async throws {
     guard store == nil else { return }
     let store = try PersistenceStore(
       databaseURL: databaseURL,
-      backupDirectoryURL: backupDirectoryURL
+      backupDirectoryURL: backupDirectoryURL,
+      faultInjector: faultInjector
     )
     try await store.verifyIntegrity()
     self.store = store
@@ -82,10 +86,57 @@ public actor PersistenceNoteRepository: NoteRepository {
     return try await store.promoteNote(id: id, at: date)
   }
 
+  @discardableResult
+  public func promoteNote(id: UUID, at date: Date, expiresAt: Date?) async throws -> Note {
+    let (store, _) = try components()
+    return try await store.promoteNote(id: id, at: date, expiresAt: expiresAt)
+  }
+
   public func deleteNote(id: UUID) async throws {
     let (store, saver) = try components()
     await saver.discard(noteID: id)
     try await store.deleteNote(id: id)
+  }
+
+  @discardableResult
+  public func applyExpirationPolicy(
+    _ policy: NoteExpirationPolicy,
+    effectiveAt date: Date
+  ) async throws -> [Note] {
+    let (store, saver) = try components()
+    _ = try await saver.flushAll()
+    return try await store.applyExpirationPolicy(policy, effectiveAt: date)
+  }
+
+  @discardableResult
+  public func deleteExpiredNotes(at date: Date) async throws -> ExpirationDeletionReceipt {
+    let (store, saver) = try components()
+    _ = try await saver.flushAll()
+    return try await store.deleteExpiredNotes(at: date)
+  }
+
+  public func previewBulkDeletion(before cutoff: Date) async throws -> BulkDeletionPreview {
+    let (store, _) = try components()
+    return try await store.previewBulkDeletion(before: cutoff)
+  }
+
+  @discardableResult
+  public func confirmBulkDeletion(
+    _ preview: BulkDeletionPreview,
+    backupAt date: Date
+  ) async throws -> BulkDeletionReceipt {
+    let (store, saver) = try components()
+    _ = try await saver.flushAll()
+    let descriptor = try await store.createBackup(at: date)
+    let deletedIDs = try await store.deleteNotes(matching: preview)
+    return BulkDeletionReceipt(
+      preview: preview,
+      deletedNoteIDs: deletedIDs,
+      safetyBackup: SafetyBackupReceipt(
+        createdAt: descriptor.manifest.createdAt,
+        noteCount: descriptor.manifest.noteCount
+      )
+    )
   }
 
   public func currentTimer() async throws -> NoteTimer? {

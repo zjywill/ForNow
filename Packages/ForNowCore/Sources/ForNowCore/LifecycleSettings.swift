@@ -27,26 +27,60 @@ public enum ReopenNewNotePolicy: String, CaseIterable, Codable, Sendable {
 }
 
 public struct LifecycleSettings: Codable, Equatable, Sendable {
-  public static let currentVersion = 1
+  public static let currentVersion = 2
 
   public var version: Int
   public var createsNewNoteOnLaunch: Bool
   public var reopenNewNotePolicy: ReopenNewNotePolicy
   public var showsNoteCount: Bool
   public var suppressesDeleteWarning: Bool
+  public var noteExpirationChoice: NoteExpirationChoice
 
   public init(
     version: Int = currentVersion,
     createsNewNoteOnLaunch: Bool = true,
     reopenNewNotePolicy: ReopenNewNotePolicy = .never,
     showsNoteCount: Bool = false,
-    suppressesDeleteWarning: Bool = false
+    suppressesDeleteWarning: Bool = false,
+    noteExpirationChoice: NoteExpirationChoice = .never
   ) {
     self.version = version
     self.createsNewNoteOnLaunch = createsNewNoteOnLaunch
     self.reopenNewNotePolicy = reopenNewNotePolicy
     self.showsNoteCount = showsNoteCount
     self.suppressesDeleteWarning = suppressesDeleteWarning
+    self.noteExpirationChoice = noteExpirationChoice
+  }
+
+  public func migratedToCurrentVersion() -> LifecycleSettings {
+    var migrated = self
+    migrated.version = Self.currentVersion
+    return migrated
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case version
+    case createsNewNoteOnLaunch
+    case reopenNewNotePolicy
+    case showsNoteCount
+    case suppressesDeleteWarning
+    case noteExpirationChoice
+  }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    version = try container.decodeIfPresent(Int.self, forKey: .version) ?? 1
+    createsNewNoteOnLaunch =
+      try container.decodeIfPresent(Bool.self, forKey: .createsNewNoteOnLaunch) ?? true
+    reopenNewNotePolicy =
+      try container.decodeIfPresent(ReopenNewNotePolicy.self, forKey: .reopenNewNotePolicy)
+      ?? .never
+    showsNoteCount = try container.decodeIfPresent(Bool.self, forKey: .showsNoteCount) ?? false
+    suppressesDeleteWarning =
+      try container.decodeIfPresent(Bool.self, forKey: .suppressesDeleteWarning) ?? false
+    noteExpirationChoice =
+      try container.decodeIfPresent(NoteExpirationChoice.self, forKey: .noteExpirationChoice)
+      ?? .never
   }
 }
 
@@ -91,7 +125,7 @@ public actor InMemoryLifecycleSettingsStore: LifecycleSettingsStoring {
     settings: LifecycleSettings = LifecycleSettings(),
     lastWindowClosedAt: Date? = nil
   ) {
-    self.settings = settings
+    self.settings = settings.migratedToCurrentVersion()
     closeDate = lastWindowClosedAt
   }
 
@@ -100,7 +134,7 @@ public actor InMemoryLifecycleSettingsStore: LifecycleSettingsStoring {
   }
 
   public func save(_ settings: LifecycleSettings) {
-    self.settings = settings
+    self.settings = settings.migratedToCurrentVersion()
   }
 
   public func lastWindowClosedAt() -> Date? {

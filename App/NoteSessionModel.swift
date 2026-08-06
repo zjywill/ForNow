@@ -40,10 +40,13 @@ final class NoteSessionModel: ObservableObject {
   private var meaningfulContentPolicy: MeaningfulContentPolicy
   private let resumeNotePolicy: ResumeNotePolicy
   private let deleteConfirmationPolicy: DeleteConfirmationPolicy
+  private let expirationCalendar: Calendar
 
   private var committedText = ""
   private var hasMarkedText = false
   private var createdAt: Date?
+  private var modifiedAt: Date?
+  private var expiresAt: Date?
   private var selection = NoteSelection()
   private var scrollOffset = 0
   private var editRevision: UInt64 = 0
@@ -56,7 +59,8 @@ final class NoteSessionModel: ObservableObject {
     settingsStore: any LifecycleSettingsStoring,
     meaningfulContentPolicy: MeaningfulContentPolicy = MeaningfulContentPolicy(),
     resumeNotePolicy: ResumeNotePolicy = ResumeNotePolicy(),
-    deleteConfirmationPolicy: DeleteConfirmationPolicy = DeleteConfirmationPolicy()
+    deleteConfirmationPolicy: DeleteConfirmationPolicy = DeleteConfirmationPolicy(),
+    expirationCalendar: Calendar = .autoupdatingCurrent
   ) {
     self.repository = repository
     self.clock = clock
@@ -65,6 +69,7 @@ final class NoteSessionModel: ObservableObject {
     self.meaningfulContentPolicy = meaningfulContentPolicy
     self.resumeNotePolicy = resumeNotePolicy
     self.deleteConfirmationPolicy = deleteConfirmationPolicy
+    self.expirationCalendar = expirationCalendar
   }
 
   func start() async throws {
@@ -88,6 +93,11 @@ final class NoteSessionModel: ObservableObject {
       text = pendingLaunchEdit.text
       committedText = pendingLaunchEdit.committedText
       hasMarkedText = pendingLaunchEdit.hasMarkedText
+      if !hasMarkedText, !committedText.isEmpty {
+        let modificationDate = clock.now()
+        modifiedAt = modificationDate
+        expiresAt = expirationPolicy.expirationDate(referenceDate: modificationDate)
+      }
       editRevision &+= 1
       try await persistIfCurrent(revision: editRevision)
     } else if notes.isEmpty || createsNewNote {
@@ -148,7 +158,7 @@ final class NoteSessionModel: ObservableObject {
         capturedAt: capturedAt,
         isFirstCapture: isFirstCapture
       )
-      updateInMemory(updatedText, hasMarkedText: false)
+      updateInMemory(updatedText, hasMarkedText: false, mutationDate: capturedAt)
       try await persistIfCurrent(revision: editRevision)
       _ = try await repository.flush()
       return .appended
@@ -177,7 +187,7 @@ final class NoteSessionModel: ObservableObject {
         ),
         createdAt: note.createdAt,
         modifiedAt: capturedAt,
-        expiresAt: note.expiresAt,
+        expiresAt: expirationPolicy.expirationDate(referenceDate: capturedAt),
         slotIndex: note.slotIndex,
         selection: note.selection,
         scrollOffset: note.scrollOffset
@@ -229,8 +239,37 @@ final class NoteSessionModel: ObservableObject {
   }
 
   func updateSettings(_ settings: LifecycleSettings) async throws {
+    let settings = settings.migratedToCurrentVersion()
+    let previousSettings = self.settings
+    guard settings.noteExpirationChoice != previousSettings.noteExpirationChoice else {
+      try await settingsStore.save(settings)
+      self.settings = settings
+      return
+    }
+
+    persistenceTask?.cancel()
+    persistenceTask = nil
+    _ = try await repository.flush()
     try await settingsStore.save(settings)
-    self.settings = settings
+    do {
+      let effectiveAt = clock.now()
+      let policy = NoteExpirationPolicy(
+        choice: settings.noteExpirationChoice,
+        calendar: expirationCalendar
+      )
+      let notes = try await repository.applyExpirationPolicy(policy, effectiveAt: effectiveAt)
+      self.settings = settings
+      if let currentNoteID,
+        let current = notes.first(where: { $0.id == currentNoteID })
+      {
+        expiresAt = current.expiresAt
+      } else if phase == .transient {
+        expiresAt = nil
+      }
+    } catch {
+      try? await settingsStore.save(previousSettings)
+      throw error
+    }
   }
 
   func updateMeaningfulContentPolicy(_ policy: MeaningfulContentPolicy) async throws {
@@ -320,7 +359,12 @@ final class NoteSessionModel: ObservableObject {
   private func promoteAndOpen(noteID: UUID) async throws {
     try await prepareForDeparture()
     _ = try await repository.flush()
-    let promoted = try await repository.promoteNote(id: noteID, at: clock.now())
+    let promotedAt = clock.now()
+    let promoted = try await repository.promoteNote(
+      id: noteID,
+      at: promotedAt,
+      expiresAt: expirationPolicy.expirationDate(referenceDate: promotedAt)
+    )
     load(promoted, armsDirectionalEntry: true)
   }
 
@@ -360,11 +404,21 @@ final class NoteSessionModel: ObservableObject {
     try await updateSettings(updatedSettings)
   }
 
-  private func updateInMemory(_ newText: String, hasMarkedText: Bool) {
+  private func updateInMemory(
+    _ newText: String,
+    hasMarkedText: Bool,
+    mutationDate: Date? = nil
+  ) {
+    let sourceDidChange = !hasMarkedText && newText != committedText
     text = newText
     self.hasMarkedText = hasMarkedText
     if !hasMarkedText {
       committedText = newText
+    }
+    if sourceDidChange {
+      let mutationDate = mutationDate ?? clock.now()
+      modifiedAt = mutationDate
+      expiresAt = expirationPolicy.expirationDate(referenceDate: mutationDate)
     }
     editRevision &+= 1
     hasPersistenceFailure = false
@@ -391,12 +445,14 @@ final class NoteSessionModel: ObservableObject {
   }
 
   private func scheduleCurrentDraft(noteID: UUID) async throws {
+    let modificationDate = modifiedAt ?? createdAt ?? clock.now()
     try await repository.schedule(
       NoteDraft(
         id: noteID,
         body: committedText,
         createdAt: createdAt,
-        modifiedAt: clock.now(),
+        modifiedAt: modificationDate,
+        expiresAt: expiresAt,
         selection: selection,
         scrollOffset: scrollOffset
       )
@@ -420,6 +476,27 @@ final class NoteSessionModel: ObservableObject {
     }
   }
 
+  func reconcileDeletedNotes(_ deletedNoteIDs: [UUID]) async throws {
+    let deletedIDs = Set(deletedNoteIDs)
+    guard !deletedIDs.isEmpty else { return }
+    let currentWasDeleted = currentNoteID.map(deletedIDs.contains) ?? false
+    if currentWasDeleted {
+      persistenceTask?.cancel()
+      persistenceTask = nil
+      if let currentNoteID {
+        await repository.discardPending(noteID: currentNoteID)
+      }
+    }
+    let notes = try await repository.allNotes()
+    noteCount = notes.count
+    guard currentWasDeleted else { return }
+    if let newest = notes.first {
+      load(newest, armsDirectionalEntry: true)
+    } else {
+      await createTransientNote(armsDirectionalEntry: true)
+    }
+  }
+
   private func createTransientNote(armsDirectionalEntry: Bool = false) async {
     let now = clock.now()
     currentNoteID = await uuidGenerator.next()
@@ -427,6 +504,8 @@ final class NoteSessionModel: ObservableObject {
     committedText = ""
     hasMarkedText = false
     createdAt = now
+    modifiedAt = now
+    expiresAt = nil
     selection = NoteSelection()
     scrollOffset = 0
     phase = .transient
@@ -443,6 +522,8 @@ final class NoteSessionModel: ObservableObject {
     committedText = note.body
     hasMarkedText = false
     createdAt = note.createdAt
+    modifiedAt = note.modifiedAt
+    expiresAt = note.expiresAt
     let sourceLength = note.body.utf16.count
     let clampedLocation = min(max(0, note.selection.location), sourceLength)
     selection = NoteSelection(
@@ -456,5 +537,12 @@ final class NoteSessionModel: ObservableObject {
     if armsDirectionalEntry {
       navigationEntryToken &+= 1
     }
+  }
+
+  private var expirationPolicy: NoteExpirationPolicy {
+    NoteExpirationPolicy(
+      choice: settings.noteExpirationChoice,
+      calendar: expirationCalendar
+    )
   }
 }
