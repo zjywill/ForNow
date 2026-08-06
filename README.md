@@ -95,6 +95,11 @@ natural/LTR/RTL presentation, and macOS 15+ native translucency with mismatch,
 Reduce Transparency, and Increase Contrast policies. Quick-action shortcuts are
 versioned and remappable with live conflict diagnostics, active-binding
 rollback, and startup reconciliation that preserves the global invocation.
+Step 5.1 Quick Export is complete with one canonical source-derived export
+document, Command-S routing, atomic UTF-8 TXT and Markdown output, ZIP export-all,
+Obsidian, Bear, Apple Shortcut, and bounded custom-URL adapters, versioned
+settings, Unicode-safe deterministic filenames, availability diagnostics, and
+failure paths that preserve Note, SQLite, and FTS source.
 
 Step 0.1 uses XcodeGen 2.45.4 as the reproducible project generator. Bootstrap
 downloads that exact release, verifies its SHA-256, generates the project, and
