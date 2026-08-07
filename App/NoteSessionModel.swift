@@ -497,6 +497,26 @@ final class NoteSessionModel: ObservableObject {
     }
   }
 
+  func reloadAfterStoreReplacement(preferredNoteID: UUID?) async throws {
+    persistenceTask?.cancel()
+    persistenceTask = nil
+    if let currentNoteID {
+      await repository.discardPending(noteID: currentNoteID)
+    }
+    let notes = try await repository.allNotes()
+    noteCount = notes.count
+    if let preferredNoteID,
+      let preferred = notes.first(where: { $0.id == preferredNoteID })
+    {
+      load(preferred, armsDirectionalEntry: true)
+    } else if let newest = notes.first {
+      load(newest, armsDirectionalEntry: true)
+    } else {
+      await createTransientNote(armsDirectionalEntry: true)
+    }
+    hasPersistenceFailure = false
+  }
+
   private func createTransientNote(armsDirectionalEntry: Bool = false) async {
     let now = clock.now()
     currentNoteID = await uuidGenerator.next()

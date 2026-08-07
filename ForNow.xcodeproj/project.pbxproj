@@ -11,6 +11,7 @@
 		085AA0DB893E86753A6CDBA0 /* ForNowCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8E5283B315AF96BE2843B6C6 /* ForNowCore */; };
 		0A5096A015E25797BD480891 /* EditorStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91CC4B86ECB18B8FF9A7EB4 /* EditorStateStore.swift */; };
 		0A7DCA311471B3AF0E11FDCE /* ListModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC02F5CE9A748D269BC51A8A /* ListModeTests.swift */; };
+		0D5F6040C2E4A274F5D6B718 /* BackupRestoreConfirmationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B35F7195894B2AABEC6B9FE0 /* BackupRestoreConfirmationCoordinator.swift */; };
 		12646040774587DA37C213FE /* SmokePerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041662CC7FAA13AE0E517B33 /* SmokePerformanceTests.swift */; };
 		1726945452B96DC6269DFB3A /* MarkdownProjectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1864F88C94C6124652292DF3 /* MarkdownProjectionTests.swift */; };
 		1B8D11BB23221DEB83B36E39 /* WindowSpikeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BF3B14BDA74BC0364DA8F5 /* WindowSpikeModel.swift */; };
@@ -19,6 +20,7 @@
 		1E61552F3E7ADDB6AD8B0603 /* TimerModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A7E3E06ED34B276D160B433 /* TimerModelTests.swift */; };
 		1F742C1A2932ED30288F47E1 /* DeleteConfirmationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E66ADFC63F4CE218733F734 /* DeleteConfirmationCoordinator.swift */; };
 		209C4BB78932FB59EB721A7F /* TimerModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60EFF7C10ED7CB8644B7C0FE /* TimerModel.swift */; };
+		215E2AA8146CA6CFA1D529E9 /* BackupManagement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1999674F96303C8D6C643 /* BackupManagement.swift */; };
 		22A02A581FD66F6688DDC161 /* PasteSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B5AB93D61A3D40ADC4367E /* PasteSettingsStore.swift */; };
 		23494DCE15F89633C3FB9E70 /* ForNowDesign in Frameworks */ = {isa = PBXBuildFile; productRef = 7848BA0A913AAA53447E41BA /* ForNowDesign */; };
 		26280CA93077F3084517CE18 /* WindowSpikeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FA72D4F7F50CA99AF2C040A /* WindowSpikeApp.swift */; };
@@ -173,6 +175,7 @@
 		868DCA96283961231D520080 /* EditorProjectionSpikeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorProjectionSpikeTests.swift; sourceTree = "<group>"; };
 		88BBE659C87C566D1EA16CDA /* ExportDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportDocumentTests.swift; sourceTree = "<group>"; };
 		8F785A68154FECDDDF1ACFFB /* FindReplaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindReplaceTests.swift; sourceTree = "<group>"; };
+		93D1999674F96303C8D6C643 /* BackupManagement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManagement.swift; sourceTree = "<group>"; };
 		94E4BF171617FCE3A7A39053 /* ForNowCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ForNowCore; path = Packages/ForNowCore; sourceTree = SOURCE_ROOT; };
 		9537F98901A9E534B5D68C56 /* AggregateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AggregateTests.swift; sourceTree = "<group>"; };
 		9E8D248FDE3CAEA55E722819 /* ForNow.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ForNow.entitlements; sourceTree = "<group>"; };
@@ -181,6 +184,7 @@
 		A2CAED8E78B690DAE43F26B2 /* EditorProjectionSpikeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EditorProjectionSpikeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2F1900907061BFE3D41CB47 /* AppearanceAndShortcutSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceAndShortcutSettingsTests.swift; sourceTree = "<group>"; };
 		A3098242836B4AF144259EF9 /* NoteNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteNavigationTests.swift; sourceTree = "<group>"; };
+		B35F7195894B2AABEC6B9FE0 /* BackupRestoreConfirmationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupRestoreConfirmationCoordinator.swift; sourceTree = "<group>"; };
 		B36344F389ADCEA8E66038F5 /* ModeSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSettingsStore.swift; sourceTree = "<group>"; };
 		B3F76CB8606C964D83ED4079 /* ExportSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportSettingsSection.swift; sourceTree = "<group>"; };
 		B6B28C4F55C1A2AEAF26F94D /* LifecycleSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleSettingsStore.swift; sourceTree = "<group>"; };
@@ -298,6 +302,8 @@
 				DAB434D3DD350FB0DC3412C0 /* AppLifecycleLogging.swift */,
 				E2CA7680A70A1038AAFCF7DF /* AutoPasteModel.swift */,
 				C3B91BAB26AC57ECEE497A94 /* AutoPasteSettingsStore.swift */,
+				93D1999674F96303C8D6C643 /* BackupManagement.swift */,
+				B35F7195894B2AABEC6B9FE0 /* BackupRestoreConfirmationCoordinator.swift */,
 				C8BF537AECA30310B177B9AA /* BulkDeletionConfirmationCoordinator.swift */,
 				5AEAFEA065BE8EE706045421 /* ContentView.swift */,
 				F3269F6EFEA39DD1CEC2B2B3 /* CurrencyRateRefreshCoordinator.swift */,
@@ -733,6 +739,8 @@
 				F8542A91AF8B37B7E04381D3 /* AppearanceSettingsStore.swift in Sources */,
 				2722837775B6F49954182DDB /* AutoPasteModel.swift in Sources */,
 				3AB6B6C7A931E5F2CC650261 /* AutoPasteSettingsStore.swift in Sources */,
+				215E2AA8146CA6CFA1D529E9 /* BackupManagement.swift in Sources */,
+				0D5F6040C2E4A274F5D6B718 /* BackupRestoreConfirmationCoordinator.swift in Sources */,
 				A4BB8642B9F009AA2FF650C6 /* BulkDeletionConfirmationCoordinator.swift in Sources */,
 				2A5B110B400373DBB22DF147 /* ContentView.swift in Sources */,
 				554524835CBE96DA69D6008E /* CurrencyRateRefreshCoordinator.swift in Sources */,

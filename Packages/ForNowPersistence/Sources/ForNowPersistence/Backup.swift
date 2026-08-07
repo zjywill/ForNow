@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import GRDB
 
-public enum BackupFrequency: String, CaseIterable, Codable, Sendable {
+public enum BackupFrequency: String, CaseIterable, Codable, Hashable, Sendable {
   case minutes10
   case minutes30
   case hour1
@@ -86,6 +86,71 @@ public struct BackupDescriptor: Equatable, Sendable {
   }
 }
 
+public enum BackupRecoveryOutcome: String, Codable, Equatable, Sendable {
+  case restored
+  case rejected
+  case rolledBack
+  case rollbackFailed
+}
+
+public struct BackupRecoveryReport: Codable, Equatable, Sendable {
+  public static let currentFormatVersion = 1
+
+  public let formatVersion: Int
+  public let operationID: UUID
+  public let startedAt: Date
+  public let completedAt: Date
+  public let requestedManifestFileName: String
+  public let requestedSchemaVersion: Int?
+  public let requestedNoteCount: Int?
+  public let emergencyManifestFileName: String
+  public let outcome: BackupRecoveryOutcome
+  public let failureCode: String?
+
+  public init(
+    formatVersion: Int = currentFormatVersion,
+    operationID: UUID,
+    startedAt: Date,
+    completedAt: Date,
+    requestedManifestFileName: String,
+    requestedSchemaVersion: Int?,
+    requestedNoteCount: Int?,
+    emergencyManifestFileName: String,
+    outcome: BackupRecoveryOutcome,
+    failureCode: String?
+  ) {
+    self.formatVersion = formatVersion
+    self.operationID = operationID
+    self.startedAt = startedAt
+    self.completedAt = completedAt
+    self.requestedManifestFileName = requestedManifestFileName
+    self.requestedSchemaVersion = requestedSchemaVersion
+    self.requestedNoteCount = requestedNoteCount
+    self.emergencyManifestFileName = emergencyManifestFileName
+    self.outcome = outcome
+    self.failureCode = failureCode
+  }
+}
+
+public struct BackupRestoreReceipt: Equatable, Sendable {
+  public let restoredBackup: BackupDescriptor
+  public let emergencyBackup: BackupDescriptor
+  public let recoveryReport: BackupRecoveryReport
+  public let recoveryReportURL: URL
+
+  public init(
+    restoredBackup: BackupDescriptor,
+    emergencyBackup: BackupDescriptor,
+    recoveryReport: BackupRecoveryReport,
+    recoveryReportURL: URL
+  ) {
+    self.restoredBackup = restoredBackup
+    self.emergencyBackup = emergencyBackup
+    self.recoveryReport = recoveryReport
+    self.recoveryReportURL = recoveryReportURL
+  }
+}
+
 extension PersistenceStore {
   @discardableResult
   public func createBackup(
@@ -126,20 +191,28 @@ extension PersistenceStore {
   }
 
   @discardableResult
-  public func restoreBackup(manifestURL: URL) throws -> BackupDescriptor {
-    let validated = try Self.loadAndValidateManifest(at: manifestURL, validateDatabase: true)
-    let emergency = try createBackup(at: Date(), prefix: "emergency")
+  public func restoreBackup(
+    manifestURL: URL,
+    at date: Date = Date()
+  ) throws -> BackupRestoreReceipt {
+    let operationID = UUID()
+    let emergency = try createBackup(at: date, prefix: "emergency")
     let fileManager = FileManager.default
     let stagingURL = databaseURL.deletingLastPathComponent()
       .appendingPathComponent(".restore-\(UUID().uuidString).sqlite")
     try? fileManager.removeItem(at: stagingURL)
-    try fileManager.copyItem(at: validated.databaseURL, to: stagingURL)
 
     var databaseWasClosed = false
+    var replacementStarted = false
+    var validated: BackupDescriptor?
     do {
+      let target = try Self.loadAndValidateManifest(at: manifestURL, validateDatabase: true)
+      validated = target
+      try fileManager.copyItem(at: target.databaseURL, to: stagingURL)
       try pool.close()
       databaseWasClosed = true
       Self.removeSQLiteSidecars(for: databaseURL)
+      replacementStarted = true
       _ = try fileManager.replaceItemAt(databaseURL, withItemAt: stagingURL)
       pool = try Self.openPool(at: databaseURL)
       databaseWasClosed = false
@@ -147,15 +220,48 @@ extension PersistenceStore {
       try faultInjector.hit(.afterStoreReplacement)
       try Self.verifyDatabase(pool)
       let restoredIdentity = try Self.databaseIdentity(pool)
-      guard restoredIdentity.noteCount == validated.manifest.noteCount else {
+      guard restoredIdentity.noteCount == target.manifest.noteCount else {
         throw PersistenceStoreError.backupNotesChecksumMismatch
       }
-      guard restoredIdentity.notesSHA256 == validated.manifest.notesSHA256 else {
+      guard restoredIdentity.notesSHA256 == target.manifest.notesSHA256 else {
         throw PersistenceStoreError.backupNotesChecksumMismatch
       }
-      return emergency
-    } catch {
+      let report = BackupRecoveryReport(
+        operationID: operationID,
+        startedAt: date,
+        completedAt: Date(),
+        requestedManifestFileName: manifestURL.lastPathComponent,
+        requestedSchemaVersion: target.manifest.schemaVersion,
+        requestedNoteCount: target.manifest.noteCount,
+        emergencyManifestFileName: emergency.manifestURL.lastPathComponent,
+        outcome: .restored,
+        failureCode: nil
+      )
+      let reportURL = try writeRecoveryReport(report)
+      return BackupRestoreReceipt(
+        restoredBackup: target,
+        emergencyBackup: emergency,
+        recoveryReport: report,
+        recoveryReportURL: reportURL
+      )
+    } catch let restoreError {
       try? fileManager.removeItem(at: stagingURL)
+      guard replacementStarted else {
+        let report = BackupRecoveryReport(
+          operationID: operationID,
+          startedAt: date,
+          completedAt: Date(),
+          requestedManifestFileName: manifestURL.lastPathComponent,
+          requestedSchemaVersion: validated?.manifest.schemaVersion,
+          requestedNoteCount: validated?.manifest.noteCount,
+          emergencyManifestFileName: emergency.manifestURL.lastPathComponent,
+          outcome: .rejected,
+          failureCode: Self.recoveryFailureCode(for: restoreError)
+        )
+        _ = try writeRecoveryReport(report)
+        throw restoreError
+      }
+
       do {
         if !databaseWasClosed {
           try pool.close()
@@ -171,10 +277,39 @@ extension PersistenceStore {
         else {
           throw PersistenceStoreError.backupNotesChecksumMismatch
         }
-      } catch {
-        throw PersistenceStoreError.restoreRollbackFailed(String(describing: error))
+      } catch let rollbackError {
+        let report = BackupRecoveryReport(
+          operationID: operationID,
+          startedAt: date,
+          completedAt: Date(),
+          requestedManifestFileName: manifestURL.lastPathComponent,
+          requestedSchemaVersion: validated?.manifest.schemaVersion,
+          requestedNoteCount: validated?.manifest.noteCount,
+          emergencyManifestFileName: emergency.manifestURL.lastPathComponent,
+          outcome: .rollbackFailed,
+          failureCode: Self.recoveryFailureCode(for: rollbackError)
+        )
+        _ = try? writeRecoveryReport(report)
+        throw PersistenceStoreError.restoreRollbackFailed(String(describing: rollbackError))
       }
-      throw PersistenceStoreError.restoreRolledBack(String(describing: error))
+
+      let report = BackupRecoveryReport(
+        operationID: operationID,
+        startedAt: date,
+        completedAt: Date(),
+        requestedManifestFileName: manifestURL.lastPathComponent,
+        requestedSchemaVersion: validated?.manifest.schemaVersion,
+        requestedNoteCount: validated?.manifest.noteCount,
+        emergencyManifestFileName: emergency.manifestURL.lastPathComponent,
+        outcome: .rolledBack,
+        failureCode: Self.recoveryFailureCode(for: restoreError)
+      )
+      do {
+        _ = try writeRecoveryReport(report)
+      } catch {
+        throw PersistenceStoreError.restoreRolledBack("recovery_report_unavailable")
+      }
+      throw PersistenceStoreError.restoreRolledBack(String(describing: restoreError))
     }
   }
 
@@ -240,15 +375,53 @@ extension PersistenceStore {
     }
   }
 
-  func pruneBackups(policy: BackupPolicy, now: Date) throws {
+  public func pruneBackups(policy: BackupPolicy, now: Date = Date()) throws {
     let backups = try availableBackups()
     for (index, backup) in backups.enumerated() {
       let isOverCount = index >= policy.retainedCopies
       let isOverAge = now.timeIntervalSince(backup.manifest.createdAt) > policy.maximumAge
       if isOverCount || isOverAge {
-        try? FileManager.default.removeItem(at: backup.manifestURL)
-        try? FileManager.default.removeItem(at: backup.databaseURL)
+        try FileManager.default.removeItem(at: backup.manifestURL)
+        try FileManager.default.removeItem(at: backup.databaseURL)
       }
+    }
+  }
+
+  private func writeRecoveryReport(_ report: BackupRecoveryReport) throws -> URL {
+    let fileName = "recovery-\(report.operationID.uuidString.lowercased()).json"
+    let finalURL = backupDirectoryURL.appendingPathComponent(fileName)
+    let temporaryURL = backupDirectoryURL.appendingPathComponent(".\(fileName).tmp")
+    let encoder = JSONEncoder()
+    encoder.dateEncodingStrategy = .iso8601
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    try encoder.encode(report).write(to: temporaryURL, options: .atomic)
+    do {
+      try FileManager.default.moveItem(at: temporaryURL, to: finalURL)
+    } catch {
+      try? FileManager.default.removeItem(at: temporaryURL)
+      throw error
+    }
+    return finalURL
+  }
+
+  private static func recoveryFailureCode(for error: any Error) -> String {
+    guard let error = error as? PersistenceStoreError else {
+      return "storage_operation_failed"
+    }
+    return switch error {
+    case .noteNotFound: "note_not_found"
+    case .invalidStoredNoteID: "invalid_stored_note_id"
+    case .invalidStoredTimer: "invalid_stored_timer"
+    case .orderSequenceOverflow: "order_sequence_overflow"
+    case .sourceRevisionOverflow: "source_revision_overflow"
+    case .invalidBackupManifest: "invalid_backup_manifest"
+    case .unsupportedBackupSchema: "unsupported_backup_schema"
+    case .backupChecksumMismatch: "backup_checksum_mismatch"
+    case .backupNotesChecksumMismatch: "backup_notes_checksum_mismatch"
+    case .databaseIntegrityCheckFailed: "database_integrity_check_failed"
+    case .ftsIndexDiverged: "fts_index_diverged"
+    case .restoreRolledBack: "restore_rolled_back"
+    case .restoreRollbackFailed: "restore_rollback_failed"
     }
   }
 

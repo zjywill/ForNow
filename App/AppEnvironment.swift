@@ -13,6 +13,9 @@ import SwiftUI
 @MainActor
 struct AppDependencies {
   let repository: any NoteRepository
+  let backupManager: any BackupManaging
+  let backupSettings: any BackupSettingsStoring
+  let folderRevealer: any FolderRevealing
   let clock: any WallClock
   let monotonicClock: any MonotonicClock
   let uuidGenerator: any UUIDGenerating
@@ -62,6 +65,9 @@ final class AppEnvironment: ObservableObject {
   let appName = "ForNow"
   let variant: AppEnvironmentVariant
   let repository: any NoteRepository
+  let backupManager: any BackupManaging
+  let backupSettingsStore: any BackupSettingsStoring
+  let folderRevealer: any FolderRevealing
   let clock: any WallClock
   let monotonicClock: any MonotonicClock
   let uuidGenerator: any UUIDGenerating
@@ -95,6 +101,7 @@ final class AppEnvironment: ObservableObject {
   let slashCommand: SlashCommandModel
   let deleteConfirmationCoordinator: DeleteConfirmationCoordinator
   let bulkDeletionConfirmationCoordinator: BulkDeletionConfirmationCoordinator
+  let backupRestoreConfirmationCoordinator: BackupRestoreConfirmationCoordinator
   let timerModel: TimerModel
   let ocrModel: OCRWorkflowModel
   let autoPasteModel: AutoPasteModel
@@ -119,6 +126,12 @@ final class AppEnvironment: ObservableObject {
   @Published private(set) var lastBulkDeletionReceipt: BulkDeletionReceipt?
   @Published private(set) var bulkDeletionErrorMessage: String?
   @Published private(set) var isBulkDeletionWorking = false
+  @Published private(set) var backupSettings = BackupSettings()
+  @Published private(set) var backups: [ManagedBackup] = []
+  @Published private(set) var backupOperationState = BackupOperationState.idle
+  @Published private(set) var backupErrorMessage: String?
+  @Published private(set) var lastCreatedBackup: ManagedBackup?
+  @Published private(set) var lastRestoreReceipt: ManagedRestoreReceipt?
   @Published private(set) var modeSettings = ModeSettings()
   @Published private(set) var mathSettings = MathSettings()
   @Published private(set) var rateSnapshot: RateSnapshot?
@@ -138,11 +151,15 @@ final class AppEnvironment: ObservableObject {
   private var slashCommandSuspension: AutoHideSuspension?
   private var automaticCurrencyRefreshTask: Task<Void, Never>?
   private var expirationScheduleTask: Task<Void, Never>?
+  private var backupScheduleTask: Task<Void, Never>?
   private var isProcessingExpiration = false
 
   init(variant: AppEnvironmentVariant, dependencies: AppDependencies) {
     self.variant = variant
     repository = dependencies.repository
+    backupManager = dependencies.backupManager
+    backupSettingsStore = dependencies.backupSettings
+    folderRevealer = dependencies.folderRevealer
     clock = dependencies.clock
     monotonicClock = dependencies.monotonicClock
     uuidGenerator = dependencies.uuidGenerator
@@ -225,6 +242,7 @@ final class AppEnvironment: ObservableObject {
     )
     deleteConfirmationCoordinator = DeleteConfirmationCoordinator()
     bulkDeletionConfirmationCoordinator = BulkDeletionConfirmationCoordinator()
+    backupRestoreConfirmationCoordinator = BackupRestoreConfirmationCoordinator()
     windowCoordinator.configure(
       WindowCoordinatorCallbacks(
         makeContentViewController: { [weak self] in
@@ -252,13 +270,17 @@ final class AppEnvironment: ObservableObject {
   static func production(fileManager: FileManager = .default) -> AppEnvironment {
     let paths = ProductionPaths.standard(fileManager: fileManager)
     let rateCache = UserDefaultsCurrencyRateCache()
+    let repository = PersistenceNoteRepository(
+      databaseURL: paths.databaseURL,
+      backupDirectoryURL: paths.backupDirectoryURL
+    )
     return AppEnvironment(
       variant: .production,
       dependencies: AppDependencies(
-        repository: PersistenceNoteRepository(
-          databaseURL: paths.databaseURL,
-          backupDirectoryURL: paths.backupDirectoryURL
-        ),
+        repository: repository,
+        backupManager: PersistenceBackupManager(repository: repository),
+        backupSettings: UserDefaultsBackupSettingsStore(),
+        folderRevealer: SystemFolderRevealer(),
         clock: SystemWallClock(),
         monotonicClock: SystemMonotonicClock(),
         uuidGenerator: SystemUUIDGenerator(),
@@ -298,6 +320,9 @@ final class AppEnvironment: ObservableObject {
       variant: .preview,
       dependencies: AppDependencies(
         repository: InMemoryNoteRepository(),
+        backupManager: InMemoryBackupManager(),
+        backupSettings: InMemoryBackupSettingsStore(),
+        folderRevealer: RecordingFolderRevealer(),
         clock: FixedWallClock(Date(timeIntervalSince1970: 0)),
         monotonicClock: ManualMonotonicClock(),
         uuidGenerator: SequenceUUIDGenerator(values: [Self.previewUUID]),
@@ -341,6 +366,9 @@ final class AppEnvironment: ObservableObject {
 
   static func test(
     repository: any NoteRepository = InMemoryNoteRepository(),
+    backupManager: any BackupManaging = InMemoryBackupManager(),
+    backupSettings: any BackupSettingsStoring = InMemoryBackupSettingsStore(),
+    folderRevealer: any FolderRevealing = RecordingFolderRevealer(),
     clock: any WallClock = FixedWallClock(Date(timeIntervalSince1970: 0)),
     monotonicClock: any MonotonicClock = ManualMonotonicClock(),
     uuidGenerator: any UUIDGenerating = SequenceUUIDGenerator(values: [previewUUID]),
@@ -373,6 +401,9 @@ final class AppEnvironment: ObservableObject {
       variant: .test,
       dependencies: AppDependencies(
         repository: repository,
+        backupManager: backupManager,
+        backupSettings: backupSettings,
+        folderRevealer: folderRevealer,
         clock: clock,
         monotonicClock: monotonicClock,
         uuidGenerator: uuidGenerator,
@@ -420,6 +451,8 @@ final class AppEnvironment: ObservableObject {
       appearanceSettings = await appearanceSettingsStore.load()
       quickActionSettings = await quickActionSettingsStore.load()
       exportSettings = await exportSettingsStore.load()
+      backupSettings = await backupSettingsStore.load()
+      backups = try await backupManager.availableBackups()
       modeSettings = await modeSettingsStore.load()
       mathSettings = await mathSettingsStore.load()
       await autoPasteModel.loadSettings()
@@ -451,6 +484,8 @@ final class AppEnvironment: ObservableObject {
       await logger.record(.startupCompleted)
       scheduleAutomaticCurrencyRefreshIfNeeded()
       scheduleExpirationProcessing()
+      await performAutomaticBackupIfEligible()
+      scheduleAutomaticBackupProcessing()
     } catch {
       state = .failed
       await logger.record(.startupFailed)
@@ -469,7 +504,10 @@ final class AppEnvironment: ObservableObject {
     expirationScheduleTask?.cancel()
     await expirationScheduleTask?.value
     expirationScheduleTask = nil
-    while isProcessingExpiration || isBulkDeletionWorking {
+    backupScheduleTask?.cancel()
+    await backupScheduleTask?.value
+    backupScheduleTask = nil
+    while isProcessingExpiration || isBulkDeletionWorking || backupOperationState.isWorking {
       await Task.yield()
     }
 
@@ -597,7 +635,9 @@ final class AppEnvironment: ObservableObject {
 
   @discardableResult
   func processExpiredNotes() async throws -> ExpirationDeletionReceipt? {
-    guard state == .running, repositoryIsPrepared, !isProcessingExpiration else { return nil }
+    guard state == .running, repositoryIsPrepared, !isProcessingExpiration,
+      !backupOperationState.isWorking
+    else { return nil }
     isProcessingExpiration = true
     defer { isProcessingExpiration = false }
     do {
@@ -613,17 +653,21 @@ final class AppEnvironment: ObservableObject {
   }
 
   func synchronizeWallClock() async {
+    guard backupOperationState != .restoring else { return }
     await timerModel.synchronizeClock()
     do {
       _ = try await processExpiredNotes()
     } catch {
       NSSound.beep()
     }
+    await performAutomaticBackupIfEligible()
   }
 
   @discardableResult
   func previewBulkDeletion(before cutoff: Date) async throws -> BulkDeletionPreview {
-    guard !isBulkDeletionWorking else { throw BulkDeletionOperationError.inProgress }
+    guard !isBulkDeletionWorking, !backupOperationState.isWorking else {
+      throw BulkDeletionOperationError.inProgress
+    }
     isBulkDeletionWorking = true
     defer { isBulkDeletionWorking = false }
     do {
@@ -647,7 +691,9 @@ final class AppEnvironment: ObservableObject {
 
   @discardableResult
   func confirmBulkDeletion() async throws -> BulkDeletionReceipt? {
-    guard let preview = bulkDeletionPreview, preview.count > 0, !isBulkDeletionWorking else {
+    guard let preview = bulkDeletionPreview, preview.count > 0, !isBulkDeletionWorking,
+      !backupOperationState.isWorking
+    else {
       return nil
     }
     isBulkDeletionWorking = true
@@ -680,6 +726,135 @@ final class AppEnvironment: ObservableObject {
       return nil
     }
     return try await confirmBulkDeletion()
+  }
+
+  func refreshBackups() async {
+    guard repositoryIsPrepared else { return }
+    do {
+      backups = try await backupManager.availableBackups()
+      backupErrorMessage = nil
+    } catch {
+      backupErrorMessage = error.localizedDescription
+    }
+  }
+
+  func updateBackupSettings(_ settings: BackupSettings) async throws {
+    let settings = try settings.validated()
+    guard !backupOperationState.isWorking, !isBulkDeletionWorking else {
+      throw BackupOperationError.inProgress
+    }
+    do {
+      try await backupSettingsStore.save(settings)
+      backupSettings = settings
+      try await backupManager.pruneBackups(policy: settings.policy, now: clock.now())
+      backups = try await backupManager.availableBackups()
+      backupErrorMessage = nil
+      await performAutomaticBackupIfEligible()
+    } catch {
+      backupErrorMessage = error.localizedDescription
+      throw error
+    }
+  }
+
+  @discardableResult
+  func createManualBackup() async throws -> ManagedBackup {
+    guard state == .running, repositoryIsPrepared else {
+      throw BackupOperationError.unavailable
+    }
+    guard !backupOperationState.isWorking, !isBulkDeletionWorking else {
+      throw BackupOperationError.inProgress
+    }
+    backupOperationState = .creating
+    backupErrorMessage = nil
+    lastRestoreReceipt = nil
+    defer { backupOperationState = .idle }
+    do {
+      try await flushCurrentSourceForBackup()
+      let backup = try await backupManager.createBackup(
+        at: clock.now(),
+        policy: backupSettings.policy
+      )
+      lastCreatedBackup = backup
+      backups = try await backupManager.availableBackups()
+      return backup
+    } catch {
+      backupErrorMessage = error.localizedDescription
+      throw error
+    }
+  }
+
+  func revealNotesFolder() {
+    revealFolder(backupManager.notesDirectoryURL)
+  }
+
+  func revealBackupsFolder() {
+    revealFolder(backupManager.backupDirectoryURL)
+  }
+
+  @discardableResult
+  func requestRestoreConfirmation(for backup: ManagedBackup) async throws
+    -> ManagedRestoreReceipt?
+  {
+    let suspension = windowCoordinator.beginOwnedPanel(.confirmation)
+    defer { windowCoordinator.endOwnedPanel(suspension) }
+    guard await backupRestoreConfirmationCoordinator.requestConfirmation(for: backup) else {
+      return nil
+    }
+    return try await restoreBackup(backup)
+  }
+
+  @discardableResult
+  func restoreBackup(_ backup: ManagedBackup) async throws -> ManagedRestoreReceipt {
+    guard state == .running, repositoryIsPrepared else {
+      throw BackupOperationError.unavailable
+    }
+    guard !backupOperationState.isWorking, !isBulkDeletionWorking else {
+      throw BackupOperationError.inProgress
+    }
+
+    backupOperationState = .restoring
+    backupErrorMessage = nil
+    lastCreatedBackup = nil
+    lastRestoreReceipt = nil
+    let preferredNoteID = noteSession.currentNoteID
+    var runtimeWasSuspended = false
+    defer { backupOperationState = .idle }
+
+    releaseSearch(restoresEditorFocus: false)
+    releaseFindReplace(restoresEditorFocus: false)
+    releaseSlashCommand(restoresEditorFocus: false)
+
+    do {
+      try await flushCurrentSourceForBackup()
+      autoPasteModel.stop(.backupRestore)
+      await timerModel.suspendForStoreReplacement()
+      runtimeWasSuspended = true
+      let receipt = try await backupManager.restoreBackup(
+        manifestURL: backup.manifestURL,
+        at: clock.now()
+      )
+      try await reloadRuntimeStateAfterRestore(preferredNoteID: preferredNoteID)
+      lastRestoreReceipt = receipt
+      backups = try await backupManager.availableBackups()
+      return receipt
+    } catch let restoreError {
+      if runtimeWasSuspended {
+        do {
+          try await reloadRuntimeStateAfterRestore(preferredNoteID: preferredNoteID)
+        } catch {
+          backupErrorMessage =
+            "Restore did not complete and the current session could not be reloaded. Restart ForNow before editing."
+          throw restoreError
+        }
+      }
+      backups = (try? await backupManager.availableBackups()) ?? backups
+      backupErrorMessage = restoreError.localizedDescription
+      throw restoreError
+    }
+  }
+
+  func dismissBackupError() {
+    backupErrorMessage = nil
   }
 
   func executeTimerCommand(_ command: TimerCommand, source: String) async throws {
@@ -1038,6 +1213,75 @@ final class AppEnvironment: ObservableObject {
       return ExportDestinationDiagnostic(status: .unavailable, message: unavailableMessage)
     }
     return ExportDestinationDiagnostic(status: .available, message: availableMessage)
+  }
+
+  private func scheduleAutomaticBackupProcessing() {
+    backupScheduleTask?.cancel()
+    backupScheduleTask = Task { @MainActor [weak self] in
+      while !Task.isCancelled {
+        do {
+          try await Task.sleep(for: .seconds(60))
+        } catch {
+          return
+        }
+        guard let self else { return }
+        await self.performAutomaticBackupIfEligible()
+      }
+    }
+  }
+
+  @discardableResult
+  func performAutomaticBackupIfEligible() async -> ManagedBackup? {
+    guard state == .running, repositoryIsPrepared, !backupOperationState.isWorking,
+      !isBulkDeletionWorking, !isProcessingExpiration,
+      let interval = backupSettings.frequency.interval
+    else { return nil }
+
+    let now = clock.now()
+    if let latestDate = backups.map(\.createdAt).max(),
+      now.timeIntervalSince(latestDate) < interval
+    {
+      return nil
+    }
+
+    backupOperationState = .creating
+    defer { backupOperationState = .idle }
+    do {
+      try await flushCurrentSourceForBackup()
+      let backup = try await backupManager.createBackupIfEligible(
+        afterSuccessfulWriteAt: now,
+        now: now,
+        policy: backupSettings.policy
+      )
+      if backup != nil {
+        backups = try await backupManager.availableBackups()
+        backupErrorMessage = nil
+      }
+      return backup
+    } catch {
+      backupErrorMessage = error.localizedDescription
+      return nil
+    }
+  }
+
+  private func flushCurrentSourceForBackup() async throws {
+    try await windowCoordinator.flushPendingSourceForCommand()
+    try await noteSession.prepareForDeparture()
+    _ = try await repository.flush()
+  }
+
+  private func reloadRuntimeStateAfterRestore(preferredNoteID: UUID?) async throws {
+    try await noteSession.reloadAfterStoreReplacement(preferredNoteID: preferredNoteID)
+    try await timerModel.reloadAfterStoreReplacement()
+  }
+
+  private func revealFolder(_ url: URL) {
+    do {
+      try folderRevealer.reveal(url)
+      backupErrorMessage = nil
+    } catch {
+      backupErrorMessage = error.localizedDescription
+    }
   }
 
   private func scheduleExpirationProcessing() {

@@ -2112,13 +2112,13 @@
     },
     "FR-BACK-001": {
       "title": "Backups",
-      "classification": "parity",
-      "sourceDescription": "`AN-BACK-001`.",
+      "classification": "product-decision",
+      "sourceDescription": "`AN-BACK-001`, `FORNOW-DECISION-019`.",
       "evidence": [
         "AN-BACK-001"
       ],
       "decisions": [
-
+        "FORNOW-DECISION-019"
       ],
       "release": "macos-1.0",
       "tests": [
@@ -2143,12 +2143,13 @@
     "FR-BACK-002": {
       "title": "Restore",
       "classification": "product-decision",
-      "sourceDescription": "`AN-BACK-001`, `FORNOW-DECISION-001`.",
+      "sourceDescription": "`AN-BACK-001`, `FORNOW-DECISION-001`, `FORNOW-DECISION-019`.",
       "evidence": [
         "AN-BACK-001"
       ],
       "decisions": [
-        "FORNOW-DECISION-001"
+        "FORNOW-DECISION-001",
+        "FORNOW-DECISION-019"
       ],
       "release": "macos-1.0",
       "tests": [

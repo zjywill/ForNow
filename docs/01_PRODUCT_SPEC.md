@@ -644,7 +644,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-BACK-001 - Backups
 
-- Source: `AN-BACK-001`.
+- Source: `AN-BACK-001`, `FORNOW-DECISION-019`.
 - Create periodic versioned local backups.
 - Retention is bounded by count and age.
 - Backup creation cannot run concurrently with migration or restore.
@@ -655,7 +655,7 @@ References: `AN-EXP-001`, `AN-EXP-002`.
 
 #### FR-BACK-002 - Restore
 
-- Source: `AN-BACK-001`, `FORNOW-DECISION-001`.
+- Source: `AN-BACK-001`, `FORNOW-DECISION-001`, `FORNOW-DECISION-019`.
 - Validate schema and checksum before restore.
 - Create a safety backup of the current store.
 - Restore either completes atomically or leaves the current store intact.

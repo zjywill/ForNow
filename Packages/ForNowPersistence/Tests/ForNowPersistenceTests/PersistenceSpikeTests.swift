@@ -410,6 +410,40 @@ struct PersistenceSpikeTests {
     }
   }
 
+  @Test("SOAK-BACK-001: repeated backups remain valid across retention rollover")
+  func backupRetentionRolloverSoak() async throws {
+    try await withWorkspace { workspace in
+      let store = try workspace.makeStore()
+      _ = try await store.createNote(body: "soak source stays private")
+      let policy = BackupPolicy(
+        frequency: .minutes10,
+        retainedCopies: 12,
+        maximumAge: 60 * 60
+      )
+
+      for index in 0..<40 {
+        _ = try await store.createBackup(
+          at: Date(timeIntervalSince1970: TimeInterval(index * 600)),
+          policy: policy
+        )
+      }
+
+      let backups = try await store.availableBackups()
+      #expect(backups.count == 7)
+      #expect(backups.map(\.manifest.createdAt) == backups.map(\.manifest.createdAt).sorted(by: >))
+      for backup in backups {
+        _ = try await store.validateBackup(manifestURL: backup.manifestURL)
+      }
+      let files = try FileManager.default.contentsOfDirectory(
+        at: workspace.backupDirectoryURL,
+        includingPropertiesForKeys: nil
+      )
+      #expect(files.filter { $0.pathExtension == "json" }.count == 7)
+      #expect(files.filter { $0.pathExtension == "sqlite" }.count == 7)
+      try await store.close()
+    }
+  }
+
   @Test("FAULT-DB-002, IT-BACK-001E: interrupted temp backup is never published")
   func interruptedBackupCleansTemporaryFiles() async throws {
     enum Injected: Error { case interrupted }
@@ -472,9 +506,25 @@ struct PersistenceSpikeTests {
       try handle.close()
 
       await #expect(throws: PersistenceStoreError.backupChecksumMismatch) {
-        try await store.restoreBackup(manifestURL: backup.manifestURL)
+        try await store.restoreBackup(
+          manifestURL: backup.manifestURL,
+          at: Date(timeIntervalSince1970: 500)
+        )
       }
       #expect(try await store.note(id: id)?.body == "healthy current store")
+      let reports = try recoveryReports(in: workspace.backupDirectoryURL)
+      let report = try #require(reports.first)
+      #expect(report.outcome == .rejected)
+      #expect(report.failureCode == "backup_checksum_mismatch")
+      #expect(report.emergencyManifestFileName.hasPrefix("emergency-"))
+      #expect(report.requestedSchemaVersion == nil)
+      let emergencyManifests = try FileManager.default.contentsOfDirectory(
+        at: workspace.backupDirectoryURL,
+        includingPropertiesForKeys: nil
+      ).filter {
+        $0.lastPathComponent.hasPrefix("emergency-") && $0.pathExtension == "json"
+      }
+      #expect(emergencyManifests.count == 1)
       try await store.verifyIntegrity()
       try await store.close()
     }
@@ -503,7 +553,7 @@ struct PersistenceSpikeTests {
         }
       }
 
-      let emergency = try await store.restoreBackup(manifestURL: backup.manifestURL)
+      let restore = try await store.restoreBackup(manifestURL: backup.manifestURL)
       let restored = try await store.allNotes()
       #expect(Set(restored.map(\.id)) == Set(expected.keys))
       #expect(
@@ -513,7 +563,14 @@ struct PersistenceSpikeTests {
         Dictionary(uniqueKeysWithValues: restored.map { ($0.id, $0.orderKey) })
           == expected.mapValues(\.orderKey))
       #expect(try await store.search("known").count == 100)
-      #expect(emergency.manifest.noteCount < 100)
+      #expect(restore.emergencyBackup.manifest.noteCount < 100)
+      #expect(restore.recoveryReport.outcome == .restored)
+      #expect(restore.recoveryReport.failureCode == nil)
+      #expect(FileManager.default.fileExists(atPath: restore.recoveryReportURL.path))
+      let reportBytes = try Data(contentsOf: restore.recoveryReportURL)
+      let reportText = String(decoding: reportBytes, as: UTF8.self)
+      #expect(!reportText.contains("known-"))
+      #expect(!reportText.contains("mutated-"))
       try await store.verifyIntegrity()
       try await store.close()
     }
@@ -545,6 +602,10 @@ struct PersistenceSpikeTests {
       }
 
       #expect(try await store.note(id: id)?.body == "pre-restore current version")
+      let report = try #require(try recoveryReports(in: workspace.backupDirectoryURL).first)
+      #expect(report.outcome == .rolledBack)
+      #expect(report.failureCode == "storage_operation_failed")
+      #expect(report.emergencyManifestFileName.hasPrefix("emergency-"))
       try await store.verifyIntegrity()
       try await store.close()
     }
@@ -621,6 +682,17 @@ struct PersistenceSpikeTests {
       try await store.close()
     }
   }
+}
+
+private func recoveryReports(in directoryURL: URL) throws -> [BackupRecoveryReport] {
+  let decoder = JSONDecoder()
+  decoder.dateDecodingStrategy = .iso8601
+  return try FileManager.default.contentsOfDirectory(
+    at: directoryURL,
+    includingPropertiesForKeys: nil
+  )
+  .filter { $0.lastPathComponent.hasPrefix("recovery-") && $0.pathExtension == "json" }
+  .map { try decoder.decode(BackupRecoveryReport.self, from: Data(contentsOf: $0)) }
 }
 
 private struct TestWorkspace {

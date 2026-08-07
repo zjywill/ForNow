@@ -17,6 +17,7 @@ enum AutoPasteStopReason: Equatable, Sendable {
   case indicator
   case destinationDeleted
   case destinationUnavailable
+  case backupRestore
   case appTermination
   case failure
 }

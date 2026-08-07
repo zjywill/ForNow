@@ -139,6 +139,56 @@ public actor PersistenceNoteRepository: NoteRepository {
     )
   }
 
+  @discardableResult
+  public func createBackup(
+    at date: Date = Date(),
+    policy: BackupPolicy = BackupPolicy()
+  ) async throws -> BackupDescriptor {
+    let (store, saver) = try components()
+    _ = try await saver.flushAll()
+    try await store.checkpoint()
+    return try await store.createBackup(at: date, policy: policy)
+  }
+
+  public func createBackupIfEligible(
+    afterSuccessfulWriteAt writeDate: Date,
+    now: Date = Date(),
+    policy: BackupPolicy = BackupPolicy()
+  ) async throws -> BackupDescriptor? {
+    let (store, saver) = try components()
+    _ = try await saver.flushAll()
+    try await store.checkpoint()
+    return try await store.createBackupIfEligible(
+      afterSuccessfulWriteAt: writeDate,
+      now: now,
+      policy: policy
+    )
+  }
+
+  public func availableBackups() async throws -> [BackupDescriptor] {
+    let (store, _) = try components()
+    return try await store.availableBackups()
+  }
+
+  public func pruneBackups(
+    policy: BackupPolicy,
+    now: Date = Date()
+  ) async throws {
+    let (store, _) = try components()
+    try await store.pruneBackups(policy: policy, now: now)
+  }
+
+  @discardableResult
+  public func restoreBackup(
+    manifestURL: URL,
+    at date: Date = Date()
+  ) async throws -> BackupRestoreReceipt {
+    let (store, saver) = try components()
+    _ = try await saver.flushAll()
+    try await store.checkpoint()
+    return try await store.restoreBackup(manifestURL: manifestURL, at: date)
+  }
+
   public func currentTimer() async throws -> NoteTimer? {
     let (store, _) = try components()
     return try await store.currentTimer()

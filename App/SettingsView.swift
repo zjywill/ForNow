@@ -4,6 +4,7 @@ import ForNowDesign
 import ForNowEditor
 import ForNowIntegrations
 import ForNowModes
+import ForNowPersistence
 import ForNowWindowing
 import SwiftUI
 
@@ -417,6 +418,120 @@ struct SettingsView: View {
         }
       }
 
+      Section("Backups") {
+        Picker("Automatic backup", selection: backupFrequency) {
+          ForEach(BackupFrequency.allCases, id: \.self) { frequency in
+            Text(frequency.displayName).tag(frequency)
+          }
+        }
+        .accessibilityIdentifier("Backup frequency")
+
+        Stepper(
+          "Retain \(environmentModel.backupSettings.retainedCopies) backups",
+          value: retainedBackupCopies,
+          in: 1...100
+        )
+        .accessibilityIdentifier("Backup retained copies")
+
+        Stepper(
+          "Keep for \(environmentModel.backupSettings.maximumAgeDays) days",
+          value: backupMaximumAgeDays,
+          in: 1...3_650
+        )
+        .accessibilityIdentifier("Backup maximum age")
+
+        HStack {
+          Button {
+            environment.revealNotesFolder()
+          } label: {
+            Label("Notes Folder", systemImage: "folder")
+          }
+          .accessibilityIdentifier("Reveal Notes folder")
+
+          Button {
+            environment.revealBackupsFolder()
+          } label: {
+            Label("Backups Folder", systemImage: "archivebox")
+          }
+          .accessibilityIdentifier("Reveal Backups folder")
+
+          Spacer()
+
+          Button {
+            Task { await environment.refreshBackups() }
+          } label: {
+            Image(systemName: "arrow.clockwise")
+          }
+          .help("Refresh Backups")
+          .accessibilityLabel("Refresh Backups")
+
+          Button {
+            Task { _ = try? await environment.createManualBackup() }
+          } label: {
+            Label("Back Up Now", systemImage: "externaldrive.badge.plus")
+          }
+          .disabled(environmentModel.backupOperationState.isWorking)
+          .accessibilityIdentifier("Create manual backup")
+        }
+
+        if environmentModel.backups.isEmpty {
+          Text("No backups available.")
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("Empty backup list")
+        } else {
+          ForEach(environmentModel.backups) { backup in
+            HStack(spacing: 12) {
+              VStack(alignment: .leading, spacing: 2) {
+                Text(backup.createdAt, format: .dateTime.year().month().day().hour().minute())
+                Text(backupMetadata(backup))
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              }
+              Spacer()
+              Button(role: .destructive) {
+                Task { _ = try? await environment.requestRestoreConfirmation(for: backup) }
+              } label: {
+                Label("Restore", systemImage: "arrow.counterclockwise")
+              }
+              .disabled(environmentModel.backupOperationState.isWorking)
+              .accessibilityIdentifier("Restore backup")
+            }
+            .accessibilityElement(children: .contain)
+          }
+        }
+
+        if environmentModel.backupOperationState.isWorking {
+          ProgressView(
+            environmentModel.backupOperationState == .restoring
+              ? "Restoring backup..." : "Creating backup..."
+          )
+          .accessibilityIdentifier("Backup operation progress")
+        }
+
+        if let receipt = environmentModel.lastRestoreReceipt {
+          Text(
+            "Restored \(receipt.restoredBackup.noteCount) \(noteLabel(receipt.restoredBackup.noteCount)); emergency backup and recovery report saved."
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("Backup restore result")
+        } else if let backup = environmentModel.lastCreatedBackup {
+          Text(
+            "Backup created with \(backup.noteCount) \(noteLabel(backup.noteCount))."
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("Backup creation result")
+        }
+
+        if let errorMessage = environmentModel.backupErrorMessage {
+          Text(errorMessage)
+            .font(.caption)
+            .foregroundStyle(.red)
+            .accessibilityIdentifier("Backup error")
+        }
+      }
+
       Section("Deletion") {
         Button("Reset Delete Warning") {
           Task { try? await noteSession.resetDeleteWarning() }
@@ -478,7 +593,10 @@ struct SettingsView: View {
     }
     .formStyle(.grouped)
     .frame(width: 640, height: 820)
-    .onAppear { environment.settingsDidAppear() }
+    .onAppear {
+      environment.settingsDidAppear()
+      Task { await environment.refreshBackups() }
+    }
     .onDisappear { environment.settingsDidDisappear() }
     .onReceive(
       NSWorkspace.shared.notificationCenter.publisher(
@@ -523,6 +641,40 @@ struct SettingsView: View {
         Task { try? await environment.updateExpirationChoice(choice) }
       }
     )
+  }
+
+  private var backupFrequency: Binding<BackupFrequency> {
+    backupBinding(\.frequency)
+  }
+
+  private var retainedBackupCopies: Binding<Int> {
+    backupBinding(\.retainedCopies)
+  }
+
+  private var backupMaximumAgeDays: Binding<Int> {
+    backupBinding(\.maximumAgeDays)
+  }
+
+  private func backupBinding<Value>(_ keyPath: WritableKeyPath<BackupSettings, Value>)
+    -> Binding<Value>
+  {
+    Binding(
+      get: { environmentModel.backupSettings[keyPath: keyPath] },
+      set: { value in
+        var settings = environmentModel.backupSettings
+        settings[keyPath: keyPath] = value
+        Task { try? await environment.updateBackupSettings(settings) }
+      }
+    )
+  }
+
+  private func backupMetadata(_ backup: ManagedBackup) -> String {
+    let size = ByteCountFormatter.string(
+      fromByteCount: backup.byteCount,
+      countStyle: .file
+    )
+    return
+      "\(size)  |  Schema \(backup.schemaVersion)  |  \(backup.noteCount) \(noteLabel(backup.noteCount))"
   }
 
   private func noteLabel(_ count: Int) -> String {

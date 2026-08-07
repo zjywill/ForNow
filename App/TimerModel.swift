@@ -82,6 +82,19 @@ final class TimerModel: ObservableObject {
     await apply(update, dispatchesEvents: true, reschedulesNotification: true)
   }
 
+  func suspendForStoreReplacement() async {
+    isClockActive = false
+    tickerTask?.cancel()
+    tickerTask = nil
+    await notifications.cancelTimerNotifications(timerID: nil)
+  }
+
+  func reloadAfterStoreReplacement() async throws {
+    isClockActive = true
+    let update = try await timerClock.load()
+    await apply(update, dispatchesEvents: false, reschedulesNotification: true)
+  }
+
   func removeTimer(linkedTo noteID: NoteID) async throws {
     let update = try await timerClock.removeTimer(linkedTo: noteID)
     await apply(update, dispatchesEvents: false, reschedulesNotification: true)

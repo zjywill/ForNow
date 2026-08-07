@@ -857,6 +857,18 @@ These entries describe deliberate ForNow behavior. They are not AntiNote facts.
   still-eligible members of its frozen preview after a validated safety backup;
   cancellation or backup failure deletes nothing.
 
+### FORNOW-DECISION-019 - Coordinated restore and private recovery reports
+
+- Decision: ForNow V1 freezes application-level backup policy, scheduling,
+  list metadata, guarded restore coordination, and recovery reporting in
+  `docs/backup/BACKUP_MANAGEMENT_V1.md`.
+- Reason: Public evidence defines frequencies, retained copies, folder reveal,
+  and manual file replacement but not age bounds, live-writer suspension,
+  restore-session reload, or recovery-report content.
+- Constraint: Every confirmed restore publishes an emergency current-state
+  snapshot before target validation or replacement; persisted recovery reports
+  contain bounded metadata and failure codes but no Note source.
+
 ## Sync, Slots, And Extensions
 
 ### AN-BETA-001 - Slotted notes
